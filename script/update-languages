@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CURRENT=$(pwd);
+
+script/bootstrap
+
+for language in $(ls languages); do
+  cd languages/$language/vendor/tree-sitter-$language;
+  echo $(pwd);
+  git checkout master; git pull origin master;
+  cd $CURRENT;
+done
+
+cd vendor/tree-sitter;
+git checkout master; git pull origin master;
