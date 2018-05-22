@@ -18,23 +18,15 @@ void log_to_stdout(void *payload, TSLogType type, const char *message) {
   printf("%s\n", message);
 }
 
-void ts_document_log_to_stderr(TSDocument *document) {
-  ts_document_set_logger(document, (TSLogger) {.log = log_to_stdout, .payload = NULL});
+void ts_parser_log_to_stderr(TSParser *parser) {
+  ts_parser_set_logger(parser, (TSLogger) {.log = log_to_stdout, .payload = NULL});
 }
 
-void ts_document_parse_halt_on_error(TSDocument *document) {
-  ts_document_parse_with_options(document, (TSParseOptions){
-    .changed_ranges = NULL,
-    .changed_range_count = NULL,
-    .halt_on_error = true
-  });
-}
-
-static inline Node ts_node_elaborate(const TSDocument *document, TSNode node) {
-  return (Node){
+static inline Node ts_node_elaborate(TSNode node) {
+  return (Node) {
     .node = node,
     .symbol = ts_node_symbol(node),
-    .type = document ? ts_node_type(node, document) : NULL,
+    .type = ts_node_type(node),
     .startPoint = ts_node_start_point(node),
     .endPoint = ts_node_end_point(node),
     .startByte = ts_node_start_byte(node),
@@ -43,23 +35,22 @@ static inline Node ts_node_elaborate(const TSDocument *document, TSNode node) {
   };
 }
 
-void ts_document_root_node_p(TSDocument *document, Node *outNode) {
-  assert(document != NULL);
+void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
+  assert(tree != NULL);
   assert(outNode != NULL);
-  TSNode root = ts_document_root_node(document);
-  assert(root.data != NULL);
-  *outNode = ts_node_elaborate(document, root);
+  TSNode root = ts_tree_root_node(tree);
+  assert(root.id != NULL);
+  *outNode = ts_node_elaborate(root);
 }
 
-
-void ts_node_copy_child_nodes(const TSDocument *document, const TSNode *parentNode, Node *outChildNodes, size_t count) {
+void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes, size_t count) {
   assert(parentNode != NULL);
   assert(outChildNodes != NULL);
   assert(count >= 0);
   uint32_t maxCount = ts_node_child_count(*parentNode);
   uint32_t max = maxCount <= count ? maxCount : count;
   for (uint32_t i = 0; i < max; i++) {
-    outChildNodes[i] = ts_node_elaborate(document, ts_node_child(*parentNode, i));
+    outChildNodes[i] = ts_node_elaborate(ts_node_child(*parentNode, i));
   }
 }
 
