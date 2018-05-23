@@ -1,6 +1,5 @@
 module TreeSitter.Parser where
 
-import Prelude
 import Foreign
 import Foreign.C
 import TreeSitter.Language

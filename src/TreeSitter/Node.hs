@@ -7,7 +7,6 @@ module TreeSitter.Node
 , ts_node_copy_child_nodes
 ) where
 
-import Prelude
 import Foreign
 import Foreign.C
 import GHC.Generics
