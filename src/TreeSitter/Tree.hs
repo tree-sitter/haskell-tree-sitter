@@ -1,6 +1,5 @@
 module TreeSitter.Tree where
 
-import Prelude
 import Foreign
 import TreeSitter.Node
 

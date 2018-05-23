@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Language where
 
-import Prelude
 import Data.Char
 import Data.Function ((&))
 import Data.Ix (Ix)

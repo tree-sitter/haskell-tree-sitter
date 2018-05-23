@@ -5,7 +5,7 @@ description:         Please see README.md
 homepage:            http://github.com/tree-sitter/haskell-tree-sitter#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld
+author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, Ayman Nadeem, Patrick Thomson
 maintainer:          rob.rix@github.com
 copyright:           2015 GitHub
 category:            Web
