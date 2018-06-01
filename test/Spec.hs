@@ -11,7 +11,7 @@ main = hspec $ do
       sizeOf (undefined :: TSNode) `shouldBe` fromIntegral sizeof_tsnode
 
     it "roundtrips correctly" $
-      with (TSNode nullPtr 1 2) peek `shouldReturn` TSNode nullPtr 1 2
+      with (TSNode 1 2 3 4 nullPtr nullPtr) peek `shouldReturn` TSNode 1 2 3 4 nullPtr nullPtr
 
   describe "TSPoint" $ do
     it "has the same size as its C counterpart" $
@@ -25,7 +25,7 @@ main = hspec $ do
       sizeOf (undefined :: Node) `shouldBe` fromIntegral sizeof_node
 
     it "roundtrips correctly" $
-      with (Node (TSNode nullPtr 1 2) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8) peek `shouldReturn` Node (TSNode nullPtr 1 2) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8
+      with (Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8) peek `shouldReturn` Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8
 
 foreign import ccall unsafe "src/bridge.c sizeof_tsnode" sizeof_tsnode :: CSize
 foreign import ccall unsafe "src/bridge.c sizeof_tspoint" sizeof_tspoint :: CSize

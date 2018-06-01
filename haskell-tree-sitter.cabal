@@ -5,7 +5,7 @@ description:         Please see README.md
 homepage:            http://github.com/tree-sitter/haskell-tree-sitter#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld
+author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, Ayman Nadeem, Patrick Thomson
 maintainer:          rob.rix@github.com
 copyright:           2015 GitHub
 category:            Web
@@ -19,13 +19,14 @@ library
                      , directory >= 1.3.0.2 && < 1.4
                      , filepath >= 1.4.1.2 && < 1.5
                      , split >= 0.2.3.2 && < 0.3
-                     , template-haskell >= 2.12.0.0 && < 2.13.0.0
+                     , template-haskell >= 2.12.0.0 && < 2.14.0.0
   default-language:    Haskell2010
-  exposed-modules:     TreeSitter.Document
+  exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Language
                      , TreeSitter.Node
+                     , TreeSitter.Tree
   c-sources:           src/bridge.c
-                     , vendor/tree-sitter/src/runtime/document.c
+                     , vendor/tree-sitter/externals/utf8proc/utf8proc.c
                      , vendor/tree-sitter/src/runtime/get_changed_ranges.c
                      , vendor/tree-sitter/src/runtime/language.c
                      , vendor/tree-sitter/src/runtime/lexer.c
@@ -33,9 +34,10 @@ library
                      , vendor/tree-sitter/src/runtime/parser.c
                      , vendor/tree-sitter/src/runtime/stack.c
                      , vendor/tree-sitter/src/runtime/string_input.c
+                     , vendor/tree-sitter/src/runtime/subtree.c
                      , vendor/tree-sitter/src/runtime/tree.c
+                     , vendor/tree-sitter/src/runtime/tree_cursor.c
                      , vendor/tree-sitter/src/runtime/utf16.c
-                     , vendor/tree-sitter/externals/utf8proc/utf8proc.c
   cc-options:          -std=c99 -Os
   ghc-options:         -Wall -fno-warn-name-shadowing -O -j
 

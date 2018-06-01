@@ -4,15 +4,12 @@ module TreeSitter.Node
 ( Node(..)
 , TSPoint(..)
 , TSNode(..)
-, ts_document_root_node_p
 , ts_node_copy_child_nodes
 ) where
 
-import Prelude
 import Foreign
 import Foreign.C
 import GHC.Generics
-import TreeSitter.Document
 
 data Node = Node
   { nodeTSNode :: !TSNode
@@ -29,9 +26,8 @@ data Node = Node
 data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }
   deriving (Show, Eq, Generic)
 
-data TSNode = TSNode !(Ptr ()) !Word32 !Word32
+data TSNode = TSNode !Word32 !Word32 !Word32 !Word32 !(Ptr ()) !(Ptr ())
   deriving (Show, Eq, Generic)
-
 
 -- | 'Struct' is a strict 'Monad' with automatic alignment & advancing, & inferred type.
 newtype Struct a = Struct { runStruct :: forall b . Ptr b -> IO (a, Ptr a) }
@@ -55,8 +51,8 @@ pokeStruct a = Struct (\ p -> do
 
 
 instance Storable Node where
-  alignment _ = alignment (TSNode nullPtr 0 0 :: TSNode)
-  sizeOf _ = 56
+  alignment _ = alignment (TSNode 0 0 0 0 nullPtr nullPtr :: TSNode)
+  sizeOf _ = 72
   peek = evalStruct $ Node <$> peekStruct
                            <*> peekStruct
                            <*> peekStruct
@@ -86,15 +82,20 @@ instance Storable TSPoint where
 
 instance Storable TSNode where
   alignment _ = alignment (nullPtr :: Ptr ())
-  sizeOf _ = 16
+  sizeOf _ = 32
   peek = evalStruct $ TSNode <$> peekStruct
                              <*> peekStruct
                              <*> peekStruct
-  poke ptr (TSNode p o1 o2) = flip evalStruct ptr $ do
-    pokeStruct p
+                             <*> peekStruct
+                             <*> peekStruct
+                             <*> peekStruct
+  poke ptr (TSNode o1 o2 o3 o4 p1 p2) = flip evalStruct ptr $ do
     pokeStruct o1
     pokeStruct o2
-
+    pokeStruct o3
+    pokeStruct o4
+    pokeStruct p1
+    pokeStruct p2
 
 instance Functor Struct where
   fmap f a = Struct (\ p -> do
@@ -125,6 +126,4 @@ instance Monad Struct where
   {-# INLINE (>>=) #-}
 
 
-foreign import ccall unsafe "src/bridge.c ts_document_root_node_p" ts_document_root_node_p :: Ptr Document -> Ptr Node -> IO ()
-
-foreign import ccall unsafe "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr Document -> Ptr TSNode -> Ptr Node -> CSize -> IO ()
+foreign import ccall unsafe "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr TSNode -> Ptr Node -> CSize -> IO ()

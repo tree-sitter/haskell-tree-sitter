@@ -3,7 +3,7 @@ version:             0.1.0
 synopsis:            tree-sitter json language bindings
 description:         Please see README.md
 homepage:            https://github.com/tree-sitter/tree-sitter-json#readme
-author:              Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey
+author:              Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey, Ayman Nadeem, Patrick Thomson
 maintainer:          vera@github.com
 copyright:           2017 GitHub
 category:            Web
