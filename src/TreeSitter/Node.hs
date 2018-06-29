@@ -101,7 +101,7 @@ instance Functor Struct where
   fmap f a = Struct (\ p -> do
     (a', p') <- runStruct a p
     let fa = f a'
-    fa `seq` pure (fa, castPtr p'))
+    fa `seq` p' `seq` pure (fa, castPtr p'))
   {-# INLINE fmap #-}
 
 instance Applicative Struct where
@@ -110,9 +110,9 @@ instance Applicative Struct where
 
   f <*> a = Struct (\ p -> do
     (f', p')  <- runStruct f          p
-    (a', p'') <- runStruct a (castPtr p')
+    (a', p'') <- p' `seq` runStruct a (castPtr p')
     let fa = f' a'
-    fa `seq` pure (fa, castPtr p''))
+    fa `seq` p'' `seq` pure (fa, castPtr p''))
   {-# INLINE (<*>) #-}
 
 instance Monad Struct where
@@ -121,8 +121,8 @@ instance Monad Struct where
 
   a >>= f = Struct (\ p -> do
     (a', p')   <- runStruct a               p
-    (fa', p'') <- runStruct (f a') (castPtr p')
-    fa' `seq` pure (fa', p''))
+    (fa', p'') <- p' `seq` runStruct (f a') (castPtr p')
+    fa' `seq` p'' `seq` pure (fa', p''))
   {-# INLINE (>>=) #-}
 
 
