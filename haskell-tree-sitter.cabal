@@ -33,7 +33,6 @@ library
                      , vendor/tree-sitter/src/runtime/node.c
                      , vendor/tree-sitter/src/runtime/parser.c
                      , vendor/tree-sitter/src/runtime/stack.c
-                     , vendor/tree-sitter/src/runtime/string_input.c
                      , vendor/tree-sitter/src/runtime/subtree.c
                      , vendor/tree-sitter/src/runtime/tree.c
                      , vendor/tree-sitter/src/runtime/tree_cursor.c
