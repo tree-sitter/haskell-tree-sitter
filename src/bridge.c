@@ -35,23 +35,42 @@ static inline Node ts_node_elaborate(TSNode node) {
   };
 }
 
+// As ts_node_elaborate, but operating on pointer values,
+// so as to avoid making stack space for Node values
+// that are then copied into an array.
+static inline void ts_node_poke(TSNode node, Node *out) {
+  out->node = node;
+  out->symbol = ts_node_symbol(node);
+  out->type = ts_node_type(node);
+  out->startPoint = ts_node_start_point(node);
+  out->endPoint = ts_node_end_point(node);
+  out->startByte = ts_node_start_byte(node);
+  out->endByte = ts_node_end_byte(node);
+  out->childCount = ts_node_child_count(node);
+}
+
 void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
   assert(tree != NULL);
   assert(outNode != NULL);
   TSNode root = ts_tree_root_node(tree);
   assert(root.id != NULL);
-  *outNode = ts_node_elaborate(root);
+  ts_node_poke(root, outNode);
 }
 
-void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes, size_t count) {
+void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes) {
   assert(parentNode != NULL);
   assert(outChildNodes != NULL);
-  assert(count >= 0);
-  uint32_t maxCount = ts_node_child_count(*parentNode);
-  uint32_t max = maxCount <= count ? maxCount : count;
-  for (uint32_t i = 0; i < max; i++) {
-    outChildNodes[i] = ts_node_elaborate(ts_node_child(*parentNode, i));
+  TSTreeCursor curse = ts_tree_cursor_new(*parentNode);
+
+  if (ts_tree_cursor_goto_first_child(&curse)) {
+    do {
+      TSNode current = ts_tree_cursor_current_node(&curse);
+      ts_node_poke(current, outChildNodes);
+      outChildNodes++;
+    } while (ts_tree_cursor_goto_next_sibling(&curse));
   }
+
+  ts_tree_cursor_delete(&curse);
 }
 
 // For testing cancellation from Haskell.
