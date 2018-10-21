@@ -22,22 +22,6 @@ void ts_parser_log_to_stderr(TSParser *parser) {
   ts_parser_set_logger(parser, (TSLogger) {.log = log_to_stdout, .payload = NULL});
 }
 
-static inline Node ts_node_elaborate(TSNode node) {
-  return (Node) {
-    .node = node,
-    .symbol = ts_node_symbol(node),
-    .type = ts_node_type(node),
-    .startPoint = ts_node_start_point(node),
-    .endPoint = ts_node_end_point(node),
-    .startByte = ts_node_start_byte(node),
-    .endByte = ts_node_end_byte(node),
-    .childCount = ts_node_child_count(node)
-  };
-}
-
-// As ts_node_elaborate, but operating on pointer values,
-// so as to avoid making stack space for Node values
-// that are then copied into an array.
 static inline void ts_node_poke(TSNode node, Node *out) {
   out->node = node;
   out->symbol = ts_node_symbol(node);
