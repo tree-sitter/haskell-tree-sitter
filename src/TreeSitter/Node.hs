@@ -126,4 +126,4 @@ instance Monad Struct where
   {-# INLINE (>>=) #-}
 
 
-foreign import ccall interruptible "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr TSNode -> Ptr Node -> CSize -> IO ()
+foreign import ccall interruptible "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr TSNode -> Ptr Node -> IO ()
