@@ -33,7 +33,8 @@ data TSNode = TSNode !Word32 !Word32 !Word32 !Word32 !(Ptr ()) !(Ptr ())
 newtype Struct a = Struct { runStruct :: forall b . Ptr b -> IO (a, Ptr a) }
 
 evalStruct :: Struct a -> Ptr b -> IO a
-evalStruct = fmap (fmap fst) . runStruct
+evalStruct s p = fmap fst $! runStruct s p
+{-# INLINE evalStruct #-}
 
 peekStruct :: forall a . Storable a => Struct a
 peekStruct = Struct (\ p -> do
