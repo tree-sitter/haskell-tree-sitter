@@ -20,3 +20,9 @@ probably want to add a step that munges a given `TreeSitter.Node` into
 a more Haskell-amenable data structure.
 
 [tree-sitter]: https://github.com/tree-sitter/tree-sitter
+
+# Building
+
+1. Run `script/bootstrap` to pull in all submodules.
+2. Adjust `stack.yaml`'s `resolver` field to target whatever LTS you want.
+3. `stack build`.
