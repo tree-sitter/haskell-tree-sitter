@@ -19,6 +19,10 @@ The interface is somewhat low-level: if you use this package, you'll
 probably want to add a step that munges a given `TreeSitter.Node` into
 a more Haskell-amenable data structure.
 
+An example of using this library to parse, read, and print out AST nodes
+can be found [here](https://github.com/clojj/hs-tree-sitter-test/blob/master/app/Main.hs), 
+courtesy of @clojj.
+
 [tree-sitter]: https://github.com/tree-sitter/tree-sitter
 
 # Building
