@@ -25,7 +25,11 @@ library
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Tree
+                     , TreeSitter.Ptr
+  Include-dirs:        includes                     
+  Includes:            tree_sitter_ptr.h                     
   c-sources:           src/bridge.c
+                     , src/bridge_ptr.c
                      , vendor/tree-sitter/externals/utf8proc/utf8proc.c
                      , vendor/tree-sitter/src/runtime/get_changed_ranges.c
                      , vendor/tree-sitter/src/runtime/language.c
