@@ -45,6 +45,3 @@ main = do
     nodeType <- ts_ptr_current_type ptr
     theType <- peekCString nodeType
     print theType
-
--- demo :: ()
--- demo = unsafePerformIO main
