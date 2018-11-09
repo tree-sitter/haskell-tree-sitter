@@ -20,8 +20,10 @@ probably want to add a step that munges a given `TreeSitter.Node` into
 a more Haskell-amenable data structure.
 
 An example of using this library to parse, read, and print out AST nodes
-can be found [here](https://github.com/clojj/hs-tree-sitter-test/blob/master/app/Main.hs), 
-courtesy of @clojj.
+can be found [here](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/languages/haskell/examples/Demo.hs)
+
+An example of using this library's experimental API to parse, navigate, read, and print out AST nodes
+can be found [here](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/languages/haskell/examples/DemoPtr.hs)
 
 [tree-sitter]: https://github.com/tree-sitter/tree-sitter
 
