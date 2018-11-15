@@ -37,11 +37,4 @@ main = do
 
   withForeignPtr fgnPtr $ \ptr -> do
     ts_ptr_init tree ptr
-    -- when (status /= 0) $ fail "error in init"
-    ts_ptr_goto_first_child ptr
-    ts_ptr_goto_next_sibling ptr
-    ts_ptr_goto_next_sibling ptr
-
-    nodeType <- ts_ptr_current_type ptr
-    theType <- peekCString nodeType
-    print theType
+    readTreeSitter ptr

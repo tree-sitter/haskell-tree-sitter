@@ -17,29 +17,43 @@ void ts_ptr_init(TSTree *tree, tree_sitter_ptr *p)
     TSNode rootNode = ts_tree_root_node(tree);
     assert(rootNode.id != NULL);
     p->rootNode = rootNode;
+    p->cursor = ts_tree_cursor_new(p->rootNode);
 }
 
-void ts_ptr_goto_first_child(tree_sitter_ptr *p)
+bool ts_ptr_goto_first_child(tree_sitter_ptr *p)
 {
-    p->cursor = ts_tree_cursor_new(p->rootNode);
     if (ts_tree_cursor_goto_first_child(&p->cursor))
     {
-        debugPrintCurrentNode(p);
+        // debugPrintCurrentNode(p);
+        return true;
     }
+    return false;
 }
 
-void ts_ptr_goto_next_sibling(tree_sitter_ptr *p)
+bool ts_ptr_goto_next_sibling(tree_sitter_ptr *p)
 {
     if (ts_tree_cursor_goto_next_sibling(&p->cursor))
     {
-        debugPrintCurrentNode(p);
+        // debugPrintCurrentNode(p);
+        return true;
     }
+    return false;
+}
+
+bool ts_ptr_goto_parent(tree_sitter_ptr *p)
+{
+    if (ts_tree_cursor_goto_parent(&p->cursor))
+    {
+        // debugPrintCurrentNode(p);
+        return true;
+    }
+    return false;
 }
 
 const char *ts_ptr_current_type(tree_sitter_ptr *p)
 {
     TSNode n = ts_tree_cursor_current_node(&p->cursor);
-    debugPrintCurrentNode(p);
+    // debugPrintCurrentNode(p);
     return ts_node_type(n);
 }
 

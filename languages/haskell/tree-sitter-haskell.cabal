@@ -32,6 +32,16 @@ executable demo-ptr
     , tree-sitter-haskell
   default-language: Haskell2010
 
+executable demo-read-tree
+  main-is: DemoReadTreeWithCursor.hs
+  hs-source-dirs:
+      examples
+  build-depends:
+      base >=4.7 && <5
+    , haskell-tree-sitter
+    , tree-sitter-haskell
+  default-language: Haskell2010
+
 library
   exposed-modules:     TreeSitter.Haskell
   build-depends:       base >= 4.7 && < 5

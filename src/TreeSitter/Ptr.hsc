@@ -7,11 +7,19 @@
 #let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
 #endif
 
-module TreeSitter.Ptr (TreeSitter_Ptr, ts_ptr_init, funptr_ts_ptr_free, ts_ptr_goto_first_child, ts_ptr_goto_next_sibling, ts_ptr_current_type) where
+module TreeSitter.Ptr (
+    TreeSitter_Ptr
+    , ts_ptr_init
+    , funptr_ts_ptr_free
+    , ts_ptr_goto_first_child
+    , ts_ptr_goto_next_sibling
+    , ts_ptr_goto_parent
+    , ts_ptr_current_type
+    ) where
 
 import Foreign.Ptr
 import Foreign.Storable
-import Foreign.C.String
+import Foreign.C
 
 import TreeSitter.Tree
 
@@ -25,7 +33,8 @@ instance Storable TreeSitter_Ptr where
     poke _ _ = error "Cant poke"
 
 foreign import ccall ts_ptr_init :: Ptr Tree -> Ptr TreeSitter_Ptr -> IO ()
-foreign import ccall ts_ptr_goto_first_child :: Ptr TreeSitter_Ptr -> IO ()
-foreign import ccall ts_ptr_goto_next_sibling :: Ptr TreeSitter_Ptr -> IO ()
+foreign import ccall ts_ptr_goto_first_child :: Ptr TreeSitter_Ptr -> IO CBool
+foreign import ccall ts_ptr_goto_next_sibling :: Ptr TreeSitter_Ptr -> IO CBool
+foreign import ccall ts_ptr_goto_parent :: Ptr TreeSitter_Ptr -> IO CBool
 foreign import ccall ts_ptr_current_type :: Ptr TreeSitter_Ptr -> IO CString
 foreign import ccall "&ts_ptr_free" funptr_ts_ptr_free :: FunPtr (Ptr TreeSitter_Ptr -> IO ())

@@ -26,6 +26,7 @@ library
                      , TreeSitter.Node
                      , TreeSitter.Tree
                      , TreeSitter.Ptr
+                     , TreeSitter.Cursor
   Include-dirs:        includes                     
   Includes:            tree_sitter_ptr.h                     
   c-sources:           src/bridge.c
