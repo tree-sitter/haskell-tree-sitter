@@ -4,7 +4,6 @@ module Main where
 
 import           Control.Monad
 
-import           TreeSitter.Ptr
 import           TreeSitter.Cursor
 
 import           TreeSitter.Parser
@@ -32,9 +31,9 @@ main = do
 
   tree       <- ts_parser_parse_string parser nullPtr str len
 
-  fgnPtr     <- mallocForeignPtr :: IO (ForeignPtr TreeSitter_Ptr)
+  fgnPtr     <- mallocForeignPtr :: IO (ForeignPtr Cursor)
   addForeignPtrFinalizer funptr_ts_ptr_free fgnPtr
 
-  withForeignPtr fgnPtr $ \ptr -> do
-    ts_ptr_init tree ptr
-    readTreeSitter ptr
+  withForeignPtr fgnPtr $ \cur -> do
+    ts_ptr_init tree cur
+    readTreeSitter cur
