@@ -24,6 +24,7 @@ void ts_ptr_init(TSTree *tree, Cursor *p)
     assert(tree != NULL);
     TSNode rootNode = ts_tree_root_node(tree);
     assert(rootNode.id != NULL);
+    icur.node = rootNode;
     icur.cursor = ts_tree_cursor_new(rootNode);
     p->type = ts_node_type(rootNode);
 }

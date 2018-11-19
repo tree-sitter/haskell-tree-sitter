@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
 import           Control.Monad
@@ -19,6 +18,9 @@ import           Foreign.C.Types
 import           Foreign.Ptr                    ( Ptr(..)
                                                 , nullPtr
                                                 )
+import qualified Data.Tree as T
+import qualified Data.Tree.Zipper as Z
+
 
 main :: IO ()
 main = do
@@ -36,4 +38,6 @@ main = do
 
   withForeignPtr fgnPtr $ \cur -> do
     ts_ptr_init tree cur
-    readTreeSitter cur
+    -- readTreeSitter cur
+    tree <- traverseTreeSitter cur
+    putStrLn $ T.drawTree tree

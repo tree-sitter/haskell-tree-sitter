@@ -1,8 +1,9 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Cursor (
   Cursor(..)
   , readTreeSitter
+  , traverseTreeSitter
   , ts_ptr_init  
   , ts_ptr_goto_first_child
   , ts_ptr_goto_next_sibling
@@ -17,6 +18,11 @@ import GHC.Generics
 
 import TreeSitter.Tree
 import TreeSitter.Struct
+
+import qualified Data.Tree as T
+import qualified Data.Tree.Zipper as Z
+import Data.Maybe
+import Control.Monad.Identity
 
 
 data Cursor = Cursor
@@ -53,6 +59,80 @@ instance Storable TSPoint where
 
 
 data Navigation = Down | Next | Up
+
+class Monad m => TreeCursor m a where
+  nodeLabel      :: a -> m String
+  nodeFirstChild :: a -> m (Maybe a)
+  nodeNext       :: a -> m (Maybe a)
+  nodeParent     :: a -> m (Maybe a)
+
+instance TreeCursor IO (Ptr Cursor) where
+  nodeLabel      = label
+  nodeFirstChild = firstChild
+  nodeNext       = next
+  nodeParent     = parent
+
+instance TreeCursor Identity (Z.TreePos Z.Full String) where
+  nodeLabel      = return . Z.label
+  nodeFirstChild = return . Z.firstChild
+  nodeNext       = return . Z.next
+  nodeParent     = return . Z.parent
+
+
+traverseTreeSitter :: TreeCursor m a => a -> m (T.Tree String)
+traverseTreeSitter ptrCur = do
+  rootLabel <- nodeLabel ptrCur
+  let resultZipper = Z.fromTree $ T.Node rootLabel []
+   in go resultZipper Down ptrCur
+  where
+    go :: TreeCursor m a => (Z.TreePos Z.Full String) -> Navigation -> a -> m (T.Tree String)
+    go resultZipper nav ptrCur = case nav of
+      Down -> do
+        fc <- nodeFirstChild ptrCur
+        case fc of
+          Nothing   -> go resultZipper Next ptrCur
+          Just node -> do
+            l <- nodeLabel node
+            go (Z.insert (T.Node l []) (Z.children resultZipper)) Down node
+      Next -> do
+        n <- nodeNext ptrCur
+        case n of
+          Nothing   -> go resultZipper Up ptrCur
+          Just node -> do
+            l <- nodeLabel node
+            go (Z.insert (T.Node l []) (Z.nextSpace resultZipper)) Down node
+      Up -> do
+        p <- nodeParent ptrCur
+        case p of
+          Nothing   -> return $ Z.toTree resultZipper
+          Just node -> go (fromJust $ Z.parent resultZipper) Next node
+
+-- traverseTreeSitter :: Ptr Cursor -> IO (T.Tree String)
+-- traverseTreeSitter ptrCur =
+--   let resultZipper = Z.fromTree $ T.Node "ROOT" []
+--    in go resultZipper Down ptrCur
+--   where
+--     go :: Z.TreePos Z.Full String -> Navigation -> Ptr Cursor -> IO (T.Tree String)
+--     go resultZipper nav ptrCur = case nav of
+--       Down -> do
+--         fc <- firstChild ptrCur
+--         case fc of
+--           Nothing   -> go resultZipper Next ptrCur
+--           Just node -> do
+--             l <- label ptrCur
+--             go (Z.insert (T.Node l []) (Z.children resultZipper)) Down node
+--       Next -> do
+--         n <- next ptrCur
+--         case n of
+--           Nothing   -> go resultZipper Up ptrCur
+--           Just node -> do
+--             l <- label ptrCur
+--             go (Z.insert (T.Node l []) (Z.nextSpace resultZipper)) Down node
+--       Up -> do
+--         p <- parent ptrCur
+--         case p of
+--           Nothing   -> return $ Z.toTree resultZipper
+--           Just node -> go (fromJust $ Z.parent resultZipper) Next node
 
 
 readTreeSitter :: Ptr Cursor -> IO ()

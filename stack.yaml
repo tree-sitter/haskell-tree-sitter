@@ -16,4 +16,4 @@ packages:
   extra-dep: true
 - location: languages/haskell
   extra-dep: true
-resolver: lts-12.17
+resolver: lts-12.18
