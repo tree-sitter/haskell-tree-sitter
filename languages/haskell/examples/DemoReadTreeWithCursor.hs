@@ -38,6 +38,5 @@ main = do
 
   withForeignPtr fgnPtr $ \cur -> do
     ts_ptr_init tree cur
-    -- readTreeSitter cur
     tree <- traverseTreeSitter cur
     putStrLn $ T.drawTree tree

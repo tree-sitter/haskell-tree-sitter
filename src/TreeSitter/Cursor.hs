@@ -2,7 +2,6 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Cursor (
   Cursor(..)
-  , readTreeSitter
   , traverseTreeSitter
   , ts_ptr_init  
   , ts_ptr_goto_first_child
@@ -106,60 +105,6 @@ traverseTreeSitter ptrCur = do
         case p of
           Nothing   -> return $ Z.toTree resultZipper
           Just node -> go (fromJust $ Z.parent resultZipper) Next node
-
--- traverseTreeSitter :: Ptr Cursor -> IO (T.Tree String)
--- traverseTreeSitter ptrCur =
---   let resultZipper = Z.fromTree $ T.Node "ROOT" []
---    in go resultZipper Down ptrCur
---   where
---     go :: Z.TreePos Z.Full String -> Navigation -> Ptr Cursor -> IO (T.Tree String)
---     go resultZipper nav ptrCur = case nav of
---       Down -> do
---         fc <- firstChild ptrCur
---         case fc of
---           Nothing   -> go resultZipper Next ptrCur
---           Just node -> do
---             l <- label ptrCur
---             go (Z.insert (T.Node l []) (Z.children resultZipper)) Down node
---       Next -> do
---         n <- next ptrCur
---         case n of
---           Nothing   -> go resultZipper Up ptrCur
---           Just node -> do
---             l <- label ptrCur
---             go (Z.insert (T.Node l []) (Z.nextSpace resultZipper)) Down node
---       Up -> do
---         p <- parent ptrCur
---         case p of
---           Nothing   -> return $ Z.toTree resultZipper
---           Just node -> go (fromJust $ Z.parent resultZipper) Next node
-
-
-readTreeSitter :: Ptr Cursor -> IO ()
-readTreeSitter cur =
-  go Down cur
-  where
-    go :: Navigation -> Ptr Cursor -> IO ()
-    go nav z = case nav of
-      Down -> do
-        fc <- firstChild z
-        case fc of
-          Nothing   -> go Next z
-          Just node -> do
-            l <- label z
-            print l >> go Down node
-      Next -> do
-        n <- next z
-        case n of
-          Nothing   -> go Up z
-          Just node -> do
-            l <- label z
-            print l >> go Down node
-      Up -> do
-        p <- parent z
-        case p of
-          Nothing   -> print "END"
-          Just node -> go Next node
 
 
 label :: Ptr Cursor -> IO String
