@@ -13,6 +13,7 @@ module TreeSitter.Cursor (
 import Foreign
 import Foreign.Ptr
 import Foreign.C
+import Foreign.C.Types
 import GHC.Generics
 
 import TreeSitter.Tree
@@ -110,8 +111,13 @@ traverseTreeSitter ptrCur = do
 label :: Ptr Cursor -> IO String
 label cur = do
   node <- peek cur
-  typeAsString <- peekCString (nodeType node)
-  return typeAsString
+  nodeType <- peekCString (nodeType node)
+  let nodeStart = nodeStartPoint node
+      nodeEnd   = nodeEndPoint node
+      startPoint = show (pointRow nodeStart, pointColumn nodeStart)
+      endPoint = show (pointRow nodeEnd, pointColumn nodeEnd)
+    in      
+    return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
 
 firstChild :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
 firstChild cur = do
