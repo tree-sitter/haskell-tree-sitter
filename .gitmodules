@@ -25,3 +25,7 @@
 [submodule "languages/java/vendor/tree-sitter-java"]
 	path = languages/java/vendor/tree-sitter-java
 	url = https://github.com/tree-sitter/tree-sitter-java.git
+[submodule "haskell-zipper"]
+	path = haskell-zipper
+	url = https://github.com/yav/haskell-zipper.git
+	branch = master
