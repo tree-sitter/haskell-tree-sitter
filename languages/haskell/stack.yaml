@@ -3,6 +3,7 @@ extra-package-dbs: []
 packages:
 - '.'
 - '../../'
+- '../../loc/loc'
 extra-deps:
 - c-storable-deriving-0.1.3
 - rosezipper-0.2

@@ -3,6 +3,7 @@
 module TreeSitter.Cursor (
   Cursor(..)
   , traverseTreeSitter
+  , traverseTreeSitterPositions
   , ts_ptr_init  
   , ts_ptr_goto_first_child
   , ts_ptr_goto_next_sibling
@@ -78,6 +79,35 @@ instance TreeCursor Identity (Z.TreePos Z.Full String) where
   nodeNext       = return . Z.next
   nodeParent     = return . Z.parent
 
+type NodePosition = (TSPoint, TSPoint)
+
+traverseTreeSitterPositions :: Ptr Cursor -> IO [NodePosition]
+traverseTreeSitterPositions ptrCur = do
+  pos <- position ptrCur
+  go [pos] Down ptrCur
+  where
+    go :: [NodePosition] -> Navigation -> Ptr Cursor -> IO [NodePosition]
+    go poss nav ptrCur = case nav of
+      Down -> do
+        fc <- firstChild ptrCur
+        case fc of
+          Nothing   -> go poss Next ptrCur
+          Just node -> do
+            pos <- position node
+            go (pos:poss) Down node
+      Next -> do
+        n <- next ptrCur
+        case n of
+          Nothing   -> go poss Up ptrCur
+          Just node -> do
+            pos <- position node
+            go (pos:poss) Down node
+      Up -> do
+        p <- parent ptrCur
+        case p of
+          Nothing   -> return poss
+          Just node -> go poss Next node
+
 
 traverseTreeSitter :: TreeCursor m a => a -> m (T.Tree String)
 traverseTreeSitter ptrCur = do
@@ -118,6 +148,13 @@ label cur = do
       endPoint = show (pointRow nodeEnd, pointColumn nodeEnd)
     in      
     return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
+
+position :: Ptr Cursor -> IO NodePosition
+position cur = do
+  node <- peek cur
+  let nodeStart = nodeStartPoint node
+      nodeEnd   = nodeEndPoint node
+    in return (nodeStart, nodeEnd)
 
 firstChild :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
 firstChild cur = do

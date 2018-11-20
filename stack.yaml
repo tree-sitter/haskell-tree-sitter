@@ -3,6 +3,7 @@ extra-package-dbs: []
 packages:
 - '.'
 - 'haskell-zipper'
+- './loc/loc'
 - location: languages/go
   extra-dep: true
 - location: languages/php

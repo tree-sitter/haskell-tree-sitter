@@ -40,3 +40,6 @@ main = do
     ts_ptr_init tree cur
     tree <- traverseTreeSitter cur
     putStrLn $ T.drawTree tree
+
+    poss <- traverseTreeSitterPositions cur
+    putStrLn $ show $ reverse poss

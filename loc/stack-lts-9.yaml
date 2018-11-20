@@ -1,0 +1,8 @@
+resolver: lts-9.1
+
+packages:
+  - loc
+  - loc-test
+
+extra-deps:
+  - hedgehog-0.5

@@ -23,6 +23,7 @@ library
                      , containers
                      , rosezipper
                      , mtl
+                     , loc
   default-language:    Haskell2010
   exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Language
