@@ -1,20 +1,22 @@
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Cursor (
-  Cursor(..)
-  , traverseTreeSitter
-  , traverseTreeSitterPositions
-  , ts_ptr_init  
-  , ts_ptr_goto_first_child
-  , ts_ptr_goto_next_sibling
-  , ts_ptr_goto_parent
-  , funptr_ts_ptr_free
+  Cursor(..),
+  SpanInfo(..)
+  , tsTransformTree
+  , tsTransformList
+  , ts_cursor_init  
+  , ts_cursor_goto_first_child
+  , ts_cursor_goto_next_sibling
+  , ts_cursor_goto_parent
+  , funptr_ts_cursor_free
 ) where
 
 import Foreign
 import Foreign.Ptr
 import Foreign.C
 import Foreign.C.Types
+import Foreign.Marshal.Utils
 import GHC.Generics
 
 import TreeSitter.Tree
@@ -83,36 +85,47 @@ instance TreeCursor Identity (Z.TreePos Z.Full String) where
   nodeNext       = return . Z.next
   nodeParent     = return . Z.parent
 
-traverseTreeSitterPositions :: Ptr Cursor -> IO [Span]
-traverseTreeSitterPositions ptrCur = do
-  pos <- locspan ptrCur
-  go [pos] Down ptrCur
-  where
-    go :: [Span] -> Navigation -> Ptr Cursor -> IO [Span]
-    go poss nav ptrCur = case nav of
-      Down -> do
-        fc <- firstChild ptrCur
-        case fc of
-          Nothing   -> go poss Next ptrCur
-          Just node -> do
-            pos <- locspan node
-            go (pos:poss) Down node
-      Next -> do
-        n <- next ptrCur
-        case n of
-          Nothing   -> go poss Up ptrCur
-          Just node -> do
-            pos <- locspan node
-            go (pos:poss) Down node
-      Up -> do
-        p <- parent ptrCur
-        case p of
-          Nothing   -> return poss
-          Just node -> go poss Next node
+data SpanInfo = Parent Span | Token Span
+  deriving (Show, Eq, Ord)
+
+spanInfoFromCursor :: Ptr Cursor -> IO SpanInfo
+spanInfoFromCursor ptrCur = do
+  span <- locspan ptrCur
+  isParent <- hasChildren
+  return $ case isParent of
+    True -> Parent span
+    False -> Token span
+
+tsTransformList :: Ptr Cursor -> IO [SpanInfo]
+tsTransformList ptrCur = do
+  spanInfo <- spanInfoFromCursor ptrCur
+  go [spanInfo] Down ptrCur
+    where
+      go :: [SpanInfo] -> Navigation -> Ptr Cursor -> IO [SpanInfo]
+      go spanInfos nav ptrCur = case nav of
+        Down -> do
+          fc <- firstChild ptrCur
+          case fc of
+            Nothing      -> go spanInfos Next ptrCur
+            Just ptrCur' -> do
+              spanInfo <- spanInfoFromCursor ptrCur'
+              go (spanInfo:spanInfos) Down ptrCur'
+        Next -> do
+          n <- next ptrCur
+          case n of
+            Nothing      -> go spanInfos Up ptrCur
+            Just ptrCur' -> do
+              spanInfo <- spanInfoFromCursor ptrCur'
+              go (spanInfo:spanInfos) Down ptrCur'
+        Up -> do
+          p <- parent ptrCur
+          case p of
+            Nothing      -> return spanInfos
+            Just ptrCur' -> go spanInfos Next ptrCur'
 
 
-traverseTreeSitter :: TreeCursor m a => a -> m (T.Tree String)
-traverseTreeSitter ptrCur = do
+tsTransformTree :: TreeCursor m a => a -> m (T.Tree String)
+tsTransformTree ptrCur = do
   rootLabel <- nodeLabel ptrCur
   let resultZipper = Z.fromTree $ T.Node rootLabel []
    in go resultZipper Down ptrCur
@@ -140,17 +153,6 @@ traverseTreeSitter ptrCur = do
           Just node -> go (fromJust $ Z.parent resultZipper) Next node
 
 
-label :: Ptr Cursor -> IO String
-label cur = do
-  node <- peek cur
-  nodeType <- peekCString (nodeType node)
-  let nodeStart = nodeStartPoint node
-      nodeEnd   = nodeEndPoint node
-      startPoint = show (pointRow nodeStart, pointColumn nodeStart)
-      endPoint = show (pointRow nodeEnd, pointColumn nodeEnd)
-    in      
-    return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
-
 saveLine :: TSPoint -> Line
 saveLine tsp =
   let row = pointRow tsp
@@ -173,20 +175,37 @@ locspan cur = do
     in do
       return $ fromTo startLoc endLoc
 
+
+label :: Ptr Cursor -> IO String
+label cur = do
+  node <- peek cur
+  nodeType <- peekCString (nodeType node)
+  let nodeStart = nodeStartPoint node
+      nodeEnd   = nodeEndPoint node
+      startPoint = show (pointRow nodeStart, pointColumn nodeStart)
+      endPoint = show (pointRow nodeEnd, pointColumn nodeEnd)
+    in      
+    return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
+
 firstChild :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
 firstChild cur = do
-  exists <- ts_ptr_goto_first_child cur
+  exists <- ts_cursor_goto_first_child cur
   return $ boolToMaybe cur exists
 
 next :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
 next cur = do
-  exists <- ts_ptr_goto_next_sibling cur
+  exists <- ts_cursor_goto_next_sibling cur
   return $ boolToMaybe cur exists
 
 parent :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
 parent cur = do
-  exists <- ts_ptr_goto_parent cur
+  exists <- ts_cursor_goto_parent cur
   return $ boolToMaybe cur exists
+
+hasChildren :: IO Bool
+hasChildren = do
+  cbool <- ts_cursor_has_children
+  return $ toBool cbool
 
 boolToMaybe :: Ptr Cursor -> CBool  -> Maybe (Ptr Cursor)
 boolToMaybe cur exists =
@@ -196,8 +215,9 @@ boolToMaybe cur exists =
 
 
 
-foreign import ccall ts_ptr_init :: Ptr Tree -> Ptr Cursor -> IO ()
-foreign import ccall ts_ptr_goto_first_child :: Ptr Cursor -> IO CBool
-foreign import ccall ts_ptr_goto_next_sibling :: Ptr Cursor -> IO CBool
-foreign import ccall ts_ptr_goto_parent :: Ptr Cursor -> IO CBool
-foreign import ccall "&ts_ptr_free" funptr_ts_ptr_free :: FunPtr (Ptr Cursor -> IO ())
+foreign import ccall ts_cursor_init :: Ptr Tree -> Ptr Cursor -> IO ()
+foreign import ccall ts_cursor_goto_first_child :: Ptr Cursor -> IO CBool
+foreign import ccall ts_cursor_goto_next_sibling :: Ptr Cursor -> IO CBool
+foreign import ccall ts_cursor_goto_parent :: Ptr Cursor -> IO CBool
+foreign import ccall ts_cursor_has_children :: IO CBool
+foreign import ccall "&ts_cursor_free" funptr_ts_cursor_free :: FunPtr (Ptr Cursor -> IO ())

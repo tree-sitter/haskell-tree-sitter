@@ -2,8 +2,9 @@ import Foreign
 import Foreign.C.Types
 import Foreign.Storable
 import Test.Hspec
-import TreeSitter.Node
+
 import TreeSitter.Cursor
+import TreeSitter.Node
 
 import qualified Data.Tree as T
 import qualified Data.Tree.Zipper as Z
@@ -20,20 +21,20 @@ prop_traverses_all :: T.Tree String -> QC.Property
 prop_traverses_all tree =
   QC.label ("tree size " ++ show (length $ T.flatten tree))
     $  tree
-    == runIdentity (traverseTreeSitter (Z.fromTree tree))
+    == runIdentity (tsTransformTree (Z.fromTree tree))
 
 
 main :: IO ()
 main = hspec $ do
-  describe "traverseTreeSitter" $ do
-    it "traverses entire TSTree" $
-      let tree = T.Node "1" [T.Node "2a" [], T.Node "2b" []]
-          z    = Z.fromTree $ tree
-      in 
-        (runIdentity $ traverseTreeSitter z) `shouldBe` tree
+  -- describe "tsTransformTree" $ do
+  --   it "traverses entire TSTree" $
+  --     let tree = T.Node "1" [T.Node "2a" [], T.Node "2b" []]
+  --         z    = Z.fromTree $ tree
+  --     in 
+  --       (runIdentity $ tsTransformTree z) `shouldBe` tree
 
-  describe "quickcheck traverseTreeSitter" $ do
-    it "quickchecks traversing entire TSTree" $
+  describe "quickcheck tsTransformTree" $ do
+    it "quickchecks traversing entire TSTree, building a Tree" $
       -- QC.quickCheck $ QC.mapSize ((*) 100) $ QC.withMaxSuccess 500 prop_traverses_all
       QC.property prop_traverses_all
 

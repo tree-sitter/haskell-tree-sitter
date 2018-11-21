@@ -28,20 +28,20 @@ main = do
   ts_parser_set_language parser tree_sitter_haskell
 
   let source =
-        "module Test (main) where\nimport Lib\nf1 = undefined\nf2 = undefined"
+        "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
   (str, len) <- newCStringLen source
 
   tree       <- ts_parser_parse_string parser nullPtr str len
 
   fgnPtr     <- mallocForeignPtr :: IO (ForeignPtr Cursor)
-  addForeignPtrFinalizer funptr_ts_ptr_free fgnPtr
+  addForeignPtrFinalizer funptr_ts_cursor_free fgnPtr
 
   withForeignPtr fgnPtr $ \cur -> do
-    ts_ptr_init tree cur
+    ts_cursor_init tree cur
 
-    tree <- traverseTreeSitter cur
+    tree <- tsTransformTree cur
     putStrLn $ T.drawTree tree
 
-    poss <- traverseTreeSitterPositions cur
-    putStrLn $ show $ reverse poss
+    spanInfos <- tsTransformList cur
+    putStrLn $ show $ reverse spanInfos
     

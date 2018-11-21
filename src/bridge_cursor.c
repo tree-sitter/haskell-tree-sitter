@@ -27,7 +27,7 @@ void updateNode(Cursor *p, TSNode n)
     p->endPoint = ts_node_end_point(n);
 }
 
-void ts_ptr_init(TSTree *tree, Cursor *p)
+void ts_cursor_init(TSTree *tree, Cursor *p)
 {
     assert(tree != NULL);
     TSNode rootNode = ts_tree_root_node(tree);
@@ -37,7 +37,7 @@ void ts_ptr_init(TSTree *tree, Cursor *p)
     updateNode(p, rootNode);
 }
 
-bool ts_ptr_goto_first_child(Cursor *p)
+bool ts_cursor_goto_first_child(Cursor *p)
 {
     if (ts_tree_cursor_goto_first_child(&icur.cursor))
     {
@@ -47,7 +47,7 @@ bool ts_ptr_goto_first_child(Cursor *p)
     return false;
 }
 
-bool ts_ptr_goto_next_sibling(Cursor *p)
+bool ts_cursor_goto_next_sibling(Cursor *p)
 {
     if (ts_tree_cursor_goto_next_sibling(&icur.cursor))
     {
@@ -57,7 +57,7 @@ bool ts_ptr_goto_next_sibling(Cursor *p)
     return false;
 }
 
-bool ts_ptr_goto_parent(Cursor *p)
+bool ts_cursor_goto_parent(Cursor *p)
 {
     if (ts_tree_cursor_goto_parent(&icur.cursor))
     {
@@ -67,7 +67,12 @@ bool ts_ptr_goto_parent(Cursor *p)
     return false;
 }
 
-void ts_ptr_free(Cursor *p)
+bool ts_cursor_has_children()
+{
+    return ts_node_child_count(icur.node) > 0;
+}
+
+void ts_cursor_free(Cursor *p)
 {
     ts_tree_cursor_delete(&icur.cursor);
 }
