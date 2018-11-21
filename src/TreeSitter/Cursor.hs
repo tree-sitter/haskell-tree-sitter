@@ -25,6 +25,10 @@ import qualified Data.Tree.Zipper as Z
 import Data.Maybe
 import Control.Monad.Identity
 
+import Data.Loc.Span hiding ((+))
+import Data.Loc.Loc
+import Data.Loc.Pos
+
 
 data Cursor = Cursor
   { nodeType :: !CString
@@ -79,28 +83,26 @@ instance TreeCursor Identity (Z.TreePos Z.Full String) where
   nodeNext       = return . Z.next
   nodeParent     = return . Z.parent
 
-type NodePosition = (TSPoint, TSPoint)
-
-traverseTreeSitterPositions :: Ptr Cursor -> IO [NodePosition]
+traverseTreeSitterPositions :: Ptr Cursor -> IO [Span]
 traverseTreeSitterPositions ptrCur = do
-  pos <- position ptrCur
+  pos <- locspan ptrCur
   go [pos] Down ptrCur
   where
-    go :: [NodePosition] -> Navigation -> Ptr Cursor -> IO [NodePosition]
+    go :: [Span] -> Navigation -> Ptr Cursor -> IO [Span]
     go poss nav ptrCur = case nav of
       Down -> do
         fc <- firstChild ptrCur
         case fc of
           Nothing   -> go poss Next ptrCur
           Just node -> do
-            pos <- position node
+            pos <- locspan node
             go (pos:poss) Down node
       Next -> do
         n <- next ptrCur
         case n of
           Nothing   -> go poss Up ptrCur
           Just node -> do
-            pos <- position node
+            pos <- locspan node
             go (pos:poss) Down node
       Up -> do
         p <- parent ptrCur
@@ -149,12 +151,27 @@ label cur = do
     in      
     return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
 
-position :: Ptr Cursor -> IO NodePosition
-position cur = do
+saveLine :: TSPoint -> Line
+saveLine tsp =
+  let row = pointRow tsp
+      saveRow = row + 1
+    in fromInteger $ toInteger saveRow
+
+saveColumn :: TSPoint -> Column
+saveColumn tsp =
+  let col = pointColumn tsp
+      saveCol = col + 1
+    in fromInteger $ toInteger saveCol
+
+locspan :: Ptr Cursor -> IO Span
+locspan cur = do
   node <- peek cur
   let nodeStart = nodeStartPoint node
+      startLoc = loc (saveLine nodeStart) (saveColumn nodeStart)
       nodeEnd   = nodeEndPoint node
-    in return (nodeStart, nodeEnd)
+      endLoc = loc (saveLine nodeEnd) (saveColumn nodeEnd)
+    in do
+      return $ fromTo startLoc endLoc
 
 firstChild :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
 firstChild cur = do

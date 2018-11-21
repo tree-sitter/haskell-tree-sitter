@@ -16,8 +16,8 @@ import           Test.QuickCheck.Arbitrary
 import           Test.QuickCheck.Instances.Containers
 
 
-_prop_traverses_all :: T.Tree String -> QC.Property
-_prop_traverses_all tree =
+prop_traverses_all :: T.Tree String -> QC.Property
+prop_traverses_all tree =
   QC.label ("tree size " ++ show (length $ T.flatten tree))
     $  tree
     == runIdentity (traverseTreeSitter (Z.fromTree tree))
@@ -34,8 +34,8 @@ main = hspec $ do
 
   describe "quickcheck traverseTreeSitter" $ do
     it "quickchecks traversing entire TSTree" $
-      -- QC.quickCheck $ QC.mapSize ((*) 100) $ QC.withMaxSuccess 500 _prop_traverses_all
-      QC.property _prop_traverses_all
+      -- QC.quickCheck $ QC.mapSize ((*) 100) $ QC.withMaxSuccess 500 prop_traverses_all
+      QC.property prop_traverses_all
 
   describe "TSNode" $ do
     it "has the same size as its C counterpart" $
