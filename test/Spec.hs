@@ -21,17 +21,11 @@ prop_traverses_all :: T.Tree String -> QC.Property
 prop_traverses_all tree =
   QC.label ("tree size " ++ show (length $ T.flatten tree))
     $  tree
-    == runIdentity (tsTransformTree (Z.fromTree tree))
+    == Z.toTree (runIdentity (tsTransformTree helpersID (Z.fromTree tree)))
 
 
 main :: IO ()
 main = hspec $ do
-  -- describe "tsTransformTree" $ do
-  --   it "traverses entire TSTree" $
-  --     let tree = T.Node "1" [T.Node "2a" [], T.Node "2b" []]
-  --         z    = Z.fromTree $ tree
-  --     in 
-  --       (runIdentity $ tsTransformTree z) `shouldBe` tree
 
   describe "quickcheck tsTransformTree" $ do
     it "quickchecks traversing entire TSTree, building a Tree" $

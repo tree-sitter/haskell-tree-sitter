@@ -1,9 +1,12 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses #-}
+-- {-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, GADTs, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Cursor (
   Cursor(..),
   SpanInfo(..)
   , tsTransformTree
+  , helpersIO
+  , helpersID
   , tsTransformList
   , ts_cursor_init  
   , ts_cursor_goto_first_child
@@ -67,23 +70,62 @@ instance Storable TSPoint where
 
 data Navigation = Down | Next | Up
 
-class Monad m => TreeCursor m a where
-  nodeLabel      :: a -> m String
-  nodeFirstChild :: a -> m (Maybe a)
-  nodeNext       :: a -> m (Maybe a)
-  nodeParent     :: a -> m (Maybe a)
+data Helpers a m where
+  HelpersM :: Monad m => 
+                        { nodeLabel      :: a -> m String
+                        , nodeFirstChild :: (a -> m (Maybe a))
+                        , nodeNext       :: (a -> m (Maybe a))
+                        , nodeParent     :: (a -> m (Maybe a))
+                        }
+                        -> Helpers a m
 
-instance TreeCursor IO (Ptr Cursor) where
-  nodeLabel      = label
-  nodeFirstChild = firstChild
-  nodeNext       = next
-  nodeParent     = parent
+helpersIO :: Helpers (Ptr Cursor) IO
+helpersIO = HelpersM
+            { nodeLabel      = label
+            , nodeFirstChild = firstChild
+            , nodeNext       = next
+            , nodeParent     = parent
+            }
 
-instance TreeCursor Identity (Z.TreePos Z.Full String) where
-  nodeLabel      = return . Z.label
-  nodeFirstChild = return . Z.firstChild
-  nodeNext       = return . Z.next
-  nodeParent     = return . Z.parent
+helpersID :: Helpers (Z.TreePos Z.Full String) Identity
+helpersID = HelpersM
+            { nodeLabel      = return . Z.label
+            , nodeFirstChild = return . Z.firstChild
+            , nodeNext       = return . Z.next
+            , nodeParent     = return . Z.parent
+            }
+
+tsTransformTree :: Monad m => Helpers a m -> a -> m (Z.TreePos Z.Full String)
+tsTransformTree helpers ptrCur = do
+  rootLabel <- (nodeLabel helpers) ptrCur
+  let resultZipper = Z.fromTree $ T.Node rootLabel []
+   in go helpers resultZipper Down ptrCur
+  where
+    go :: Monad m => Helpers a m -> (Z.TreePos Z.Full String) -> Navigation -> a -> m (Z.TreePos Z.Full String)
+    go helpers resultZipper nav ptrCur = case nav of
+      Down -> do
+        fc <- (nodeFirstChild helpers) ptrCur
+        case fc of
+          Nothing   -> go helpers resultZipper Next ptrCur
+          Just node -> do
+            l <- (nodeLabel helpers) node
+            go helpers (Z.insert (T.Node l []) (Z.children resultZipper)) Down node
+      Next -> do
+        n <- (nodeNext helpers) ptrCur
+        case n of
+          Nothing   -> go helpers resultZipper Up ptrCur
+          Just node -> do
+            l <- (nodeLabel helpers) node
+            go helpers (Z.insert (T.Node l []) (Z.nextSpace resultZipper)) Down node
+      Up -> do
+        p <- (nodeParent helpers) ptrCur
+        case p of
+          Nothing   -> return resultZipper
+          Just node -> go helpers (fromJust $ Z.parent resultZipper) Next node
+
+
+
+-- [SpanInfo]
 
 data SpanInfo = Parent Span | Token Span
   deriving (Show, Eq, Ord)
@@ -122,35 +164,6 @@ tsTransformList ptrCur = do
           case p of
             Nothing      -> return spanInfos
             Just ptrCur' -> go spanInfos Next ptrCur'
-
-
-tsTransformTree :: TreeCursor m a => a -> m (T.Tree String)
-tsTransformTree ptrCur = do
-  rootLabel <- nodeLabel ptrCur
-  let resultZipper = Z.fromTree $ T.Node rootLabel []
-   in go resultZipper Down ptrCur
-  where
-    go :: TreeCursor m a => (Z.TreePos Z.Full String) -> Navigation -> a -> m (T.Tree String)
-    go resultZipper nav ptrCur = case nav of
-      Down -> do
-        fc <- nodeFirstChild ptrCur
-        case fc of
-          Nothing   -> go resultZipper Next ptrCur
-          Just node -> do
-            l <- nodeLabel node
-            go (Z.insert (T.Node l []) (Z.children resultZipper)) Down node
-      Next -> do
-        n <- nodeNext ptrCur
-        case n of
-          Nothing   -> go resultZipper Up ptrCur
-          Just node -> do
-            l <- nodeLabel node
-            go (Z.insert (T.Node l []) (Z.nextSpace resultZipper)) Down node
-      Up -> do
-        p <- nodeParent ptrCur
-        case p of
-          Nothing   -> return $ Z.toTree resultZipper
-          Just node -> go (fromJust $ Z.parent resultZipper) Next node
 
 
 saveLine :: TSPoint -> Line
