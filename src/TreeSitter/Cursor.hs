@@ -35,6 +35,7 @@ import Data.Loc.Pos
 
 data Cursor = Cursor
   { nodeType :: !CString
+  , nodeStr :: !CString
   , nodeSymbol :: !Word16
   , nodeStartPoint :: !TSPoint
   , nodeEndPoint :: !TSPoint
@@ -50,6 +51,7 @@ instance Storable Cursor where
   alignment _ = alignment (nullPtr :: Ptr ())
   sizeOf _ = 36
   peek = evalStruct $ Cursor <$> peekStruct
+                             <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
@@ -76,6 +78,43 @@ data Helpers a m c = Helpers
                       , nodeNext       :: Monad m => (a -> m (Maybe a))
                       , nodeParent     :: Monad m => (a -> m (Maybe a))
                       }
+
+-- SpanInfo + helpers
+
+data SpanInfo = Parent Span | Token Span
+  deriving (Show, Eq, Ord)
+
+locspan :: Ptr Cursor -> IO Span
+locspan cur = do
+  node <- peek cur
+  let nodeStart = nodeStartPoint node
+      startLoc = loc (saveLine nodeStart) (saveColumn nodeStart)
+      nodeEnd   = nodeEndPoint node
+      endLoc = loc (saveLine nodeEnd) (saveColumn nodeEnd)
+    in do
+      return $ fromTo startLoc endLoc
+
+saveLine :: TSPoint -> Line
+saveLine tsp =
+  let row = pointRow tsp
+      saveRow = row + 1
+    in fromInteger $ toInteger saveRow
+
+saveColumn :: TSPoint -> Column
+saveColumn tsp =
+  let col = pointColumn tsp
+      saveCol = col + 1
+    in fromInteger $ toInteger saveCol
+
+spanInfoFromCursor :: Ptr Cursor -> IO SpanInfo
+spanInfoFromCursor ptrCur = do
+  span <- locspan ptrCur
+  isParent <- hasChildren
+  return $ case isParent of
+    True -> Parent span
+    False -> Token span
+
+-- transformations
 
 tsTransformSpanInfos :: (Ptr Cursor) -> IO [SpanInfo]
 tsTransformSpanInfos = tsTransform helpersList
@@ -194,41 +233,6 @@ tsTransform helpers ptrCur = do
             r <- (packNode helpers) ptrCur' Up res
             go helpers r Next ptrCur'
 
-
-
-data SpanInfo = Parent Span | Token Span
-  deriving (Show, Eq, Ord)
-
-spanInfoFromCursor :: Ptr Cursor -> IO SpanInfo
-spanInfoFromCursor ptrCur = do
-  span <- locspan ptrCur
-  isParent <- hasChildren
-  return $ case isParent of
-    True -> Parent span
-    False -> Token span
-
-
-saveLine :: TSPoint -> Line
-saveLine tsp =
-  let row = pointRow tsp
-      saveRow = row + 1
-    in fromInteger $ toInteger saveRow
-
-saveColumn :: TSPoint -> Column
-saveColumn tsp =
-  let col = pointColumn tsp
-      saveCol = col + 1
-    in fromInteger $ toInteger saveCol
-
-locspan :: Ptr Cursor -> IO Span
-locspan cur = do
-  node <- peek cur
-  let nodeStart = nodeStartPoint node
-      startLoc = loc (saveLine nodeStart) (saveColumn nodeStart)
-      nodeEnd   = nodeEndPoint node
-      endLoc = loc (saveLine nodeEnd) (saveColumn nodeEnd)
-    in do
-      return $ fromTo startLoc endLoc
 
 
 label :: Ptr Cursor -> IO String
