@@ -17,19 +17,20 @@ import           Test.QuickCheck.Arbitrary
 import           Test.QuickCheck.Instances.Containers
 
 
+-- QC.quickCheck $ QC.mapSize ((*) 100) $ QC.withMaxSuccess 500 prop_traverses_all
+
 prop_traverses_all :: T.Tree String -> QC.Property
 prop_traverses_all tree =
   QC.label ("tree size " ++ show (length $ T.flatten tree))
     $  tree
-    == Z.toTree (runIdentity (tsTransformTree helpersID (Z.fromTree tree)))
+    == Z.toTree (runIdentity (tsTransformIdentityZipper (Z.fromTree tree)))
 
 
 main :: IO ()
 main = hspec $ do
 
-  describe "quickcheck tsTransformTree" $ do
+  describe "quickcheck tsTransform" $ do
     it "quickchecks traversing entire TSTree, building a Tree" $
-      -- QC.quickCheck $ QC.mapSize ((*) 100) $ QC.withMaxSuccess 500 prop_traverses_all
       QC.property prop_traverses_all
 
   describe "TSNode" $ do

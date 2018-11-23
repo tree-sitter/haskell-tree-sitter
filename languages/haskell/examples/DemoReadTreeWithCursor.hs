@@ -39,9 +39,9 @@ main = do
   withForeignPtr fgnPtr $ \cur -> do
     ts_cursor_init tree cur
 
-    z <- tsTransformTree helpersIO cur
+    z <- tsTransformZipper cur
     putStrLn $ T.drawTree $ Z.toTree z
 
-    spanInfos <- tsTransformTree helpersList cur
+    spanInfos <- tsTransformSpanInfos cur
     putStrLn $ show $ reverse spanInfos
     

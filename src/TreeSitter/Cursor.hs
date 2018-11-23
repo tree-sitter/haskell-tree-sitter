@@ -1,13 +1,11 @@
--- {-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables, FlexibleInstances, MultiParamTypeClasses #-}
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, GADTs, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Cursor (
   Cursor(..),
   SpanInfo(..)
-  , tsTransformTree
-  , helpersIO
-  , helpersID
-  , helpersList
+  , tsTransformSpanInfos
+  , tsTransformZipper
+  , tsTransformIdentityZipper
   , ts_cursor_init  
   , ts_cursor_goto_first_child
   , ts_cursor_goto_next_sibling
@@ -71,16 +69,16 @@ instance Storable TSPoint where
 data Navigation = Down | Next | Up
 
 
-data Helpers a m c where
-  HelpersM :: Monad m => 
-                        { initResult     :: a -> m c
-                        , packNode       :: a -> Navigation -> c -> m c
-                        , nodeFirstChild :: (a -> m (Maybe a))
-                        , nodeNext       :: (a -> m (Maybe a))
-                        , nodeParent     :: (a -> m (Maybe a))
-                        }
-                        -> Helpers a m c
+data Helpers a m c = Helpers 
+                      { initResult     :: Monad m => a -> m c
+                      , packNode       :: Monad m => a -> Navigation -> c -> m c
+                      , nodeFirstChild :: Monad m => (a -> m (Maybe a))
+                      , nodeNext       :: Monad m => (a -> m (Maybe a))
+                      , nodeParent     :: Monad m => (a -> m (Maybe a))
+                      }
 
+tsTransformSpanInfos :: (Ptr Cursor) -> IO [SpanInfo]
+tsTransformSpanInfos = tsTransform helpersList
 
 packNodeList :: (Ptr Cursor) -> Navigation -> [SpanInfo] -> IO [SpanInfo]
 packNodeList ptrCur _ spanInfos = do
@@ -93,7 +91,7 @@ initList ptrCur = do
   return [spanInfo]
 
 helpersList :: Helpers (Ptr Cursor) IO [SpanInfo]
-helpersList = HelpersM
+helpersList = Helpers
             { initResult     = initList
             , packNode       = packNodeList
             , nodeFirstChild = firstChild
@@ -102,8 +100,11 @@ helpersList = HelpersM
             }
 
 
-packNodeIO :: (Ptr Cursor) -> Navigation -> (Z.TreePos Z.Full String) -> IO (Z.TreePos Z.Full String)
-packNodeIO ptrCur nav resultZipper = 
+tsTransformZipper :: (Ptr Cursor) -> IO (Z.TreePos Z.Full String)
+tsTransformZipper = tsTransform helpersZipper
+
+packNodeZipper :: (Ptr Cursor) -> Navigation -> (Z.TreePos Z.Full String) -> IO (Z.TreePos Z.Full String)
+packNodeZipper ptrCur nav resultZipper = 
   case nav of
       Down -> do
         l <- label ptrCur
@@ -119,23 +120,26 @@ packNodeIO ptrCur nav resultZipper =
   where
     insertNode lbl pos = (Z.insert (T.Node lbl []) pos)
 
-initIO :: (Ptr Cursor) -> IO (Z.TreePos Z.Full String)
-initIO ptrCur = do
+initZipper :: (Ptr Cursor) -> IO (Z.TreePos Z.Full String)
+initZipper ptrCur = do
   rootLabel <- label ptrCur
   return $ Z.fromTree (T.Node rootLabel [])
 
-helpersIO :: Helpers (Ptr Cursor) IO (Z.TreePos Z.Full String)
-helpersIO = HelpersM
-            { initResult     = initIO
-            , packNode       = packNodeIO
+helpersZipper :: Helpers (Ptr Cursor) IO (Z.TreePos Z.Full String)
+helpersZipper = Helpers
+            { initResult     = initZipper
+            , packNode       = packNodeZipper
             , nodeFirstChild = firstChild
             , nodeNext       = next
             , nodeParent     = parent
             }
 
 
-packNodeID :: (Z.TreePos Z.Full String) -> Navigation -> (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
-packNodeID ptrCur nav resultZipper = 
+tsTransformIdentityZipper :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
+tsTransformIdentityZipper = tsTransform helpersIdentityZipper
+
+packNodeIdentityZipper :: (Z.TreePos Z.Full String) -> Navigation -> (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
+packNodeIdentityZipper ptrCur nav resultZipper = 
   case nav of
       Down -> return $ insertNode (Z.label ptrCur) (Z.children resultZipper)
 
@@ -146,21 +150,21 @@ packNodeID ptrCur nav resultZipper =
   where
     insertNode lbl pos = (Z.insert (T.Node lbl []) pos)
 
-initID :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
-initID ptrCur = return $ Z.fromTree (T.Node (Z.label ptrCur) [])
+initIdentityZipper :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
+initIdentityZipper ptrCur = return $ Z.fromTree (T.Node (Z.label ptrCur) [])
 
-helpersID :: Helpers (Z.TreePos Z.Full String) Identity (Z.TreePos Z.Full String)
-helpersID = HelpersM
-            { initResult     = initID
-            , packNode       = packNodeID
+helpersIdentityZipper :: Helpers (Z.TreePos Z.Full String) Identity (Z.TreePos Z.Full String)
+helpersIdentityZipper = Helpers
+            { initResult     = initIdentityZipper
+            , packNode       = packNodeIdentityZipper
             , nodeFirstChild = return . Z.firstChild
             , nodeNext       = return . Z.next
             , nodeParent     = return . Z.parent
             }
 
 
-tsTransformTree :: Monad m => Helpers a m c -> a -> m c
-tsTransformTree helpers ptrCur = do
+tsTransform :: Monad m => Helpers a m c -> a -> m c
+tsTransform helpers ptrCur = do
   res <- (initResult helpers) ptrCur
   go helpers res Down ptrCur
   where
