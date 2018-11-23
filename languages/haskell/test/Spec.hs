@@ -29,8 +29,8 @@ filterParents (Token _)  = True
 main :: IO ()
 main = hspec $ do
 
-  describe "tsTransformList" $ do
-    it "traverses entire TSTree, building a List" $ do
+  describe "tsTransformTree produces depth-first [SpanInfo]" $ do
+    it "traverses entire TSTree, building a [SpanInfo]" $ do
       parser <- ts_parser_new
       ts_parser_set_language parser tree_sitter_haskell
 
@@ -46,7 +46,7 @@ main = hspec $ do
       spaninfos <- withForeignPtr fgnPtr $ \cur -> do
         ts_cursor_init tree cur
 
-        spanInfos <- tsTransformList cur
+        spanInfos <- tsTransformTree helpersList cur
         return $ reverse spanInfos
 
       let filteredSpaninfos = filter filterParents spaninfos

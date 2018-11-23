@@ -42,6 +42,6 @@ main = do
     z <- tsTransformTree helpersIO cur
     putStrLn $ T.drawTree $ Z.toTree z
 
-    spanInfos <- tsTransformList cur
+    spanInfos <- tsTransformTree helpersList cur
     putStrLn $ show $ reverse spanInfos
     
