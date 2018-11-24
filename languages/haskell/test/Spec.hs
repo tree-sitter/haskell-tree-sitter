@@ -8,7 +8,7 @@ import           TreeSitter.Tree
 import           TreeSitter.Language
 import           TreeSitter.Haskell
 import           TreeSitter.Node
-import           TreeSitter.Cursor
+import           TreeSitter.CursorApi.Cursor
 
 import           Foreign.ForeignPtr
 import           Foreign.C

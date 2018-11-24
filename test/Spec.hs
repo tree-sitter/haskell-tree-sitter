@@ -3,7 +3,7 @@ import Foreign.C.Types
 import Foreign.Storable
 import Test.Hspec
 
-import TreeSitter.Cursor
+import TreeSitter.CursorApi.Cursor
 import TreeSitter.Node
 
 import qualified Data.Tree as T

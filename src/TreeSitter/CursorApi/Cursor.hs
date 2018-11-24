@@ -1,6 +1,7 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, RecordWildCards #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
-module TreeSitter.Cursor (
+
+module TreeSitter.CursorApi.Cursor (
   Cursor(..),
   SpanInfo(..)
   , tsTransformSpanInfos
@@ -22,6 +23,7 @@ import GHC.Generics
 
 import TreeSitter.Tree
 import TreeSitter.Struct
+import TreeSitter.CursorApi.Types
 
 import qualified Data.Tree as T
 import qualified Data.Tree.Zipper as Z
@@ -67,11 +69,9 @@ instance Storable TSPoint where
   poke _ _ = error "Cant poke"
 
 
-
 data Navigation = Down | Next | Up
 
-
-data Helpers a m c = Helpers 
+data CursorOperations a m c = CursorOperations 
                       { initResult     :: Monad m => a -> m c
                       , packNode       :: Monad m => a -> Navigation -> c -> m c
                       , nodeFirstChild :: Monad m => (a -> m (Maybe a))
@@ -79,32 +79,19 @@ data Helpers a m c = Helpers
                       , nodeParent     :: Monad m => (a -> m (Maybe a))
                       }
 
--- SpanInfo + helpers
-
-data SpanInfo = Parent Span | Token Span
-  deriving (Show, Eq, Ord)
-
 locspan :: Ptr Cursor -> IO Span
 locspan cur = do
-  node <- peek cur
-  let nodeStart = nodeStartPoint node
-      startLoc = loc (saveLine nodeStart) (saveColumn nodeStart)
-      nodeEnd   = nodeEndPoint node
-      endLoc = loc (saveLine nodeEnd) (saveColumn nodeEnd)
+  Cursor{..} <- peek cur
+  let startLoc = loc (saveLine nodeStartPoint) (saveColumn nodeStartPoint)
+      endLoc = loc (saveLine nodeEndPoint) (saveColumn nodeEndPoint)
     in do
       return $ fromTo startLoc endLoc
 
 saveLine :: TSPoint -> Line
-saveLine tsp =
-  let row = pointRow tsp
-      saveRow = row + 1
-    in fromInteger $ toInteger saveRow
+saveLine TSPoint{..} = fromInteger $ toInteger (pointRow + 1)
 
 saveColumn :: TSPoint -> Column
-saveColumn tsp =
-  let col = pointColumn tsp
-      saveCol = col + 1
-    in fromInteger $ toInteger saveCol
+saveColumn TSPoint{..} = fromInteger $ toInteger (pointColumn + 1)
 
 spanInfoFromCursor :: Ptr Cursor -> IO SpanInfo
 spanInfoFromCursor ptrCur = do
@@ -117,20 +104,20 @@ spanInfoFromCursor ptrCur = do
 -- transformations
 
 tsTransformSpanInfos :: (Ptr Cursor) -> IO [SpanInfo]
-tsTransformSpanInfos = tsTransform helpersList
+tsTransformSpanInfos = tsTransform curopsList
 
 packNodeList :: (Ptr Cursor) -> Navigation -> [SpanInfo] -> IO [SpanInfo]
 packNodeList ptrCur _ spanInfos = do
   spanInfo <- spanInfoFromCursor ptrCur
-  return (spanInfo:spanInfos)
+  return $ spanInfo : spanInfos
 
 initList :: (Ptr Cursor) -> IO [SpanInfo]
 initList ptrCur = do
   spanInfo <- spanInfoFromCursor ptrCur
   return [spanInfo]
 
-helpersList :: Helpers (Ptr Cursor) IO [SpanInfo]
-helpersList = Helpers
+curopsList :: CursorOperations (Ptr Cursor) IO [SpanInfo]
+curopsList = CursorOperations
             { initResult     = initList
             , packNode       = packNodeList
             , nodeFirstChild = firstChild
@@ -140,7 +127,7 @@ helpersList = Helpers
 
 
 tsTransformZipper :: (Ptr Cursor) -> IO (Z.TreePos Z.Full String)
-tsTransformZipper = tsTransform helpersZipper
+tsTransformZipper = tsTransform curopsZipper
 
 packNodeZipper :: (Ptr Cursor) -> Navigation -> (Z.TreePos Z.Full String) -> IO (Z.TreePos Z.Full String)
 packNodeZipper ptrCur nav resultZipper = 
@@ -153,8 +140,7 @@ packNodeZipper ptrCur nav resultZipper =
         l <- label ptrCur
         return $ insertNode l (Z.nextSpace resultZipper)
 
-      Up -> do
-        return (fromJust $ Z.parent resultZipper)
+      Up -> return (fromJust $ Z.parent resultZipper)
 
   where
     insertNode lbl pos = (Z.insert (T.Node lbl []) pos)
@@ -164,8 +150,8 @@ initZipper ptrCur = do
   rootLabel <- label ptrCur
   return $ Z.fromTree (T.Node rootLabel [])
 
-helpersZipper :: Helpers (Ptr Cursor) IO (Z.TreePos Z.Full String)
-helpersZipper = Helpers
+curopsZipper :: CursorOperations (Ptr Cursor) IO (Z.TreePos Z.Full String)
+curopsZipper = CursorOperations
             { initResult     = initZipper
             , packNode       = packNodeZipper
             , nodeFirstChild = firstChild
@@ -175,7 +161,7 @@ helpersZipper = Helpers
 
 
 tsTransformIdentityZipper :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
-tsTransformIdentityZipper = tsTransform helpersIdentityZipper
+tsTransformIdentityZipper = tsTransform curopsIdentityZipper
 
 packNodeIdentityZipper :: (Z.TreePos Z.Full String) -> Navigation -> (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
 packNodeIdentityZipper ptrCur nav resultZipper = 
@@ -192,8 +178,8 @@ packNodeIdentityZipper ptrCur nav resultZipper =
 initIdentityZipper :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
 initIdentityZipper ptrCur = return $ Z.fromTree (T.Node (Z.label ptrCur) [])
 
-helpersIdentityZipper :: Helpers (Z.TreePos Z.Full String) Identity (Z.TreePos Z.Full String)
-helpersIdentityZipper = Helpers
+curopsIdentityZipper :: CursorOperations (Z.TreePos Z.Full String) Identity (Z.TreePos Z.Full String)
+curopsIdentityZipper = CursorOperations
             { initResult     = initIdentityZipper
             , packNode       = packNodeIdentityZipper
             , nodeFirstChild = return . Z.firstChild
@@ -202,36 +188,36 @@ helpersIdentityZipper = Helpers
             }
 
 
-tsTransform :: Monad m => Helpers a m c -> a -> m c
-tsTransform helpers ptrCur = do
-  res <- (initResult helpers) ptrCur
-  go helpers res Down ptrCur
+tsTransform :: Monad m => CursorOperations a m c -> a -> m c
+tsTransform curops@CursorOperations{..} ptrCur = do
+  res <- initResult ptrCur
+  go curops res Down ptrCur
   where
-    go :: Monad m => Helpers a m c -> c -> Navigation -> a -> m c
-    go helpers res nav ptrCur = case nav of
+    go :: Monad m => CursorOperations a m c -> c -> Navigation -> a -> m c
+    go curops@CursorOperations{..} res nav ptrCur = case nav of
       Down -> do
-        fc <- (nodeFirstChild helpers) ptrCur
+        fc <- nodeFirstChild ptrCur
         case fc of
-          Nothing      -> go helpers res Next ptrCur
+          Nothing      -> go curops res Next ptrCur
           Just ptrCur' -> do
-            res' <- (packNode helpers) ptrCur' Down res
-            go helpers res' Down ptrCur'
+            res' <- packNode ptrCur' Down res
+            go curops res' Down ptrCur'
       
       Next -> do
-        n <- (nodeNext helpers) ptrCur
+        n <- nodeNext ptrCur
         case n of
-          Nothing      -> go helpers res Up ptrCur
+          Nothing      -> go curops res Up ptrCur
           Just ptrCur' -> do
-            res' <- (packNode helpers) ptrCur' Next res
-            go helpers res' Down ptrCur'
+            res' <- packNode ptrCur' Next res
+            go curops res' Down ptrCur'
 
       Up -> do
-        p <- (nodeParent helpers) ptrCur
+        p <- nodeParent ptrCur
         case p of
           Nothing      -> return res
           Just ptrCur' -> do
-            r <- (packNode helpers) ptrCur' Up res
-            go helpers r Next ptrCur'
+            r <- packNode ptrCur' Up res
+            go curops r Next ptrCur'
 
 
 

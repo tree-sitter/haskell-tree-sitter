@@ -29,8 +29,9 @@ library
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Tree
-                     , TreeSitter.Cursor
                      , TreeSitter.Struct
+                     , TreeSitter.CursorApi.Types
+                     , TreeSitter.CursorApi.Cursor
   Include-dirs:        includes
   Includes:            ts_cursor.h
   c-sources:           src/bridge.c
