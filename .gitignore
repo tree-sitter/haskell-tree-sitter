@@ -4,4 +4,7 @@ dist
 dist-newstyle
 cabal.project.local
 .vscode
+.idea
+*.iml
+cabal.config
 TODO
