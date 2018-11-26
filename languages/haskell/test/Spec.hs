@@ -1,7 +1,7 @@
-import Foreign
-import Foreign.C.Types
-import Foreign.Storable
-import Test.Hspec
+import           Foreign
+import           Foreign.C.Types
+import           Foreign.Storable
+import           Test.Hspec
 
 import           TreeSitter.Parser
 import           TreeSitter.Tree
@@ -18,7 +18,7 @@ import           Foreign.Ptr                    ( Ptr(..)
                                                 , nullPtr
                                                 )
 
-import Data.List
+import           Data.List
 
 
 filterParents :: SpanInfo -> Bool
@@ -27,9 +27,9 @@ filterParents (Token _)  = True
 
 
 main :: IO ()
-main = hspec $ do
+main = hspec $ 
 
-  describe "tsTransform produces depth-first [SpanInfo]" $ do
+  describe "tsTransform produces depth-first [SpanInfo]" $ 
     it "traverses entire TSTree, building a [SpanInfo]" $ do
       parser <- ts_parser_new
       ts_parser_set_language parser tree_sitter_haskell

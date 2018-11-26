@@ -37,6 +37,16 @@ void ts_cursor_init(TSTree *tree, Cursor *p)
     updateNode(p, rootNode);
 }
 
+void ts_cursor_reset_root(TSTree *tree, Cursor *p)
+{
+    assert(tree != NULL);
+    TSNode rootNode = ts_tree_root_node(tree);
+    assert(rootNode.id != NULL);
+    icur.node = rootNode;
+    ts_tree_cursor_reset(&icur.cursor, rootNode);
+    updateNode(p, rootNode);
+}
+
 bool ts_cursor_goto_first_child(Cursor *p)
 {
     if (ts_tree_cursor_goto_first_child(&icur.cursor))

@@ -1,12 +1,13 @@
 {-# LANGUAGE RankNTypes, ScopedTypeVariables #-}
 module TreeSitter.Struct
-( Struct(..)
-, evalStruct
-, peekStruct
-, pokeStruct
-) where
+  ( Struct(..)
+  , evalStruct
+  , peekStruct
+  , pokeStruct
+  )
+where
 
-import Foreign
+import           Foreign
 
 
 -- | 'Struct' is a strict 'Monad' with automatic alignment & advancing, & inferred type.
@@ -17,17 +18,21 @@ evalStruct s p = fmap fst $! runStruct s p
 {-# INLINE evalStruct #-}
 
 peekStruct :: forall a . Storable a => Struct a
-peekStruct = Struct (\ p -> do
-  let aligned = alignPtr (castPtr p) (alignment (undefined :: a))
-  a <- peek aligned
-  pure (a, aligned `plusPtr` sizeOf a))
+peekStruct = Struct
+  (\p -> do
+    let aligned = alignPtr (castPtr p) (alignment (undefined :: a))
+    a <- peek aligned
+    pure (a, aligned `plusPtr` sizeOf a)
+  )
 {-# INLINE peekStruct #-}
 
 pokeStruct :: Storable a => a -> Struct ()
-pokeStruct a = Struct (\ p -> do
-  let aligned = alignPtr (castPtr p) (alignment a)
-  poke aligned a
-  pure ((), castPtr aligned `plusPtr` sizeOf a))
+pokeStruct a = Struct
+  (\p -> do
+    let aligned = alignPtr (castPtr p) (alignment a)
+    poke aligned a
+    pure ((), castPtr aligned `plusPtr` sizeOf a)
+  )
 {-# INLINE pokeStruct #-}
 
 

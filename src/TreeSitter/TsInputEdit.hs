@@ -1,16 +1,17 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric, InterruptibleFFI #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
-module TreeSitter.TsInputEdit (
-  TSInputEdit(..)
+module TreeSitter.TsInputEdit
+  ( TSInputEdit(..)
   , ts_tree_edit
-) where
+  )
+where
 
-import Foreign
-import GHC.Generics
+import           Foreign
+import           GHC.Generics
 
-import TreeSitter.Tree
-import TreeSitter.Struct
-import TreeSitter.TsPoint
+import           TreeSitter.Tree
+import           TreeSitter.Struct
+import           TreeSitter.TsPoint
 
 
 data TSInputEdit = TSInputEdit {

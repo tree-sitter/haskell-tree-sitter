@@ -39,5 +39,5 @@ main = do
     putStrLn $ T.drawTree $ Z.toTree z
 
     spanInfos <- tsTransformSpanInfos cur
-    putStrLn $ show $ reverse spanInfos
+    print (reverse spanInfos)
     

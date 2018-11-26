@@ -1,13 +1,14 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric, InterruptibleFFI #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
-module TreeSitter.TsPoint (
-  TSPoint(..)
-) where
+module TreeSitter.TsPoint
+  ( TSPoint(..)
+  )
+where
 
-import Foreign
-import GHC.Generics
+import           Foreign
+import           GHC.Generics
 
-import TreeSitter.Struct
+import           TreeSitter.Struct
 
 
 data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }

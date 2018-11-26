@@ -7,33 +7,34 @@ module TreeSitter.CursorApi.Cursor (
   , tsTransformSpanInfos
   , tsTransformZipper
   , tsTransformIdentityZipper
-  , ts_cursor_init  
+  , ts_cursor_init
+  , ts_cursor_reset_root
   , ts_cursor_goto_first_child
   , ts_cursor_goto_next_sibling
   , ts_cursor_goto_parent
   , funptr_ts_cursor_free
 ) where
 
-import Foreign
-import Foreign.Ptr
-import Foreign.C
-import Foreign.C.Types
-import Foreign.Marshal.Utils
-import GHC.Generics
+import           Foreign
+import           Foreign.Ptr
+import           Foreign.C
+import           Foreign.C.Types
+import           Foreign.Marshal.Utils
+import           GHC.Generics
 
-import TreeSitter.Tree
-import TreeSitter.Struct
-import TreeSitter.TsPoint
-import TreeSitter.CursorApi.Types
+import           TreeSitter.Tree
+import           TreeSitter.Struct
+import           TreeSitter.TsPoint
+import           TreeSitter.CursorApi.Types
 
-import qualified Data.Tree as T
-import qualified Data.Tree.Zipper as Z
-import Data.Maybe
-import Control.Monad.Identity
+import qualified Data.Tree                     as T
+import qualified Data.Tree.Zipper              as Z
+import           Data.Maybe
+import           Control.Monad.Identity
 
-import Data.Loc.Span hiding ((+))
-import Data.Loc.Loc
-import Data.Loc.Pos
+import           Data.Loc.Span           hiding ( (+) )
+import           Data.Loc.Loc
+import           Data.Loc.Pos
 
 
 data Cursor = Cursor
@@ -140,7 +141,7 @@ initZipper ptrCur = do
   rootLabel <- label ptrCur
   return $ Z.fromTree (T.Node rootLabel [])
 
-curopsZipper :: CursorOperations (PtrCursor) IO (Z.TreePos Z.Full String)
+curopsZipper :: CursorOperations PtrCursor IO (Z.TreePos Z.Full String)
 curopsZipper = CursorOperations
             { initResult     = initZipper
             , packNode       = packNodeZipper
@@ -219,17 +220,17 @@ label cur = do
     in      
     return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
 
-firstChild :: PtrCursor -> IO (Maybe (PtrCursor))
+firstChild :: PtrCursor -> IO (Maybe PtrCursor)
 firstChild cur = do
   exists <- ts_cursor_goto_first_child cur
   return $ boolToMaybe cur exists
 
-next :: PtrCursor -> IO (Maybe (PtrCursor))
+next :: PtrCursor -> IO (Maybe PtrCursor)
 next cur = do
   exists <- ts_cursor_goto_next_sibling cur
   return $ boolToMaybe cur exists
 
-parent :: PtrCursor -> IO (Maybe (PtrCursor))
+parent :: PtrCursor -> IO (Maybe PtrCursor)
 parent cur = do
   exists <- ts_cursor_goto_parent cur
   return $ boolToMaybe cur exists
@@ -237,7 +238,7 @@ parent cur = do
 hasChildren :: IO Bool
 hasChildren = toBool <$> ts_cursor_has_children
 
-boolToMaybe :: PtrCursor -> CBool  -> Maybe (PtrCursor)
+boolToMaybe :: PtrCursor -> CBool  -> Maybe PtrCursor
 boolToMaybe cur exists =
   if exists == 1
     then Just cur
@@ -246,6 +247,7 @@ boolToMaybe cur exists =
 
 
 foreign import ccall ts_cursor_init :: Ptr Tree -> PtrCursor -> IO ()
+foreign import ccall ts_cursor_reset_root :: Ptr Tree -> PtrCursor -> IO ()
 foreign import ccall ts_cursor_goto_first_child :: PtrCursor -> IO CBool
 foreign import ccall ts_cursor_goto_next_sibling :: PtrCursor -> IO CBool
 foreign import ccall ts_cursor_goto_parent :: PtrCursor -> IO CBool
