@@ -2,7 +2,6 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-- 'haskell-zipper'
 - './loc/loc'
 - location: languages/go
   extra-dep: true
@@ -18,4 +17,4 @@ packages:
   extra-dep: true
 - location: languages/haskell
   extra-dep: true
-resolver: lts-12.18
+resolver: lts-12.20
