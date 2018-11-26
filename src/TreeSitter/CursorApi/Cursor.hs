@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric, InterruptibleFFI, RankNTypes, RecordWildCards #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module TreeSitter.CursorApi.Cursor (
@@ -69,13 +69,13 @@ data CursorOperations a m c = CursorOperations
                       , nodeParent     :: Monad m => (a -> m (Maybe a))
                       }
 
+
 locspan :: Ptr Cursor -> IO Span
 locspan cur = do
   Cursor{..} <- peek cur
   let startLoc = loc (saveLine nodeStartPoint) (saveColumn nodeStartPoint)
       endLoc = loc (saveLine nodeEndPoint) (saveColumn nodeEndPoint)
-    in do
-      return $ fromTo startLoc endLoc
+    in return $ fromTo startLoc endLoc
 
 saveLine :: TSPoint -> Line
 saveLine TSPoint{..} = fromInteger $ toInteger (pointRow + 1)
@@ -87,26 +87,24 @@ spanInfoFromCursor :: Ptr Cursor -> IO SpanInfo
 spanInfoFromCursor ptrCur = do
   span <- locspan ptrCur
   isParent <- hasChildren
-  return $ case isParent of
-    True -> Parent span
-    False -> Token span
+  return (if isParent then Parent span else Token span)
 
 -- transformations
 
-tsTransformSpanInfos :: (Ptr Cursor) -> IO [SpanInfo]
+tsTransformSpanInfos :: PtrCur -> IO [SpanInfo]
 tsTransformSpanInfos = tsTransform curopsList
 
-packNodeList :: (Ptr Cursor) -> Navigation -> [SpanInfo] -> IO [SpanInfo]
+packNodeList :: PtrCur -> Navigation -> [SpanInfo] -> IO [SpanInfo]
 packNodeList ptrCur _ spanInfos = do
   spanInfo <- spanInfoFromCursor ptrCur
   return $ spanInfo : spanInfos
 
-initList :: (Ptr Cursor) -> IO [SpanInfo]
+initList :: PtrCur -> IO [SpanInfo]
 initList ptrCur = do
   spanInfo <- spanInfoFromCursor ptrCur
   return [spanInfo]
 
-curopsList :: CursorOperations (Ptr Cursor) IO [SpanInfo]
+curopsList :: CursorOperations PtrCur IO [SpanInfo]
 curopsList = CursorOperations
             { initResult     = initList
             , packNode       = packNodeList
@@ -116,11 +114,11 @@ curopsList = CursorOperations
             }
 
 
-tsTransformZipper :: (Ptr Cursor) -> IO (Z.TreePos Z.Full String)
+tsTransformZipper :: PtrCur -> IO (Z.TreePos Z.Full String)
 tsTransformZipper = tsTransform curopsZipper
 
-packNodeZipper :: (Ptr Cursor) -> Navigation -> (Z.TreePos Z.Full String) -> IO (Z.TreePos Z.Full String)
-packNodeZipper ptrCur nav resultZipper = 
+packNodeZipper :: PtrCur -> Navigation -> Z.TreePos Z.Full String -> IO (Z.TreePos Z.Full String)
+packNodeZipper ptrCur nav resultZipper =
   case nav of
       Down -> do
         l <- label ptrCur
@@ -133,9 +131,9 @@ packNodeZipper ptrCur nav resultZipper =
       Up -> return (fromJust $ Z.parent resultZipper)
 
   where
-    insertNode lbl pos = (Z.insert (T.Node lbl []) pos)
+    insertNode lbl = Z.insert (T.Node lbl [])
 
-initZipper :: (Ptr Cursor) -> IO (Z.TreePos Z.Full String)
+initZipper :: PtrCur -> IO (Z.TreePos Z.Full String)
 initZipper ptrCur = do
   rootLabel <- label ptrCur
   return $ Z.fromTree (T.Node rootLabel [])
@@ -150,22 +148,19 @@ curopsZipper = CursorOperations
             }
 
 
-tsTransformIdentityZipper :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
+tsTransformIdentityZipper :: Z.TreePos Z.Full String -> Identity (Z.TreePos Z.Full String)
 tsTransformIdentityZipper = tsTransform curopsIdentityZipper
 
-packNodeIdentityZipper :: (Z.TreePos Z.Full String) -> Navigation -> (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
-packNodeIdentityZipper ptrCur nav resultZipper = 
+packNodeIdentityZipper :: Z.TreePos Z.Full String -> Navigation -> Z.TreePos Z.Full String -> Identity (Z.TreePos Z.Full String)
+packNodeIdentityZipper ptrCur nav resultZipper =
   case nav of
-      Down -> return $ insertNode (Z.label ptrCur) (Z.children resultZipper)
-
-      Next -> return $ insertNode (Z.label ptrCur) (Z.nextSpace resultZipper)
-
-      Up -> return (fromJust $ Z.parent resultZipper)
-
+    Down -> return $ insertNode (Z.label ptrCur) (Z.children resultZipper)
+    Next -> return $ insertNode (Z.label ptrCur) (Z.nextSpace resultZipper)
+    Up -> return (fromJust $ Z.parent resultZipper)
   where
-    insertNode lbl pos = (Z.insert (T.Node lbl []) pos)
+    insertNode lbl = Z.insert (T.Node lbl [])
 
-initIdentityZipper :: (Z.TreePos Z.Full String) -> Identity (Z.TreePos Z.Full String)
+initIdentityZipper :: Z.TreePos Z.Full String -> Identity (Z.TreePos Z.Full String)
 initIdentityZipper ptrCur = return $ Z.fromTree (T.Node (Z.label ptrCur) [])
 
 curopsIdentityZipper :: CursorOperations (Z.TreePos Z.Full String) Identity (Z.TreePos Z.Full String)
@@ -238,9 +233,7 @@ parent cur = do
   return $ boolToMaybe cur exists
 
 hasChildren :: IO Bool
-hasChildren = do
-  cbool <- ts_cursor_has_children
-  return $ toBool cbool
+hasChildren = toBool <$> ts_cursor_has_children
 
 boolToMaybe :: Ptr Cursor -> CBool  -> Maybe (Ptr Cursor)
 boolToMaybe cur exists =
