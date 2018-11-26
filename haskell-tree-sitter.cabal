@@ -31,6 +31,7 @@ library
                      , TreeSitter.Tree
                      , TreeSitter.Struct
                      , TreeSitter.TsPoint
+                     , TreeSitter.TsInputEdit
                      , TreeSitter.CursorApi.Types
                      , TreeSitter.CursorApi.Cursor
   Include-dirs:        includes
