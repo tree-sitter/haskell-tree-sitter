@@ -2,11 +2,13 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.TsInputEdit (
   TSInputEdit(..)
+  , ts_tree_edit
 ) where
 
 import Foreign
 import GHC.Generics
 
+import TreeSitter.Tree
 import TreeSitter.Struct
 import TreeSitter.TsPoint
 
@@ -38,3 +40,5 @@ instance Storable TSInputEdit where
     pokeStruct oep
     pokeStruct nep
 
+
+foreign import ccall ts_tree_edit :: Ptr Tree -> Ptr TSInputEdit -> IO ()
