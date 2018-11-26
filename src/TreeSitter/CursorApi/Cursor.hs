@@ -23,6 +23,7 @@ import GHC.Generics
 
 import TreeSitter.Tree
 import TreeSitter.Struct
+import TreeSitter.TsPoint
 import TreeSitter.CursorApi.Types
 
 import qualified Data.Tree as T
@@ -46,9 +47,6 @@ data Cursor = Cursor
   }
   deriving (Show, Eq, Generic)
 
-data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }
-  deriving (Show, Eq, Generic)
-
 instance Storable Cursor where
   alignment _ = alignment (nullPtr :: Ptr ())
   sizeOf _ = 36
@@ -60,14 +58,6 @@ instance Storable Cursor where
                              <*> peekStruct
                              <*> peekStruct
   poke _ _ = error "Cant poke"
-
-instance Storable TSPoint where
-  alignment _ = alignment (0 :: Int32)
-  sizeOf _ = 8
-  peek = evalStruct $ TSPoint <$> peekStruct
-                              <*> peekStruct
-  poke _ _ = error "Cant poke"
-
 
 data Navigation = Down | Next | Up
 

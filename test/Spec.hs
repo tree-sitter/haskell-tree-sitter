@@ -5,6 +5,7 @@ import Test.Hspec
 
 import TreeSitter.CursorApi.Cursor
 import TreeSitter.Node
+import TreeSitter.TsPoint
 
 import qualified Data.Tree as T
 import qualified Data.Tree.Zipper as Z

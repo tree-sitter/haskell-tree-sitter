@@ -7,6 +7,8 @@ import           TreeSitter.Tree
 import           TreeSitter.Language
 import           TreeSitter.Haskell
 import           TreeSitter.Node
+import           TreeSitter.TsPoint
+
 import           Foreign.C.String
 import           Foreign.C.Types
 import           Foreign.Ptr                    ( Ptr(..)

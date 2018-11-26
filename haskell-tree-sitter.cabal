@@ -30,6 +30,7 @@ library
                      , TreeSitter.Node
                      , TreeSitter.Tree
                      , TreeSitter.Struct
+                     , TreeSitter.TsPoint
                      , TreeSitter.CursorApi.Types
                      , TreeSitter.CursorApi.Cursor
   Include-dirs:        includes

@@ -2,7 +2,6 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Node
 ( Node(..)
-, TSPoint(..)
 , TSNode(..)
 , ts_node_copy_child_nodes
 ) where
@@ -12,7 +11,7 @@ import Foreign.C
 import GHC.Generics
 
 import TreeSitter.Struct
-
+import TreeSitter.TsPoint
 
 data Node = Node
   { nodeTSNode :: !TSNode
@@ -24,9 +23,6 @@ data Node = Node
   , nodeEndByte :: !Word32
   , nodeChildCount :: !Word32
   }
-  deriving (Show, Eq, Generic)
-
-data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }
   deriving (Show, Eq, Generic)
 
 data TSNode = TSNode !Word32 !Word32 !Word32 !Word32 !(Ptr ()) !(Ptr ())
@@ -52,15 +48,6 @@ instance Storable Node where
     pokeStruct ep
     pokeStruct sb
     pokeStruct eb
-    pokeStruct c
-
-instance Storable TSPoint where
-  alignment _ = alignment (0 :: Int32)
-  sizeOf _ = 8
-  peek = evalStruct $ TSPoint <$> peekStruct
-                              <*> peekStruct
-  poke ptr (TSPoint r c) = flip evalStruct ptr $ do
-    pokeStruct r
     pokeStruct c
 
 instance Storable TSNode where
