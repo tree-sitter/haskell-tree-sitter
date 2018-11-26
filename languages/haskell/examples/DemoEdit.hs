@@ -46,25 +46,25 @@ main = do
     putStrLn $ T.drawTree $ Z.toTree z
 
     withForeignPtr ptrTsInputEdit $ \edit -> do
-      poke edit TSInputEdit {
-          startByte = (fromInteger 0)
-          , oldEndByte = (fromInteger 0)
-          , newEndByte = (fromInteger 0)
-          , startPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 0)}
-          , oldEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 0)}
-          , newEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 0)}
-          }
       -- poke edit TSInputEdit {
-      --     startByte = (fromInteger 12)
-      --     , oldEndByte = (fromInteger 13)
-      --     , newEndByte = (fromInteger 2)
-      --     , startPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 12)}
-      --     , oldEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 13)}
-      --     , newEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 12)}
+      --     startByte = (fromInteger 0)
+      --     , oldEndByte = (fromInteger 0)
+      --     , newEndByte = (fromInteger 0)
+      --     , startPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 0)}
+      --     , oldEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 0)}
+      --     , newEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 0)}
       --     }
+      poke edit TSInputEdit {
+          startByte = (fromInteger 12)
+          , oldEndByte = (fromInteger 13)
+          , newEndByte = (fromInteger 2)
+          , startPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 12)}
+          , oldEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 13)}
+          , newEndPoint = TSPoint {pointRow = (fromInteger 0), pointColumn = (fromInteger 12)}
+          }
       ts_tree_edit tree edit
       (str, len) <- newCStringLen "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-      tree <- ts_parser_parse_string parser nullPtr str len
+      tree <- ts_parser_parse_string parser tree str len
 
       ts_cursor_init tree cur
       z <- tsTransformZipper cur
