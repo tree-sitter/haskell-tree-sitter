@@ -59,6 +59,8 @@ instance Storable Cursor where
                              <*> peekStruct
   poke _ _ = error "Cant poke"
 
+type PtrCursor = Ptr Cursor
+
 data Navigation = Down | Next | Up
 
 data CursorOperations a m c = CursorOperations 
@@ -70,7 +72,7 @@ data CursorOperations a m c = CursorOperations
                       }
 
 
-locspan :: Ptr Cursor -> IO Span
+locspan :: PtrCursor -> IO Span
 locspan cur = do
   Cursor{..} <- peek cur
   let startLoc = loc (saveLine nodeStartPoint) (saveColumn nodeStartPoint)
@@ -83,7 +85,7 @@ saveLine TSPoint{..} = fromInteger $ toInteger (pointRow + 1)
 saveColumn :: TSPoint -> Column
 saveColumn TSPoint{..} = fromInteger $ toInteger (pointColumn + 1)
 
-spanInfoFromCursor :: Ptr Cursor -> IO SpanInfo
+spanInfoFromCursor :: PtrCursor -> IO SpanInfo
 spanInfoFromCursor ptrCur = do
   span <- locspan ptrCur
   isParent <- hasChildren
@@ -91,20 +93,20 @@ spanInfoFromCursor ptrCur = do
 
 -- transformations
 
-tsTransformSpanInfos :: PtrCur -> IO [SpanInfo]
+tsTransformSpanInfos :: PtrCursor -> IO [SpanInfo]
 tsTransformSpanInfos = tsTransform curopsList
 
-packNodeList :: PtrCur -> Navigation -> [SpanInfo] -> IO [SpanInfo]
+packNodeList :: PtrCursor -> Navigation -> [SpanInfo] -> IO [SpanInfo]
 packNodeList ptrCur _ spanInfos = do
   spanInfo <- spanInfoFromCursor ptrCur
   return $ spanInfo : spanInfos
 
-initList :: PtrCur -> IO [SpanInfo]
+initList :: PtrCursor -> IO [SpanInfo]
 initList ptrCur = do
   spanInfo <- spanInfoFromCursor ptrCur
   return [spanInfo]
 
-curopsList :: CursorOperations PtrCur IO [SpanInfo]
+curopsList :: CursorOperations PtrCursor IO [SpanInfo]
 curopsList = CursorOperations
             { initResult     = initList
             , packNode       = packNodeList
@@ -114,10 +116,10 @@ curopsList = CursorOperations
             }
 
 
-tsTransformZipper :: PtrCur -> IO (Z.TreePos Z.Full String)
+tsTransformZipper :: PtrCursor -> IO (Z.TreePos Z.Full String)
 tsTransformZipper = tsTransform curopsZipper
 
-packNodeZipper :: PtrCur -> Navigation -> Z.TreePos Z.Full String -> IO (Z.TreePos Z.Full String)
+packNodeZipper :: PtrCursor -> Navigation -> Z.TreePos Z.Full String -> IO (Z.TreePos Z.Full String)
 packNodeZipper ptrCur nav resultZipper =
   case nav of
       Down -> do
@@ -133,12 +135,12 @@ packNodeZipper ptrCur nav resultZipper =
   where
     insertNode lbl = Z.insert (T.Node lbl [])
 
-initZipper :: PtrCur -> IO (Z.TreePos Z.Full String)
+initZipper :: PtrCursor -> IO (Z.TreePos Z.Full String)
 initZipper ptrCur = do
   rootLabel <- label ptrCur
   return $ Z.fromTree (T.Node rootLabel [])
 
-curopsZipper :: CursorOperations (Ptr Cursor) IO (Z.TreePos Z.Full String)
+curopsZipper :: CursorOperations (PtrCursor) IO (Z.TreePos Z.Full String)
 curopsZipper = CursorOperations
             { initResult     = initZipper
             , packNode       = packNodeZipper
@@ -206,7 +208,7 @@ tsTransform curops@CursorOperations{..} ptrCur = do
 
 
 
-label :: Ptr Cursor -> IO String
+label :: PtrCursor -> IO String
 label cur = do
   node <- peek cur
   nodeType <- peekCString (nodeType node)
@@ -217,17 +219,17 @@ label cur = do
     in      
     return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
 
-firstChild :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
+firstChild :: PtrCursor -> IO (Maybe (PtrCursor))
 firstChild cur = do
   exists <- ts_cursor_goto_first_child cur
   return $ boolToMaybe cur exists
 
-next :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
+next :: PtrCursor -> IO (Maybe (PtrCursor))
 next cur = do
   exists <- ts_cursor_goto_next_sibling cur
   return $ boolToMaybe cur exists
 
-parent :: Ptr Cursor -> IO (Maybe (Ptr Cursor))
+parent :: PtrCursor -> IO (Maybe (PtrCursor))
 parent cur = do
   exists <- ts_cursor_goto_parent cur
   return $ boolToMaybe cur exists
@@ -235,7 +237,7 @@ parent cur = do
 hasChildren :: IO Bool
 hasChildren = toBool <$> ts_cursor_has_children
 
-boolToMaybe :: Ptr Cursor -> CBool  -> Maybe (Ptr Cursor)
+boolToMaybe :: PtrCursor -> CBool  -> Maybe (PtrCursor)
 boolToMaybe cur exists =
   if exists == 1
     then Just cur
@@ -243,9 +245,9 @@ boolToMaybe cur exists =
 
 
 
-foreign import ccall ts_cursor_init :: Ptr Tree -> Ptr Cursor -> IO ()
-foreign import ccall ts_cursor_goto_first_child :: Ptr Cursor -> IO CBool
-foreign import ccall ts_cursor_goto_next_sibling :: Ptr Cursor -> IO CBool
-foreign import ccall ts_cursor_goto_parent :: Ptr Cursor -> IO CBool
+foreign import ccall ts_cursor_init :: Ptr Tree -> PtrCursor -> IO ()
+foreign import ccall ts_cursor_goto_first_child :: PtrCursor -> IO CBool
+foreign import ccall ts_cursor_goto_next_sibling :: PtrCursor -> IO CBool
+foreign import ccall ts_cursor_goto_parent :: PtrCursor -> IO CBool
 foreign import ccall ts_cursor_has_children :: IO CBool
-foreign import ccall "&ts_cursor_free" funptr_ts_cursor_free :: FunPtr (Ptr Cursor -> IO ())
+foreign import ccall "&ts_cursor_free" funptr_ts_cursor_free :: FunPtr (PtrCursor -> IO ())
