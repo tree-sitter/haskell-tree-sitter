@@ -79,7 +79,6 @@ main = do
           , newEndPoint = TSPoint {pointRow = 3, pointColumn = 8}
           }
       ts_tree_edit tree' edit
-      -- ts_edit_node_in_range tree' 54 55 edit
       (str, len) <- newCStringLen
         "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n =  + 1"
       tree'' <- ts_parser_parse_string parser tree' str len

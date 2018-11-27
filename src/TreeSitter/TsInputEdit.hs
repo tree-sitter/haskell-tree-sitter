@@ -3,7 +3,6 @@
 module TreeSitter.TsInputEdit
   ( TSInputEdit(..)
   , ts_tree_edit
-  , ts_edit_node_in_range
   )
 where
 
@@ -44,4 +43,3 @@ instance Storable TSInputEdit where
 
 
 foreign import ccall ts_tree_edit :: Ptr Tree -> Ptr TSInputEdit -> IO ()
-foreign import ccall ts_edit_node_in_range :: Ptr Tree -> Word32 -> Word32 -> Ptr TSInputEdit -> IO ()
