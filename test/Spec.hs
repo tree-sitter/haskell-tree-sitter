@@ -22,8 +22,8 @@ import           Test.QuickCheck.Instances.Containers
 
 prop_traverses_all :: T.Tree String -> QC.Property
 prop_traverses_all tree =
-  QC.label ("tree size " ++ show (length $ T.flatten tree)) $ tree == Z.toTree
-    (runIdentity (tsTransformIdentityZipper (Z.fromTree tree)))
+  QC.label ("tree size " ++ show (length $ T.flatten tree)) $ 
+  tree == Z.toTree (runIdentity (tsTransformIdentityZipper (Z.fromTree tree)))
 
 
 main :: IO ()
@@ -31,7 +31,7 @@ main = hspec $ do
 
   describe "quickcheck tsTransform" $
     it "quickchecks traversing entire TSTree, building a Tree"
-      $ QC.property prop_traverses_all
+      $ QC.property $ QC.mapSize (100 *) $ QC.withMaxSuccess 200 prop_traverses_all
 
   describe "TSNode" $ do
     it "has the same size as its C counterpart"

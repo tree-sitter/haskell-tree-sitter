@@ -22,8 +22,8 @@ import           Data.List
 
 
 filterParents :: SpanInfo -> Bool
-filterParents (Parent _)  = False
-filterParents (Token _)  = True
+filterParents (Parent _ _)  = False
+filterParents (Token _ _)  = True
 
 
 main :: IO ()

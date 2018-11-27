@@ -12,19 +12,19 @@ void debugPrintCurrentNode(Cursor *p)
     printf("type: %s \n", p->type);
 }
 
-void updateCursor(Cursor *p)
-{
-    TSNode n = ts_tree_cursor_current_node(&icur.cursor);
-    icur.node = n;
-    updateNode(p, n);
-}
-
 void updateNode(Cursor *p, TSNode n)
 {
     p->type = ts_node_type(n);
     p->symbol = ts_node_symbol(n);
     p->startPoint = ts_node_start_point(n);
     p->endPoint = ts_node_end_point(n);
+}
+
+void updateCursor(Cursor *p)
+{
+    TSNode n = ts_tree_cursor_current_node(&icur.cursor);
+    icur.node = n;
+    updateNode(p, n);
 }
 
 void ts_cursor_init(TSTree *tree, Cursor *p)

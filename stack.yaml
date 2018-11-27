@@ -1,8 +1,9 @@
 flags: {}
 extra-package-dbs: []
+extra-deps:
+- loc-0.1.3.4
 packages:
 - '.'
-- './loc/loc'
 - location: languages/go
   extra-dep: true
 - location: languages/php

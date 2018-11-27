@@ -90,7 +90,7 @@ spanInfoFromCursor cur = do
   isParent <- hasChildren
   node <- peek cur
   nodeType <- peekCString (nodeType node)
-  return (if isParent then Parent nodeType span else Token nodeType span)
+  return (if isParent then Parent span nodeType else Token span nodeType)
 
 -- transformations
 

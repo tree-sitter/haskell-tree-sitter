@@ -1,5 +1,0 @@
-resolver: lts-12.7
-
-packages:
-  - loc
-  - loc-test

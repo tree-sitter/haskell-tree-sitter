@@ -1,5 +1,0 @@
-resolver: nightly-2018-08-20
-
-packages:
-  - loc
-  - loc-test
