@@ -47,6 +47,7 @@ main = do
 
     withForeignPtr ptrTsInputEdit $ \edit -> do
 
+      -- 1st edit
       poke
         edit
         TSInputEdit
@@ -60,9 +61,30 @@ main = do
       ts_tree_edit tree edit
       (str, len) <- newCStringLen
         "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-      tree <- ts_parser_parse_string parser tree str len
+      tree' <- ts_parser_parse_string parser tree str len
 
-      ts_cursor_reset_root tree cur
+      ts_cursor_reset_root tree' cur
+      z <- tsTransformZipper cur
+      putStrLn $ T.drawTree $ Z.toTree z
+
+      -- 2nd edit
+      poke
+        edit
+        TSInputEdit
+          { startByte   = 54
+          , oldEndByte  = 55
+          , newEndByte  = 54
+          , startPoint  = TSPoint {pointRow = 3, pointColumn = 8}
+          , oldEndPoint = TSPoint {pointRow = 3, pointColumn = 9}
+          , newEndPoint = TSPoint {pointRow = 3, pointColumn = 8}
+          }
+      ts_tree_edit tree' edit
+      -- ts_edit_node_in_range tree' 54 55 edit
+      (str, len) <- newCStringLen
+        "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n =  + 1"
+      tree'' <- ts_parser_parse_string parser tree' str len
+
+      ts_cursor_reset_root tree'' cur
       z <- tsTransformZipper cur
       putStrLn $ T.drawTree $ Z.toTree z
 

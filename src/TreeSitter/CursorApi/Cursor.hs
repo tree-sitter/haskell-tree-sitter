@@ -39,7 +39,6 @@ import           Data.Loc.Pos
 
 data Cursor = Cursor
   { nodeType :: !CString
-  , nodeStr :: !CString
   , nodeSymbol :: !Word16
   , nodeStartPoint :: !TSPoint
   , nodeEndPoint :: !TSPoint
@@ -52,7 +51,6 @@ instance Storable Cursor where
   alignment _ = alignment (nullPtr :: Ptr ())
   sizeOf _ = 36
   peek = evalStruct $ Cursor <$> peekStruct
-                             <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct

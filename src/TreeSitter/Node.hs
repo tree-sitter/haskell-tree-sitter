@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Node
 ( Node(..)

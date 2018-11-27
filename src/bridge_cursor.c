@@ -27,6 +27,18 @@ void updateNode(Cursor *p, TSNode n)
     p->endPoint = ts_node_end_point(n);
 }
 
+void ts_edit_node_in_range(TSTree *tree, uint32_t rangeFrom, uint32_t rangeTo, TSInputEdit *edit)
+{
+    assert(tree != NULL);
+    TSNode rootNode = ts_tree_root_node(tree);
+    assert(rootNode.id != NULL);
+    // TSNode node = ts_node_descendant_for_byte_range(rootNode, rangeFrom, rangeTo);
+    // assert(node.id != NULL);
+    // printf("node in range: %s \n", ts_node_type(node));
+    // ts_node_edit(&node, edit);
+    ts_node_edit(&rootNode, edit);
+}
+
 void ts_cursor_init(TSTree *tree, Cursor *p)
 {
     assert(tree != NULL);
