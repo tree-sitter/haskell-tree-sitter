@@ -87,3 +87,6 @@ main = do
       z <- tsTransformZipper cur
       putStrLn $ T.drawTree $ Z.toTree z
 
+      ts_cursor_reset_root tree'' cur
+      spanInfos <- tsTransformSpanInfos cur
+      print (reverse spanInfos)

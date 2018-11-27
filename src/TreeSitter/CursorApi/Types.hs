@@ -5,5 +5,5 @@ where
 
 import Data.Loc.Span
 
-data SpanInfo = Parent Span | Token Span
+data SpanInfo = Parent String Span | Token String Span
   deriving (Show, Eq, Ord)

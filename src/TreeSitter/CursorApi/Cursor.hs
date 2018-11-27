@@ -85,10 +85,12 @@ saveColumn :: TSPoint -> Column
 saveColumn TSPoint{..} = fromInteger $ toInteger (pointColumn + 1)
 
 spanInfoFromCursor :: PtrCursor -> IO SpanInfo
-spanInfoFromCursor ptrCur = do
-  span <- locspan ptrCur
+spanInfoFromCursor cur = do
+  span <- locspan cur
   isParent <- hasChildren
-  return (if isParent then Parent span else Token span)
+  node <- peek cur
+  nodeType <- peekCString (nodeType node)
+  return (if isParent then Parent nodeType span else Token nodeType span)
 
 -- transformations
 
