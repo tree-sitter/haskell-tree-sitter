@@ -98,9 +98,18 @@ tsTransformSpanInfos :: PtrCursor -> IO [SpanInfo]
 tsTransformSpanInfos = tsTransform curopsList
 
 packNodeList :: PtrCursor -> Navigation -> [SpanInfo] -> IO [SpanInfo]
-packNodeList ptrCur _ spanInfos = do
-  spanInfo <- spanInfoFromCursor ptrCur
-  return $ spanInfo : spanInfos
+packNodeList ptrCur nav spanInfos = 
+  case nav of
+      Down -> do
+        spanInfo <- spanInfoFromCursor ptrCur
+        return $ spanInfo : spanInfos
+
+      Next -> do
+        spanInfo <- spanInfoFromCursor ptrCur
+        return $ spanInfo : spanInfos
+
+      Up -> return spanInfos
+
 
 initList :: PtrCursor -> IO [SpanInfo]
 initList ptrCur = do

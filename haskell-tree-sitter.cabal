@@ -38,6 +38,7 @@ library
   Includes:            ts_cursor.h
   c-sources:           src/bridge.c
                      , src/bridge_cursor.c
+                     , src/bridge_edit.c
                      , vendor/tree-sitter/externals/utf8proc/utf8proc.c
                      , vendor/tree-sitter/src/runtime/get_changed_ranges.c
                      , vendor/tree-sitter/src/runtime/language.c
