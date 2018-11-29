@@ -32,11 +32,7 @@ import qualified Data.Tree.Zipper              as Z
 import           Data.Maybe
 import           Control.Monad.Identity
 
-import           Data.Loc.Span           hiding ( (+) )
-import           Data.Loc.Loc
-import           Data.Loc.Pos
-
-
+-- TODO remove all TSPoint (also in C counterpart!)
 data Cursor = Cursor
   { nodeType :: !CString
   , nodeSymbol :: !Word16
@@ -71,26 +67,14 @@ data CursorOperations a m c = CursorOperations
                       }
 
 
-locspan :: PtrCursor -> IO Span
-locspan cur = do
-  Cursor{..} <- peek cur
-  let startLoc = loc (saveLine nodeStartPoint) (saveColumn nodeStartPoint)
-      endLoc = loc (saveLine nodeEndPoint) (saveColumn nodeEndPoint)
-    in return $ fromTo startLoc endLoc
-
-saveLine :: TSPoint -> Line
-saveLine TSPoint{..} = fromInteger $ toInteger (pointRow + 1)
-
-saveColumn :: TSPoint -> Column
-saveColumn TSPoint{..} = fromInteger $ toInteger (pointColumn + 1)
-
 spanInfoFromCursor :: PtrCursor -> IO SpanInfo
 spanInfoFromCursor cur = do
-  span <- locspan cur
   isParent <- hasChildren
-  node <- peek cur
-  nodeType <- peekCString (nodeType node)
-  return (if isParent then Parent span nodeType else Token span nodeType)
+  Cursor{..} <- peek cur
+  tokentype <- peekCString nodeType
+  let startByte = fromIntegral nodeStartByte
+      endByte   = fromIntegral nodeEndByte
+    in return (if isParent then Parent startByte endByte tokentype else Token startByte endByte tokentype)
 
 -- transformations
 

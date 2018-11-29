@@ -3,7 +3,9 @@ module TreeSitter.CursorApi.Types (
 )
 where
 
-import Data.Loc.Span
+type SourceOffsetFrom = Int
+type SourceOffsetTo = Int
 
-data SpanInfo = Parent Span String | Token Span String
+-- TODO Text instead of String ?
+data SpanInfo = Parent SourceOffsetFrom SourceOffsetTo String | Token SourceOffsetFrom SourceOffsetTo String
   deriving (Show, Eq, Ord)
