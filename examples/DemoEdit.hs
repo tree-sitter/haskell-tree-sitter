@@ -56,12 +56,26 @@ main = do
 
     str'' <- newCString
       "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n =  + 1"
-    tree'' <- ts_edit_tree_and_parse parser tree' str'' 54 55 54 3 8 3 9 3 8
+    tree'' <- ts_edit_tree_and_parse parser tree' str'' 51 52 51 3 8 3 9 3 8
 
     ts_cursor_reset_root tree'' cur
     z <- tsTransformZipper cur
     putStrLn $ T.drawTree $ Z.toTree z
 
     ts_cursor_reset_root tree'' cur
+    spanInfos <- tsTransformSpanInfos cur
+    print (reverse spanInfos)
+
+    -- 3rd edit
+
+    str''' <- newCString
+      "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = abc + 1"
+    tree''' <- ts_edit_tree_and_parse parser tree'' str''' 51 51 54 3 8 3 8 3 11
+
+    ts_cursor_reset_root tree''' cur
+    z <- tsTransformZipper cur
+    putStrLn $ T.drawTree $ Z.toTree z
+
+    ts_cursor_reset_root tree''' cur
     spanInfos <- tsTransformSpanInfos cur
     print (reverse spanInfos)
