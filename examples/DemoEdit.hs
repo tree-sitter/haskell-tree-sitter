@@ -20,7 +20,6 @@ import           Foreign.C.Types
 import           Foreign.Ptr                    ( Ptr(..)
                                                 , nullPtr
                                                 )
-import           Foreign.Storable               ( poke )
 
 import qualified Data.Tree                     as T
 import qualified Data.Tree.Zipper              as Z
