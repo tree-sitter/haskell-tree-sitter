@@ -46,14 +46,9 @@ main = hspec $ do
 
   describe "tsTransform produces depth-first [SpanInfo]" $ 
     it "traverses entire TSTree, building a [SpanInfo]" $ do
-      parser <- ts_parser_new
-      ts_parser_set_language parser tree_sitter_haskell
 
-      let source =
-            "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-      (str, len) <- newCStringLen source
-
-      tree       <- ts_parser_parse_string parser nullPtr str len
+      (str, len) <- newCStringLen "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
+      tree       <- hts_parse_with_language tree_sitter_haskell str (fromIntegral len)
 
       fgnPtr     <- mallocForeignPtr :: IO (ForeignPtr Cursor)
       addForeignPtrFinalizer funptr_ts_cursor_free fgnPtr
