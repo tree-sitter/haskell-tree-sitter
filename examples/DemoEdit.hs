@@ -27,12 +27,10 @@ import qualified Data.Tree.Zipper              as Z
 
 main :: IO ()
 main = do
-  parser <- ts_parser_new
-  ts_parser_set_language parser tree_sitter_haskell
-  (str, len) <- newCStringLen
-    "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
 
-  tree      <- ts_parser_parse_string parser nullPtr str len
+  (str, len) <- newCStringLen "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
+  tree       <- hts_parse_with_language tree_sitter_haskell str (fromIntegral len)
+
   ptrCursor <- mallocForeignPtr :: IO (ForeignPtr Cursor)
   addForeignPtrFinalizer funptr_ts_cursor_free ptrCursor
 
@@ -46,7 +44,7 @@ main = do
 
     str' <- newCString
       "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-    tree' <- ts_edit_tree_and_parse parser tree str' 12 13 2 0 12 0 13 0 12
+    tree' <- ts_edit_tree_and_parse tree str' 12 13 2 0 12 0 13 0 12
 
     ts_cursor_reset_root tree' cur
     z <- tsTransformZipper cur
@@ -56,7 +54,7 @@ main = do
 
     str'' <- newCString
       "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n =  + 1"
-    tree'' <- ts_edit_tree_and_parse parser tree' str'' 51 52 51 3 8 3 9 3 8
+    tree'' <- ts_edit_tree_and_parse tree' str'' 51 52 51 3 8 3 9 3 8
 
     ts_cursor_reset_root tree'' cur
     z <- tsTransformZipper cur
@@ -70,7 +68,7 @@ main = do
 
     str''' <- newCString
       "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = abc + 1"
-    tree''' <- ts_edit_tree_and_parse parser tree'' str''' 51 51 54 3 8 3 8 3 11
+    tree''' <- ts_edit_tree_and_parse tree'' str''' 51 51 54 3 8 3 8 3 11
 
     ts_cursor_reset_root tree''' cur
     z <- tsTransformZipper cur

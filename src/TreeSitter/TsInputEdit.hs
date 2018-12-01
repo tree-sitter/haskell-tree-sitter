@@ -46,7 +46,6 @@ instance Storable TSInputEdit where
 
 
 foreign import ccall ts_edit_tree_and_parse ::
-  Ptr Parser ->
   Ptr Tree ->
   CString ->
   Word32 ->

@@ -7,6 +7,7 @@ module TreeSitter.CursorApi.Cursor (
   , tsTransformSpanInfos
   , tsTransformZipper
   , tsTransformIdentityZipper
+  , hts_parse_with_language
   , ts_cursor_init
   , ts_cursor_reset_root
   , ts_cursor_goto_first_child
@@ -22,6 +23,7 @@ import           Foreign.C.Types
 import           Foreign.Marshal.Utils
 import           GHC.Generics
 
+import           TreeSitter.Language
 import           TreeSitter.Tree
 import           TreeSitter.Struct
 import           TreeSitter.TsPoint
@@ -239,6 +241,7 @@ boolToMaybe cur exists =
 
 
 
+foreign import ccall hts_parse_with_language :: Ptr Language -> CString -> Word32 -> IO (Ptr Tree)
 foreign import ccall ts_cursor_init :: Ptr Tree -> PtrCursor -> IO ()
 foreign import ccall ts_cursor_reset_root :: Ptr Tree -> PtrCursor -> IO ()
 foreign import ccall ts_cursor_goto_first_child :: PtrCursor -> IO CBool

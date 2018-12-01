@@ -6,6 +6,44 @@
 #include "ts_cursor.h"
 
 InternalCursor icur;
+TSParser *parser;
+
+TSTree *hts_parse_with_language(const TSLanguage *language, const char *source, uint32_t len) {
+    parser = ts_parser_new();
+    bool set = ts_parser_set_language(parser, language);
+    assert(set == true);
+    return ts_parser_parse_string(parser, NULL, source, len);
+}
+
+TSInputEdit edit;
+
+TSTree *ts_edit_tree_and_parse(
+    TSTree *tree
+    , char *source
+    , uint32_t startByte
+    , uint32_t oldEndByte
+    , uint32_t newEndByte
+    , uint32_t startPointRow
+    , uint32_t startPointCol
+    , uint32_t oldEndPointRow
+    , uint32_t oldEndPointCol
+    , uint32_t newEndPointRow
+    , uint32_t newEndPointCol
+    )
+{
+    assert(tree != NULL);
+    edit.start_byte = startByte;
+    edit.old_end_byte = oldEndByte;
+    edit.new_end_byte = newEndByte;
+    edit.start_point.row = startPointRow;
+    edit.start_point.column = startPointCol;
+    edit.old_end_point.row = oldEndPointRow;
+    edit.old_end_point.column = oldEndPointCol;
+    edit.new_end_point.row = newEndPointRow;
+    edit.new_end_point.column = newEndPointCol;
+    ts_tree_edit(tree, &edit);
+    return ts_parser_parse_string(parser, tree, source, strlen(source));
+}
 
 void debugPrintCurrentNode(Cursor *p)
 {

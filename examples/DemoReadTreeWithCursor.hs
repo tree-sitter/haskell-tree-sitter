@@ -24,11 +24,8 @@ import qualified Data.Tree.Zipper as Z
 
 main :: IO ()
 main = do
-  parser <- ts_parser_new
-  ts_parser_set_language parser tree_sitter_haskell
   (str, len) <- newCStringLen "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-
-  tree       <- ts_parser_parse_string parser nullPtr str len
+  tree       <- hts_parse_with_language tree_sitter_haskell str (fromIntegral len)
   fgnPtr     <- mallocForeignPtr :: IO (ForeignPtr Cursor)
   addForeignPtrFinalizer funptr_ts_cursor_free fgnPtr
 
