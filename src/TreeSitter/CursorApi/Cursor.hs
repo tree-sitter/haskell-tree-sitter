@@ -241,6 +241,7 @@ boolToMaybe cur exists =
 
 
 
+foreign import ccall hts_parser_parse_string :: CString -> Word32 -> IO (Ptr Tree)
 foreign import ccall hts_parse_with_language :: Ptr Language -> CString -> Word32 -> IO (Ptr Tree)
 foreign import ccall ts_cursor_init :: Ptr Tree -> PtrCursor -> IO ()
 foreign import ccall ts_cursor_reset_root :: Ptr Tree -> PtrCursor -> IO ()
