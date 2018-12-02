@@ -7,6 +7,7 @@ module TreeSitter.CursorApi.Cursor (
   , tsTransformSpanInfos
   , tsTransformZipper
   , tsTransformIdentityZipper
+  , hts_parser_parse_string
   , hts_parse_with_language
   , ts_cursor_init
   , ts_cursor_reset_root
