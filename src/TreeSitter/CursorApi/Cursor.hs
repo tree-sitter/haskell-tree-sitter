@@ -2,8 +2,16 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module TreeSitter.CursorApi.Cursor (
-  Cursor(..),
-  SpanInfo(..)
+  PtrCursor
+  , CursorOperations(..)
+  , Navigation(..)
+  , Cursor(..)
+  , SpanInfo(..)
+  , tsTransform
+  , firstChild
+  , next
+  , parent
+  , spanInfoFromCursor
   , tsTransformSpanInfos
   , tsTransformZipper
   , tsTransformIdentityZipper
@@ -75,9 +83,11 @@ spanInfoFromCursor cur = do
   isParent <- hasChildren
   Cursor{..} <- peek cur
   tokentype <- peekCString nodeType
-  let startByte = fromIntegral nodeStartByte
-      endByte   = fromIntegral nodeEndByte
-    in return (if isParent then Parent startByte endByte tokentype else Token startByte endByte tokentype)
+  let start = fromIntegral nodeStartByte
+      end   = fromIntegral nodeEndByte
+   in return $ if tokentype == "ERROR"
+                then Error start end
+                else (if isParent then Parent start end tokentype else Token start end tokentype)
 
 -- transformations
 
