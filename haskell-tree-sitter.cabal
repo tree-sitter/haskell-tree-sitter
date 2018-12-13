@@ -93,6 +93,8 @@ executable demo-edit
     , tree-sitter-common
     , containers
     , rosezipper
+    , text
+    , bytestring
   default-language: Haskell2010
 
 executable demo-read-tree

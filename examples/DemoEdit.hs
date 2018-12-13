@@ -24,56 +24,65 @@ import           Foreign.Ptr                    ( Ptr(..)
 import qualified Data.Tree                     as T
 import qualified Data.Tree.Zipper              as Z
 
+import qualified Data.ByteString.Unsafe as BSU
+import qualified Data.Text.Encoding as DTE
+import qualified Data.Text as T
+
 
 main :: IO ()
-main = do
+main = 
 
-  (str, len) <- newCStringLen "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-  tree       <- hts_parse_with_language tree_sitter_haskell str (fromIntegral len)
+  BSU.unsafeUseAsCStringLen (DTE.encodeUtf16LE "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1") $ \ (str, len) -> do
+    tree <- hts_parse_with_language tree_sitter_haskell str (fromIntegral len)
 
-  ptrCursor <- mallocForeignPtr :: IO (ForeignPtr Cursor)
-  addForeignPtrFinalizer funptr_ts_cursor_free ptrCursor
+    ptrCursor <- mallocForeignPtr :: IO (ForeignPtr Cursor)
+    addForeignPtrFinalizer funptr_ts_cursor_free ptrCursor
 
-  withForeignPtr ptrCursor $ \cur -> do
+    withForeignPtr ptrCursor $ \cur -> do
 
-    ts_cursor_init tree cur
-    z <- tsTransformZipper cur
-    putStrLn $ T.drawTree $ Z.toTree z
+      ts_cursor_init tree cur
+      z <- tsTransformZipper cur
+      putStrLn $ T.drawTree $ Z.toTree z
 
-    -- 1st edit
+      -- 1st edit
 
-    str' <- newCString
-      "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1"
-    tree' <- ts_edit_tree_and_parse tree str' 12 13 2 0 12 0 13 0 12
+      BSU.unsafeUseAsCStringLen (DTE.encodeUtf16LE "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1") $ \ (str', len) -> do
+        tree' <- ts_edit_tree_and_parse tree str' (fromIntegral len) 12 13 12 0 12 0 13 0 12
 
-    ts_cursor_reset_root tree' cur
-    z <- tsTransformZipper cur
-    putStrLn $ T.drawTree $ Z.toTree z
+        ts_cursor_reset_root tree' cur
+        z <- tsTransformZipper cur
+        putStrLn $ T.drawTree $ Z.toTree z
 
+        ts_cursor_reset_root tree' cur
+        spanInfos <- tsTransformSpanInfos cur
+        print (reverse spanInfos)
+
+    -- TODO migrate to unsafeUseAsCStringLen
+    
     -- 2nd edit
 
-    str'' <- newCString
-      "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n =  + 1"
-    tree'' <- ts_edit_tree_and_parse tree' str'' 51 52 51 3 8 3 9 3 8
+    -- str'' <- newCString
+    --   "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n =  + 1"
+    -- tree'' <- ts_edit_tree_and_parse tree' str'' 51 52 51 3 8 3 9 3 8
 
-    ts_cursor_reset_root tree'' cur
-    z <- tsTransformZipper cur
-    putStrLn $ T.drawTree $ Z.toTree z
+    -- ts_cursor_reset_root tree'' cur
+    -- z <- tsTransformZipper cur
+    -- putStrLn $ T.drawTree $ Z.toTree z
 
-    ts_cursor_reset_root tree'' cur
-    spanInfos <- tsTransformSpanInfos cur
-    print (reverse spanInfos)
+    -- ts_cursor_reset_root tree'' cur
+    -- spanInfos <- tsTransformSpanInfos cur
+    -- print (reverse spanInfos)
 
-    -- 3rd edit
+    -- -- 3rd edit
 
-    str''' <- newCString
-      "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = abc + 1"
-    tree''' <- ts_edit_tree_and_parse tree'' str''' 51 51 54 3 8 3 8 3 11
+    -- str''' <- newCString
+    --   "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = abc + 1"
+    -- tree''' <- ts_edit_tree_and_parse tree'' str''' 51 51 54 3 8 3 8 3 11
 
-    ts_cursor_reset_root tree''' cur
-    z <- tsTransformZipper cur
-    putStrLn $ T.drawTree $ Z.toTree z
+    -- ts_cursor_reset_root tree''' cur
+    -- z <- tsTransformZipper cur
+    -- putStrLn $ T.drawTree $ Z.toTree z
 
-    ts_cursor_reset_root tree''' cur
-    spanInfos <- tsTransformSpanInfos cur
-    print (reverse spanInfos)
+    -- ts_cursor_reset_root tree''' cur
+    -- spanInfos <- tsTransformSpanInfos cur
+    -- print (reverse spanInfos)

@@ -2,7 +2,6 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.TsInputEdit
   ( TSInputEdit(..)
-  , ts_tree_edit
   , ts_edit_tree_and_parse
   )
 where
@@ -57,6 +56,5 @@ foreign import ccall ts_edit_tree_and_parse ::
   Word32 ->
   Word32 ->
   Word32 ->
+  Word32 ->
   IO (Ptr Tree)
-
-foreign import ccall ts_tree_edit :: Ptr Tree -> Ptr TSInputEdit -> IO ()
