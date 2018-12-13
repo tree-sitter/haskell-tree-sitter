@@ -9,14 +9,14 @@ InternalCursor icur;
 TSParser *parser;
 
 TSTree *hts_parser_parse_string(const char *source, uint32_t len) {
-    return ts_parser_parse_string(parser, NULL, source, len);
+    return ts_parser_parse_string_encoding(parser, NULL, source, len, TSInputEncodingUTF16);
 }
 
 TSTree *hts_parse_with_language(const TSLanguage *language, const char *source, uint32_t len) {
     parser = ts_parser_new();
     bool set = ts_parser_set_language(parser, language);
     assert(set == true);
-    return ts_parser_parse_string(parser, NULL, source, len);
+    return ts_parser_parse_string_encoding(parser, NULL, source, len, TSInputEncodingUTF16);
 }
 
 TSInputEdit edit;
