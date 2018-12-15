@@ -7,6 +7,8 @@ module TreeSitter.CursorApi.Cursor (
   , Navigation(..)
   , Cursor(..)
   , SpanInfo(..)
+  , hasParent
+  , hasChildren
   , tsTransform
   , firstChild
   , next
@@ -244,6 +246,9 @@ parent cur = do
 hasChildren :: IO Bool
 hasChildren = toBool <$> ts_cursor_has_children
 
+hasParent :: IO Bool
+hasParent = toBool <$> ts_cursor_has_parent
+
 boolToMaybe :: PtrCursor -> CBool  -> Maybe PtrCursor
 boolToMaybe cur exists =
   if exists == 1
@@ -259,5 +264,6 @@ foreign import ccall ts_cursor_reset_root :: Ptr Tree -> PtrCursor -> IO ()
 foreign import ccall ts_cursor_goto_first_child :: PtrCursor -> IO CBool
 foreign import ccall ts_cursor_goto_next_sibling :: PtrCursor -> IO CBool
 foreign import ccall ts_cursor_goto_parent :: PtrCursor -> IO CBool
+foreign import ccall ts_cursor_has_parent :: IO CBool
 foreign import ccall ts_cursor_has_children :: IO CBool
 foreign import ccall "&ts_cursor_free" funptr_ts_cursor_free :: FunPtr (PtrCursor -> IO ())

@@ -122,6 +122,12 @@ bool ts_cursor_goto_parent(Cursor *p)
     return false;
 }
 
+bool ts_cursor_has_parent()
+{
+    TSNode n = ts_node_parent(icur.node);
+    return n.id != NULL;
+}
+
 bool ts_cursor_has_children()
 {
     return ts_node_child_count(icur.node) > 0;
