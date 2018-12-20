@@ -9,14 +9,14 @@ InternalCursor icur;
 TSParser *parser;
 
 TSTree *hts_parser_parse_string(const char *source, uint32_t len) {
-    return ts_parser_parse_string_encoding(parser, NULL, source, len, TSInputEncodingUTF16);
+    return ts_parser_parse_string_encoding(parser, NULL, source, len, TSInputEncodingUTF8);
 }
 
 TSTree *hts_parse_with_language(const TSLanguage *language, const char *source, uint32_t len) {
     parser = ts_parser_new();
     bool set = ts_parser_set_language(parser, language);
     assert(set == true);
-    return ts_parser_parse_string_encoding(parser, NULL, source, len, TSInputEncodingUTF16);
+    return ts_parser_parse_string_encoding(parser, NULL, source, len, TSInputEncodingUTF8);
 }
 
 TSInputEdit edit;
@@ -37,9 +37,9 @@ TSTree *ts_edit_tree_and_parse(
     )
 {
     assert(tree != NULL);
-    edit.start_byte = startByte * 2;
-    edit.old_end_byte = oldEndByte * 2;
-    edit.new_end_byte = newEndByte * 2;
+    edit.start_byte = startByte;
+    edit.old_end_byte = oldEndByte;
+    edit.new_end_byte = newEndByte;
     edit.start_point.row = startPointRow;
     edit.start_point.column = startPointCol;
     edit.old_end_point.row = oldEndPointRow;
@@ -47,7 +47,7 @@ TSTree *ts_edit_tree_and_parse(
     edit.new_end_point.row = newEndPointRow;
     edit.new_end_point.column = newEndPointCol;
     ts_tree_edit(tree, &edit);
-    return ts_parser_parse_string_encoding(parser, tree, source, len, TSInputEncodingUTF16);
+    return ts_parser_parse_string_encoding(parser, tree, source, len, TSInputEncodingUTF8);
 }
 
 void debugPrintCurrentNode(Cursor *p)

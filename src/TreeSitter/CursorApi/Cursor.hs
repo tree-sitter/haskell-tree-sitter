@@ -85,8 +85,8 @@ spanInfoFromCursor cur = do
   isParent <- hasChildren
   Cursor{..} <- peek cur
   tokentype <- peekCString nodeType
-  let start = quot (fromIntegral nodeStartByte) 2
-      end   = quot (fromIntegral nodeEndByte) 2
+  let start = fromIntegral nodeStartByte
+      end   = fromIntegral nodeEndByte
    in return $ if tokentype == "ERROR"
                 then Error start end
                 else (if isParent then Parent start end tokentype else Token start end tokentype)
