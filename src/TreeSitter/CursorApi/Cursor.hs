@@ -53,13 +53,15 @@ data Cursor = Cursor
   , nodeEndPoint :: !TSPoint
   , nodeStartByte :: !Word32
   , nodeEndByte :: !Word32
+  , nodeId :: Ptr ()
   }
   deriving (Show, Eq, Generic)
 
 instance Storable Cursor where
   alignment _ = alignment (nullPtr :: Ptr ())
-  sizeOf _ = 36
+  sizeOf _ = 44
   peek = evalStruct $ Cursor <$> peekStruct
+                             <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
@@ -226,7 +228,7 @@ label cur = do
       startPoint = show (pointRow nodeStart, pointColumn nodeStart)
       endPoint = show (pointRow nodeEnd, pointColumn nodeEnd)
     in      
-    return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint
+    return $ nodeType ++ " " ++ startPoint ++ "-" ++ endPoint ++ show (nodeId node)
 
 firstChild :: PtrCursor -> IO (Maybe PtrCursor)
 firstChild cur = do

@@ -63,6 +63,7 @@ void updateNode(Cursor *p, TSNode n)
     p->endByte = ts_node_end_byte(n);
     p->startPoint = ts_node_start_point(n);
     p->endPoint = ts_node_end_point(n);
+    p->id = n.id;
 }
 
 void updateCursor(Cursor *p)

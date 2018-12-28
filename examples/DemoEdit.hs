@@ -32,7 +32,7 @@ import qualified Data.Text as T
 main :: IO ()
 main = 
 
-  BSU.unsafeUseAsCStringLen (DTE.encodeUtf16LE "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1") $ \ (str, len) -> do
+  BSU.unsafeUseAsCStringLen "module Test (f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1" $ \ (str, len) -> do
     tree <- hts_parse_with_language tree_sitter_haskell str (fromIntegral len)
 
     ptrCursor <- mallocForeignPtr :: IO (ForeignPtr Cursor)
@@ -46,8 +46,8 @@ main =
 
       -- 1st edit
 
-      BSU.unsafeUseAsCStringLen (DTE.encodeUtf16LE "module Test f1) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1") $ \ (str', len) -> do
-        tree' <- ts_edit_tree_and_parse tree str' (fromIntegral len) 12 13 12 0 12 0 13 0 12
+      BSU.unsafeUseAsCStringLen "module Test (f) where\nimport Lib\nf1 = f2 42\nf2 n = n + 1" $ \ (str', len) -> do
+        tree' <- ts_edit_tree_and_parse tree str' (fromIntegral len) 14 15 14 14 14 0 15 0 14
 
         ts_cursor_reset_root tree' cur
         z <- tsTransformZipper cur

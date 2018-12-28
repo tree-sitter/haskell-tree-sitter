@@ -12,4 +12,5 @@ typedef struct Cursor {
     TSPoint endPoint;
     uint32_t startByte;
     uint32_t endByte;
+    const void *id;
 } Cursor;
