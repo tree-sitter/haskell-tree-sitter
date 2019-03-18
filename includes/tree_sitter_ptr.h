@@ -1,4 +1,4 @@
-#include "tree_sitter/runtime.h"
+#include "tree_sitter/api.h"
 
 /* TODO put TSTreeCursor etc. here ! */
 typedef struct {

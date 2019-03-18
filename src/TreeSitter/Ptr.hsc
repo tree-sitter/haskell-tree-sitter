@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls #-}
 
-#include "tree_sitter/runtime.h"
+#include "tree_sitter/api.h"
 #include <tree_sitter_ptr.h>
 
 #if __GLASGOW_HASKELL__ < 800

@@ -1,4 +1,4 @@
-#include "tree_sitter/runtime.h"
+#include "tree_sitter/api.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -55,16 +55,6 @@ void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes) {
   }
 
   ts_tree_cursor_delete(&curse);
-}
-
-// For testing cancellation from Haskell.
-// Has the same signature as ts_parser_parse_string for convenience.
-TSTree *ts_parser_loop_until_cancelled(TSParser *self, const TSTree *old_tree, const char* string, uint32_t length)
-{
-  while (ts_parser_enabled(self)) {
-
-  }
-  return NULL;
 }
 
 size_t sizeof_tsnode() {
