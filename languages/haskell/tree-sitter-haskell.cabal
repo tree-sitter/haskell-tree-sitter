@@ -11,8 +11,14 @@ build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
 
+flag build-examples
+  description: Build tree-sitter-haskell examples.
+  default:     False
+
 executable demo
   main-is: Demo.hs
+  if !flag(build-examples)
+    buildable: False
   hs-source-dirs:
       examples
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -24,6 +30,8 @@ executable demo
 
 executable demo-ptr
   main-is: DemoPtr.hs
+  if !flag(build-examples)
+    buildable: False
   hs-source-dirs:
       examples
   build-depends:
