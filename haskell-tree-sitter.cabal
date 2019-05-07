@@ -24,12 +24,14 @@ library
                      , aeson
                      , text
                      , hedgehog
+                     , bytestring
   default-language:    Haskell2010
   exposed-modules:     TreeSitter.Parser
+                     , TreeSitter.Importing
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Tree
-                     , TreeSitter.Ptr
+                     --, TreeSitter.Ptr
   Include-dirs:        includes
                      , vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
