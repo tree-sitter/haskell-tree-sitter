@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE LambdaCase #-}
 
 -- {-# LANGUAGE TypeOperators #-}
 module TH where
@@ -98,7 +99,6 @@ initUpper (c:cs) = toUpper c : cs
 initUpper "" = ""
 
 -- Helper function to remove underscores from output of data type names
--- rename to dromedary case?
 removeUnderscore :: String -> String
 removeUnderscore = foldr appender ""
   where appender :: Char -> String -> String
@@ -111,40 +111,41 @@ mapOperator = concatMap toDescription
 
 -- Helper function to map operator characters to strings
 toDescription :: Char -> String
-toDescription '{' = "LBrace"
-toDescription '}' = "RBrace"
-toDescription '(' = "LParen"
-toDescription ')' = "RParen"
-toDescription '.' = "Dot"
-toDescription ':' = "Colon"
-toDescription ',' = "Comma"
-toDescription '|' = "Pipe"
-toDescription ';' = "Semicolon"
-toDescription '*' = "Star"
-toDescription '&' = "Ampersand"
-toDescription '=' = "Equal"
-toDescription '<' = "LAngle"
-toDescription '>' = "RAngle"
-toDescription '[' = "LBracket"
-toDescription ']' = "RBracket"
-toDescription '+' = "Plus"
-toDescription '-' = "Minus"
-toDescription '/' = "Slash"
-toDescription '\\' = "Backslash"
-toDescription '^' = "Caret"
-toDescription '!' = "Bang"
-toDescription '%' = "Percent"
-toDescription '@' = "At"
-toDescription '~' = "Tilde"
-toDescription '?' = "Question"
-toDescription '`' = "Backtick"
-toDescription '#' = "Hash"
-toDescription '$' = "Dollar"
-toDescription '"' = "DQuote"
-toDescription '\'' = "SQuote"
-toDescription '\t' = "Tab"
-toDescription '\n' = "LF"
-toDescription '\r' = "CR"
-toDescription control
-  | isControl control = mapOperator (show control)
-toDescription c = [c]
+toDescription = \case
+  '{'  -> "LBrace"
+  '}'  -> "RBrace"
+  '('  -> "LParen"
+  ')'  -> "RParen"
+  '.'  -> "Dot"
+  ':'  -> "Colon"
+  ','  -> "Comma"
+  '|'  -> "Pipe"
+  ';'  -> "Semicolon"
+  '*'  -> "Star"
+  '&'  -> "Ampersand"
+  '='  -> "Equal"
+  '<'  -> "LAngle"
+  '>'  -> "RAngle"
+  '['  -> "LBracket"
+  ']'  -> "RBracket"
+  '+'  -> "Plus"
+  '-'  -> "Minus"
+  '/'  -> "Slash"
+  '\\' -> "Backslash"
+  '^'  -> "Caret"
+  '!'  -> "Bang"
+  '%'  -> "Percent"
+  '@'  -> "At"
+  '~'  -> "Tilde"
+  '?'  -> "Question"
+  '`'  -> "Backtick"
+  '#'  -> "Hash"
+  '$'  -> "Dollar"
+  '"'  -> "DQuote"
+  '\'' -> "SQuote"
+  '\t' -> "Tab"
+  '\n' -> "LF"
+  '\r' -> "CR"
+  other
+    | isControl other -> mapOperator (show other)
+    | otherwise       -> [other]
