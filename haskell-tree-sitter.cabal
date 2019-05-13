@@ -31,6 +31,8 @@ library
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Tree
+                     , CodeGen.GenerateSyntax
+                     , CodeGen.Deserialize
                      --, TreeSitter.Ptr
   Include-dirs:        includes
                      , vendor/tree-sitter/lib/include
@@ -55,8 +57,10 @@ test-suite test
 
 test-suite codegen-test
   type: exitcode-stdio-1.0
-  hs-source-dirs: test
+  hs-source-dirs: test-codegen
   main-is: test-codegen.hs
+  build-depends: hedgehog
+               , base >= 4.7 && < 5
 
 source-repository head
   type:     git

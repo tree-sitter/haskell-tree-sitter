@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Deserialize
+module CodeGen.Deserialize
 ( MkDatatype (..)
 , MkField (..)
 , MkRequired (..)

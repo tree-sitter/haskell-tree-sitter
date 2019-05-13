@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 -- {-# LANGUAGE TypeOperators #-}
-module TH where
+module CodeGen.GenerateSyntax where
 
 import Data.Aeson as Aeson
 import Data.Char
@@ -12,7 +12,7 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Syntax as TH
 import GHC.Generics hiding (Constructor, Datatype)
 import Control.Monad.IO.Class
-import Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
+import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 
