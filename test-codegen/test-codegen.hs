@@ -6,9 +6,8 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Data.Char
-import TH
+import CodeGen.GenerateSyntax
 import Data.Foldable
-
 import Control.Monad
 
 -- | Generate permutations of alphabet and underscore combinations
