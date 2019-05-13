@@ -16,10 +16,6 @@ import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), 
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 
--- Read JSON as input
-input :: Q [MkDatatype]
-input = liftIO (eitherDecodeFileStrict' "test/test.json") >>= either fail pure
-
 -- Template Haskell functions that take the input types and auto-generate Haskell datatypes
 datatypeForConstructors :: MkDatatype -> Q Dec
 datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
