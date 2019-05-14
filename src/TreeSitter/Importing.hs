@@ -6,6 +6,7 @@ import Data.ByteString
 
 import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import           Foreign
+import TreeSitter.Cursor as TS
 import TreeSitter.Node as TS
 import TreeSitter.Parser as TS
 import TreeSitter.Tree as TS
@@ -63,6 +64,18 @@ instance Importing Text.Text where
     let start = fromIntegral (nodeStartByte node)
         end = fromIntegral (nodeEndByte node)
     pure (decodeUtf8 (slice start end bytestring))
+
+importText :: Ptr Cursor -> ReaderC ByteString (LiftC IO) Text.Text
+importText cursor = do
+  node <- liftIO $ alloca $ \ tsNodePtr -> do
+    ts_tree_cursor_current_node_p cursor tsNodePtr
+    alloca $ \ nodePtr -> do
+      ts_node_poke_p tsNodePtr nodePtr
+      peek nodePtr
+  bytestring <- ask
+  let start = fromIntegral (nodeStartByte node)
+      end = fromIntegral (nodeEndByte node)
+  pure (decodeUtf8 (slice start end bytestring))
 
 
 instance (Importing a, Importing b) => Importing (Either a b) where
