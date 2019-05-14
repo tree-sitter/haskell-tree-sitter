@@ -25,6 +25,7 @@ library
                      , text
                      , hedgehog
                      , bytestring
+                     , fused-effects
   default-language:    Haskell2010
   exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Importing

@@ -8,6 +8,9 @@ import           Foreign
 import TreeSitter.Node as TS
 import TreeSitter.Parser as TS
 import TreeSitter.Tree as TS
+import qualified Data.Text as Text
+import Control.Effect.Reader
+import Control.Monad.IO.Class
 
 data Expression
       = NumberExpression Number | IdentifierExpression Identifier
@@ -36,21 +39,25 @@ importByteString parser bytestring =
               else do
                 ts_tree_root_node_p treePtr rootPtr
                 node <- peek rootPtr
-                Just <$> import' node
+                Just <$> runReader bytestring (import' node)
       Exc.bracket acquire release go)
 
 instance (Importing a, Importing b) => Importing (a,b) where
   import' node = do
-    [a,b] <- allocaArray 2 $ \ childNodesPtr -> do
+    [a,b] <- liftIO $ allocaArray 2 $ \ childNodesPtr -> do
       _ <- with (nodeTSNode node) (flip ts_node_copy_child_nodes childNodesPtr)
       peekArray 2 childNodesPtr
     a' <- import' a
     b' <- import' b
     pure (a',b')
 
+--
+-- instance Importing Text.Text where
+--   import' node = pure _
+
 class Importing type' where
 
-  import' :: Node -> IO type'
+  import' :: Node -> ReaderC ByteString IO type'
 
 -----------------
 -- | Notes
