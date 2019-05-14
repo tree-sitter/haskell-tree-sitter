@@ -94,6 +94,13 @@ instance (Importing a, Importing b) => Importing (Either a b) where
       peekArray 1 childNodesPtr
     Left <$> import' @a childNode <|> Right <$> import' @b childNode
 
+importSum :: (Ptr Cursor -> ReaderC ByteString (LiftC IO) a) -> (Ptr Cursor -> ReaderC ByteString (LiftC IO) b) -> Ptr Cursor -> ReaderC ByteString (LiftC IO) (Either a b)
+importSum importA importB cursor = do
+  _ <- liftIO $ ts_tree_cursor_goto_first_child cursor
+  e <- Left <$> importA cursor <|> Right <$> importB cursor
+  _ <- liftIO $ ts_tree_cursor_goto_parent cursor
+  pure e
+
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
 slice :: Int -> Int -> ByteString -> ByteString
