@@ -83,8 +83,17 @@ class Importing type' where
 
   import' :: Node -> ReaderC ByteString (LiftC IO) type'
 
+newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
+  deriving (Functor)
+
+instance Applicative m => Applicative (MaybeC m) where
+  pure a = MaybeC (pure (Just a))
+  liftA2 f (MaybeC a) (MaybeC b) = MaybeC $ liftA2 (liftA2 f) a b
+
+
 -----------------
 -- | Notes
 -- ToAST takes Node -> IO (value of datatype)
 -- splice will generate instances of this class
 -- CodeGen will import TreeSitter.Importing (why?)
+-- Signal backtrackable failure
