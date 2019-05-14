@@ -74,6 +74,10 @@ size_t sizeof_node() {
   return sizeof(Node);
 }
 
+size_t sizeof_tstreecursor() {
+  return sizeof(TSTreeCursor);
+}
+
 
 void ts_tree_cursor_new_p(TSNode *node, TSTreeCursor *outCursor) {
   assert(node != NULL);
