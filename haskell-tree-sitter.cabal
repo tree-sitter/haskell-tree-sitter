@@ -35,6 +35,7 @@ library
                      , CodeGen.GenerateSyntax
                      , CodeGen.Deserialize
                      --, TreeSitter.Ptr
+                     , TreeSitter.Cursor
   Include-dirs:        includes
                      , vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
