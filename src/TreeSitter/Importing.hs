@@ -48,7 +48,7 @@ importByteString parser bytestring =
               else do
                 ts_tree_root_node_p treePtr rootPtr
                 withCursor (castPtr rootPtr) $ \ cursor ->
-                  Just <$> runM (runReader cursor (runReader bytestring (import' cursor)))
+                  Just <$> runM (runReader cursor (runReader bytestring import'))
       Exc.bracket acquire release go)
 
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
@@ -59,20 +59,16 @@ withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket_
 
 
 instance (Importing a, Importing b) => Importing (a,b) where
-  import' cursor = push cursor $ do
-    a <- import' @a cursor
-    _ <- liftIO $ ts_tree_cursor_goto_next_sibling cursor
-    b <- import' @b cursor
+  import' = push $ do
+    a <- import' @a
+    step
+    b <- import' @b
     pure (a, b)
 
 
 instance Importing Text.Text where
-  import' cursor = do
-    node <- liftIO $ alloca $ \ tsNodePtr -> do
-      ts_tree_cursor_current_node_p cursor tsNodePtr
-      alloca $ \ nodePtr -> do
-        ts_node_poke_p tsNodePtr nodePtr
-        peek nodePtr
+  import' = do
+    node <- peekNode
     bytestring <- ask
     let start = fromIntegral (nodeStartByte node)
         end = fromIntegral (nodeEndByte node)
@@ -80,21 +76,14 @@ instance Importing Text.Text where
 
 
 instance (Importing a, Importing b) => Importing (Either a b) where
-  import' cursor = push cursor $
-    Left <$> import' @a cursor <|> Right <$> import' @b cursor
-
-push :: MonadIO m => Ptr Cursor -> m a -> m a
-push cursor m = do
-  _ <- liftIO $ ts_tree_cursor_goto_first_child cursor
-  a <- m
-  _ <- liftIO $ ts_tree_cursor_goto_parent cursor
-  pure a
+  import' = push $
+    Left <$> import' @a <|> Right <$> import' @b
 
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
-push' :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
-push' m = do
+push :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
+push m = do
   void $ ask >>= liftIO . ts_tree_cursor_goto_first_child
   a <- m
   a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
@@ -117,7 +106,7 @@ slice start end = take . drop
 
 class Importing type' where
 
-  import' :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Ptr Cursor -> m type'
+  import' :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m type'
 
 newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
   deriving (Functor)
