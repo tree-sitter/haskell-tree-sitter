@@ -19,6 +19,7 @@ data Number = Number
 data Identifier = Identifier
       deriving (Eq, Ord, Show)
 
+
 importByteString :: (Importing t) => Ptr TS.Parser -> ByteString -> IO (Maybe t)
 importByteString parser bytestring =
   unsafeUseAsCStringLen bytestring $ \ (source, len) -> alloca (\ rootPtr -> do
@@ -38,17 +39,21 @@ importByteString parser bytestring =
                 Just <$> import' node
       Exc.bracket acquire release go)
 
+instance (Importing a, Importing b) => Importing (a,b) where
+  import' node = do
+    [a,b] <- allocaArray 2 $ \ childNodesPtr -> do
+      _ <- with (nodeTSNode node) (flip ts_node_copy_child_nodes childNodesPtr)
+      peekArray 2 childNodesPtr
+    a' <- import' a
+    b' <- import' b
+    pure (a',b')
 
 class Importing type' where
 
   import' :: Node -> IO type'
 
-
--- ToAST takes Node -> IO (..value of DT)
--- IO t
-
-
-
+-----------------
+-- | Notes
+-- ToAST takes Node -> IO (value of datatype)
 -- splice will generate instances of this class
--- th-syntax will import TreeSitter.Importing
---
+-- CodeGen will import TreeSitter.Importing (why?)
