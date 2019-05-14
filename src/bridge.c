@@ -68,3 +68,10 @@ size_t sizeof_tspoint() {
 size_t sizeof_node() {
   return sizeof(Node);
 }
+
+
+void ts_tree_cursor_new_p(TSNode *node, TSTreeCursor *outCursor) {
+  assert(node != NULL);
+  assert(outCursor != NULL);
+  *outCursor = ts_tree_cursor_new(*node);
+}
