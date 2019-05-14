@@ -48,7 +48,7 @@ importByteString parser bytestring =
               else do
                 ts_tree_root_node_p treePtr rootPtr
                 withCursor (castPtr rootPtr) $ \ cursor ->
-                  Just <$> runM (runReader bytestring (import' cursor))
+                  Just <$> runM (runReader cursor (runReader bytestring (import' cursor)))
       Exc.bracket acquire release go)
 
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
@@ -117,7 +117,7 @@ slice start end = take . drop
 
 class Importing type' where
 
-  import' :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Cursor -> m type'
+  import' :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Ptr Cursor -> m type'
 
 newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
   deriving (Functor)
