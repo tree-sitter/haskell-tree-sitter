@@ -48,6 +48,13 @@ importByteString parser bytestring =
                 Just <$> runM (runReader bytestring (import' node))
       Exc.bracket acquire release go)
 
+withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
+withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket_
+  (ts_tree_cursor_new_p rootPtr cursor)
+  (ts_tree_cursor_delete cursor)
+  (action cursor)
+
+
 instance (Importing a, Importing b) => Importing (a,b) where
   import' node = do
     [a,b] <- liftIO $ allocaArray 2 $ \ childNodesPtr -> do
