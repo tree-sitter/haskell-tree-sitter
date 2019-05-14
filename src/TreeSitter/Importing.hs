@@ -1,22 +1,25 @@
-{-# LANGUAGE DeriveFunctor, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications #-}
+{-# LANGUAGE DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications #-}
 module TreeSitter.Importing where
 
 import Control.Exception as Exc
 import Data.ByteString
 
 import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
-import           Foreign
+import           Foreign.Marshal.Alloc
+import           Foreign.Ptr
+import           Foreign.Storable
 import TreeSitter.Cursor as TS
 import TreeSitter.Node as TS
 import TreeSitter.Parser as TS
 import TreeSitter.Tree as TS
 import qualified Data.Text as Text
+import Control.Effect
 import Control.Effect.Reader
-import Control.Effect.Lift
 import Control.Monad.IO.Class
 import Data.Text.Encoding
 import qualified Data.ByteString as B
 import Control.Applicative
+import Control.Monad (void)
 
 data Expression
       = NumberExpression Number | IdentifierExpression Identifier
@@ -86,6 +89,24 @@ push cursor m = do
   a <- m
   _ <- liftIO $ ts_tree_cursor_goto_parent cursor
   pure a
+
+step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => ReaderC (Ptr Cursor) m ()
+step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
+
+push' :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
+push' m = do
+  void $ ask >>= liftIO . ts_tree_cursor_goto_first_child
+  a <- m
+  a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
+
+peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Node
+peekNode = do
+  cursor <- ask
+  liftIO $ alloca $ \ tsNodePtr -> do
+    ts_tree_cursor_current_node_p cursor tsNodePtr
+    alloca $ \ nodePtr -> do
+      ts_node_poke_p tsNodePtr nodePtr
+      peek nodePtr
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
