@@ -44,8 +44,8 @@ importByteString parser bytestring =
               then pure Nothing
               else do
                 ts_tree_root_node_p treePtr rootPtr
-                node <- peek rootPtr
-                Just <$> runM (runReader bytestring (import' node))
+                withCursor (castPtr rootPtr) $ \ cursor ->
+                  Just <$> runM (runReader bytestring (import' cursor))
       Exc.bracket acquire release go)
 
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
@@ -56,52 +56,29 @@ withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket_
 
 
 instance (Importing a, Importing b) => Importing (a,b) where
-  import' node = do
-    [a,b] <- liftIO $ allocaArray 2 $ \ childNodesPtr -> do
-      _ <- with (nodeTSNode node) (flip ts_node_copy_child_nodes childNodesPtr)
-      peekArray 2 childNodesPtr
-    a' <- import' a
-    b' <- import' b
-    pure (a',b')
-
-importPair :: (Ptr Cursor -> ReaderC ByteString (LiftC IO) a) -> (Ptr Cursor -> ReaderC ByteString (LiftC IO) b) -> Ptr Cursor -> ReaderC ByteString (LiftC IO) (a, b)
-importPair importA importB cursor = push cursor $ do
-  a <- importA cursor
-  _ <- liftIO $ ts_tree_cursor_goto_next_sibling cursor
-  b <- importB cursor
-  pure (a, b)
+  import' cursor = push cursor $ do
+    a <- import' @a cursor
+    _ <- liftIO $ ts_tree_cursor_goto_next_sibling cursor
+    b <- import' @b cursor
+    pure (a, b)
 
 
 instance Importing Text.Text where
-  import' node = do
+  import' cursor = do
+    node <- liftIO $ alloca $ \ tsNodePtr -> do
+      ts_tree_cursor_current_node_p cursor tsNodePtr
+      alloca $ \ nodePtr -> do
+        ts_node_poke_p tsNodePtr nodePtr
+        peek nodePtr
     bytestring <- ask
     let start = fromIntegral (nodeStartByte node)
         end = fromIntegral (nodeEndByte node)
     pure (decodeUtf8 (slice start end bytestring))
 
-importText :: Ptr Cursor -> ReaderC ByteString (LiftC IO) Text.Text
-importText cursor = do
-  node <- liftIO $ alloca $ \ tsNodePtr -> do
-    ts_tree_cursor_current_node_p cursor tsNodePtr
-    alloca $ \ nodePtr -> do
-      ts_node_poke_p tsNodePtr nodePtr
-      peek nodePtr
-  bytestring <- ask
-  let start = fromIntegral (nodeStartByte node)
-      end = fromIntegral (nodeEndByte node)
-  pure (decodeUtf8 (slice start end bytestring))
-
 
 instance (Importing a, Importing b) => Importing (Either a b) where
-  import' node = do
-    [childNode] <- liftIO $ allocaArray 1 $ \ childNodesPtr -> do
-      _ <- with (nodeTSNode node) (flip ts_node_copy_child_nodes childNodesPtr)
-      peekArray 1 childNodesPtr
-    Left <$> import' @a childNode <|> Right <$> import' @b childNode
-
-importSum :: (Ptr Cursor -> ReaderC ByteString (LiftC IO) a) -> (Ptr Cursor -> ReaderC ByteString (LiftC IO) b) -> Ptr Cursor -> ReaderC ByteString (LiftC IO) (Either a b)
-importSum importA importB cursor = push cursor $
-  Left <$> importA cursor <|> Right <$> importB cursor
+  import' cursor = push cursor $
+    Left <$> import' @a cursor <|> Right <$> import' @b cursor
 
 push :: MonadIO m => Ptr Cursor -> m a -> m a
 push cursor m = do
@@ -119,7 +96,7 @@ slice start end = take . drop
 
 class Importing type' where
 
-  import' :: Node -> ReaderC ByteString (LiftC IO) type'
+  import' :: Ptr Cursor -> ReaderC ByteString (LiftC IO) type'
 
 newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
   deriving (Functor)
