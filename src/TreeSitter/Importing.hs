@@ -58,12 +58,10 @@ instance (Importing a, Importing b) => Importing (a,b) where
     pure (a',b')
 
 importPair :: (Ptr Cursor -> ReaderC ByteString (LiftC IO) a) -> (Ptr Cursor -> ReaderC ByteString (LiftC IO) b) -> Ptr Cursor -> ReaderC ByteString (LiftC IO) (a, b)
-importPair importA importB cursor = do
-  _ <- liftIO $ ts_tree_cursor_goto_first_child cursor
+importPair importA importB cursor = push cursor $ do
   a <- importA cursor
   _ <- liftIO $ ts_tree_cursor_goto_next_sibling cursor
   b <- importB cursor
-  _ <- liftIO $ ts_tree_cursor_goto_parent cursor
   pure (a, b)
 
 
