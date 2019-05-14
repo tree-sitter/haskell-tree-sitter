@@ -90,7 +90,7 @@ push cursor m = do
   _ <- liftIO $ ts_tree_cursor_goto_parent cursor
   pure a
 
-step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => ReaderC (Ptr Cursor) m ()
+step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 push' :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
