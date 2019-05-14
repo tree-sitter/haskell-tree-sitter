@@ -10,7 +10,10 @@ import TreeSitter.Parser as TS
 import TreeSitter.Tree as TS
 import qualified Data.Text as Text
 import Control.Effect.Reader
+import Control.Effect.Lift
 import Control.Monad.IO.Class
+import Data.Text.Encoding
+import qualified Data.ByteString as B
 
 data Expression
       = NumberExpression Number | IdentifierExpression Identifier
@@ -39,7 +42,7 @@ importByteString parser bytestring =
               else do
                 ts_tree_root_node_p treePtr rootPtr
                 node <- peek rootPtr
-                Just <$> runReader bytestring (import' node)
+                Just <$> runM (runReader bytestring (import' node))
       Exc.bracket acquire release go)
 
 instance (Importing a, Importing b) => Importing (a,b) where
@@ -51,13 +54,24 @@ instance (Importing a, Importing b) => Importing (a,b) where
     b' <- import' b
     pure (a',b')
 
---
--- instance Importing Text.Text where
---   import' node = pure _
+
+instance Importing Text.Text where
+  import' node = do
+    bytestring <- ask
+    let start = fromIntegral (nodeStartByte node)
+        end = fromIntegral (nodeEndByte node)
+    pure (decodeUtf8 (slice start end bytestring))
+
+
+-- | Return a 'ByteString' that contains a slice of the given 'Source'.
+slice :: Int -> Int -> ByteString -> ByteString
+slice start end = take . drop
+  where drop = B.drop start
+        take = B.take (end - start)
 
 class Importing type' where
 
-  import' :: Node -> ReaderC ByteString IO type'
+  import' :: Node -> ReaderC ByteString (LiftC IO) type'
 
 -----------------
 -- | Notes
