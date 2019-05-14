@@ -2,6 +2,7 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
+- 'codegen'
 - location: languages/go
   extra-dep: true
 - location: languages/php
