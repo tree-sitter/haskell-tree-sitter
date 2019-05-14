@@ -16,6 +16,17 @@ input = liftIO (eitherDecodeFileStrict' pythonPath) >>= either fail pure
 
 main :: IO ()
 main = do
-  result <- runQ (input >>= traverse datatypeForConstructors)
-  putStrLn "codegen test"
+  result <- runQ $ input >>= traverse datatypeForConstructors
+  traverse putStrLn [ "{-# LANGUAGE DisambiguateRecordFields, DuplicateRecordFields #-}"
+                    , ""
+                    , "module Python where"
+                    , ""
+                    , "import Prelude ()"
+                    , "import qualified Data.Either"
+                    , "import qualified GHC.Base"
+                    , "import qualified GHC.Classes"
+                    , "import qualified GHC.Maybe"
+                    , "import qualified GHC.Show"
+                    , ""
+                    ]
   putStrLn $ pprint result
