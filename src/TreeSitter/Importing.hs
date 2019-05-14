@@ -117,7 +117,7 @@ slice start end = take . drop
 
 class Importing type' where
 
-  import' :: Ptr Cursor -> ReaderC ByteString (LiftC IO) type'
+  import' :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Cursor -> m type'
 
 newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
   deriving (Functor)
