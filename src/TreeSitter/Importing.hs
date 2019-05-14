@@ -95,11 +95,8 @@ instance (Importing a, Importing b) => Importing (Either a b) where
     Left <$> import' @a childNode <|> Right <$> import' @b childNode
 
 importSum :: (Ptr Cursor -> ReaderC ByteString (LiftC IO) a) -> (Ptr Cursor -> ReaderC ByteString (LiftC IO) b) -> Ptr Cursor -> ReaderC ByteString (LiftC IO) (Either a b)
-importSum importA importB cursor = do
-  _ <- liftIO $ ts_tree_cursor_goto_first_child cursor
-  e <- Left <$> importA cursor <|> Right <$> importB cursor
-  _ <- liftIO $ ts_tree_cursor_goto_parent cursor
-  pure e
+importSum importA importB cursor = push cursor $
+  Left <$> importA cursor <|> Right <$> importB cursor
 
 push :: MonadIO m => Ptr Cursor -> m a -> m a
 push cursor m = do
