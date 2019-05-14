@@ -57,6 +57,15 @@ instance (Importing a, Importing b) => Importing (a,b) where
     b' <- import' b
     pure (a',b')
 
+importPair :: (Ptr Cursor -> ReaderC ByteString (LiftC IO) a) -> (Ptr Cursor -> ReaderC ByteString (LiftC IO) b) -> Ptr Cursor -> ReaderC ByteString (LiftC IO) (a, b)
+importPair importA importB cursor = do
+  _ <- liftIO $ ts_tree_cursor_goto_first_child cursor
+  a <- importA cursor
+  _ <- liftIO $ ts_tree_cursor_goto_next_sibling cursor
+  b <- importB cursor
+  _ <- liftIO $ ts_tree_cursor_goto_parent cursor
+  pure (a, b)
+
 
 instance Importing Text.Text where
   import' node = do
