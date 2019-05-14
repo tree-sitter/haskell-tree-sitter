@@ -101,6 +101,13 @@ importSum importA importB cursor = do
   _ <- liftIO $ ts_tree_cursor_goto_parent cursor
   pure e
 
+push :: MonadIO m => Ptr Cursor -> m a -> m a
+push cursor m = do
+  _ <- liftIO $ ts_tree_cursor_goto_first_child cursor
+  a <- m
+  _ <- liftIO $ ts_tree_cursor_goto_parent cursor
+  pure a
+
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
 slice :: Int -> Int -> ByteString -> ByteString
