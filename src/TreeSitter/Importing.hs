@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications #-}
 module TreeSitter.Importing where
 
 import Control.Exception as Exc
@@ -14,6 +15,7 @@ import Control.Effect.Lift
 import Control.Monad.IO.Class
 import Data.Text.Encoding
 import qualified Data.ByteString as B
+import Control.Applicative
 
 data Expression
       = NumberExpression Number | IdentifierExpression Identifier
@@ -61,6 +63,14 @@ instance Importing Text.Text where
     let start = fromIntegral (nodeStartByte node)
         end = fromIntegral (nodeEndByte node)
     pure (decodeUtf8 (slice start end bytestring))
+
+
+instance (Importing a, Importing b) => Importing (Either a b) where
+  import' node = do
+    [childNode] <- liftIO $ allocaArray 1 $ \ childNodesPtr -> do
+      _ <- with (nodeTSNode node) (flip ts_node_copy_child_nodes childNodesPtr)
+      peekArray 1 childNodesPtr
+    Left <$> import' @a childNode <|> Right <$> import' @b childNode
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
