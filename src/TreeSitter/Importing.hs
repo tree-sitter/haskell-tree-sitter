@@ -151,14 +151,14 @@ instance Leaf Text.Text where
         end = fromIntegral (nodeEndByte node)
     pure (decodeUtf8 (slice start end bytestring))
 
-class GBuild f where
+class GBranch f where
   gbuild :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
 
-instance (GBuild f, GBuild g) => GBuild (f :*: g) where
+instance (GBranch f, GBranch g) => GBranch (f :*: g) where
   gbuild ptr fields = (:*:) <$> gbuild @f ptr fields <*> gbuild @g ptr fields
 
-instance (GBuild f, GBuild g) => GBuild (f :+: g) where
+instance (GBranch f, GBranch g) => GBranch (f :+: g) where
   gbuild ptr fields = L1 <$> gbuild @f ptr fields <|> R1 <$> gbuild @g ptr fields
 
-instance Leaf c => GBuild (K1 i c) where
+instance Leaf c => GBranch (K1 i c) where
   gbuild ptr _ = liftIO (peek ptr) >>= fmap K1 . buildLeaf
