@@ -157,13 +157,13 @@ instance Leaf Text.Text where
 
 
 class GBranch f where
-  gbuild :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
+  gbuildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
 
 instance (GBranch f, GBranch g) => GBranch (f :*: g) where
-  gbuild ptr fields = (:*:) <$> gbuild @f ptr fields <*> gbuild @g ptr fields
+  gbuildBranch ptr fields = (:*:) <$> gbuildBranch @f ptr fields <*> gbuildBranch @g ptr fields
 
 instance (GBranch f, GBranch g) => GBranch (f :+: g) where
-  gbuild ptr fields = L1 <$> gbuild @f ptr fields <|> R1 <$> gbuild @g ptr fields
+  gbuildBranch ptr fields = L1 <$> gbuildBranch @f ptr fields <|> R1 <$> gbuildBranch @g ptr fields
 
 instance Leaf c => GBranch (K1 i c) where
-  gbuild ptr _ = liftIO (peek ptr) >>= fmap K1 . buildLeaf
+  gbuildBranch ptr _ = liftIO (peek ptr) >>= fmap K1 . buildLeaf
