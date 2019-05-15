@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
+{-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Importing where
 
 import Control.Exception as Exc
@@ -146,6 +146,8 @@ class Leaf a where
 
 class Branch a where
   buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m a
+  default buildBranch :: (Alternative m, Carrier sig m, GBranch (Rep a), Generic a, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m a
+  buildBranch ptr fields = to <$> gbuildBranch ptr fields
 
 
 instance Leaf Text.Text where
