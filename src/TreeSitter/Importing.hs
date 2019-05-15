@@ -139,6 +139,7 @@ instance Monad m => Monad (MaybeC m) where
 ----
 
 newtype FieldName = FieldName { getFieldName :: String }
+  deriving (Eq, Ord, Show)
 
 
 class Leaf a where
