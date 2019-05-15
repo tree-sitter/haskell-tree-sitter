@@ -126,6 +126,10 @@ instance Monad m => Monad (MaybeC m) where
       Nothing -> pure Nothing
       Just a -> runMaybeC $ f a
 
+instance MonadIO m => MonadIO (MaybeC m) where
+  liftIO act = MaybeC (fmap Just (liftIO act))
+
+
 -----------------
 -- | Notes
 -- ToAST takes Node -> IO (value of datatype)
