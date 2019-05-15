@@ -6,6 +6,9 @@ import Foreign.C
 import Foreign.Ptr
 import TreeSitter.Node
 
+-- | A cursor for traversing a tree.
+--
+--   Note that we do not define 'Eq', 'Ord', or 'Storable' instances, as the underlying @TSTreeCursor@ type is not usefully copyable.
 data Cursor = Cursor
   deriving (Show)
 
