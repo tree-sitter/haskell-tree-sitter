@@ -144,6 +144,10 @@ newtype FieldName = FieldName { getFieldName :: String }
 class Leaf a where
   buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
 
+class Branch a where
+  buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m a
+
+
 instance Leaf Text.Text where
   buildLeaf node = do
     bytestring <- ask
