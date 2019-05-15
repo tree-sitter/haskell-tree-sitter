@@ -151,6 +151,7 @@ instance Leaf Text.Text where
         end = fromIntegral (nodeEndByte node)
     pure (decodeUtf8 (slice start end bytestring))
 
+
 class GBranch f where
   gbuild :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
 
