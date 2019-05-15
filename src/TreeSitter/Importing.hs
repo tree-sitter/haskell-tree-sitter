@@ -20,6 +20,7 @@ import Data.Text.Encoding
 import qualified Data.ByteString as B
 import Control.Applicative
 import Control.Monad (void)
+import qualified Data.Map as Map
 
 data Expression
       = NumberExpression Number | IdentifierExpression Identifier
@@ -132,3 +133,11 @@ instance Monad m => Monad (MaybeC m) where
 -- splice will generate instances of this class
 -- CodeGen will import TreeSitter.Importing (why?)
 -- Signal backtrackable failure
+
+
+----
+
+newtype FieldName = FieldName { getFieldName :: String }
+
+class GBuild f where
+  gbuild :: Map.Map FieldName TSNode -> f a
