@@ -127,7 +127,7 @@ instance Monad m => Monad (MaybeC m) where
       Just a -> runMaybeC $ f a
 
 instance MonadIO m => MonadIO (MaybeC m) where
-  liftIO act = MaybeC (fmap Just (liftIO act))
+  liftIO = MaybeC . fmap Just . liftIO
 
 
 -----------------
