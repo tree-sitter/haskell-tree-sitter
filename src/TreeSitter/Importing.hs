@@ -172,3 +172,6 @@ instance Leaf c => GBranch (K1 i c) where
 
 instance GBranch f => GBranch (M1 D c f) where
   gbuildBranch ptr fields = M1 <$> gbuildBranch ptr fields
+
+instance GBranch f => GBranch (M1 C c f) where
+  gbuildBranch ptr fields = M1 <$> gbuildBranch ptr fields
