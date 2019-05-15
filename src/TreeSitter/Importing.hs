@@ -1,5 +1,11 @@
 {-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
-module TreeSitter.Importing where
+module TreeSitter.Importing
+( Importing(..)
+, importByteString
+, FieldName(..)
+, Branch(..)
+, Leaf(..)
+) where
 
 import Control.Exception as Exc
 import Data.ByteString (ByteString)
