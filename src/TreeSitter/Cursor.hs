@@ -1,6 +1,5 @@
 module TreeSitter.Cursor where
 
-import Data.Word
 import Foreign.C
 import Foreign.Ptr
 import TreeSitter.Node
@@ -15,7 +14,7 @@ foreign import ccall unsafe "ts_tree_cursor_delete" ts_tree_cursor_delete :: Ptr
 
 foreign import ccall unsafe "src/bridge.c ts_tree_cursor_current_node_p" ts_tree_cursor_current_node_p :: Ptr Cursor -> Ptr TSNode -> IO ()
 foreign import ccall unsafe "ts_tree_cursor_current_field_name" ts_tree_cursor_current_field_name :: Ptr Cursor -> IO CString
-foreign import ccall unsafe "ts_tree_cursor_current_field_id" ts_tree_cursor_current_field_id :: Ptr Cursor -> IO Word16
+foreign import ccall unsafe "ts_tree_cursor_current_field_id" ts_tree_cursor_current_field_id :: Ptr Cursor -> IO FieldId
 
 foreign import ccall unsafe "ts_tree_cursor_goto_parent" ts_tree_cursor_goto_parent :: Ptr Cursor -> IO Bool
 foreign import ccall unsafe "ts_tree_cursor_goto_next_sibling" ts_tree_cursor_goto_next_sibling :: Ptr Cursor -> IO Bool
