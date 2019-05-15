@@ -146,9 +146,9 @@ class Leaf a where
   buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
 
 class Branch a where
-  buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m a
-  default buildBranch :: (Alternative m, Carrier sig m, GBranch (Rep a), Generic a, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m a
-  buildBranch ptr fields = to <$> gbuildBranch ptr fields
+  buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
+  default buildBranch :: (Alternative m, Carrier sig m, GBranch (Rep a), Generic a, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
+  buildBranch node fields = to <$> gbuildBranch node fields
 
 
 instance Leaf Text.Text where
@@ -160,19 +160,19 @@ instance Leaf Text.Text where
 
 
 class GBranch f where
-  gbuildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
+  gbuildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m (f a)
 
 instance (GBranch f, GBranch g) => GBranch (f :*: g) where
-  gbuildBranch ptr fields = (:*:) <$> gbuildBranch @f ptr fields <*> gbuildBranch @g ptr fields
+  gbuildBranch node fields = (:*:) <$> gbuildBranch @f node fields <*> gbuildBranch @g node fields
 
 instance (GBranch f, GBranch g) => GBranch (f :+: g) where
-  gbuildBranch ptr fields = L1 <$> gbuildBranch @f ptr fields <|> R1 <$> gbuildBranch @g ptr fields
+  gbuildBranch node fields = L1 <$> gbuildBranch @f node fields <|> R1 <$> gbuildBranch @g node fields
 
 instance Leaf c => GBranch (K1 i c) where
-  gbuildBranch ptr _ = liftIO (peek ptr) >>= fmap K1 . buildLeaf
+  gbuildBranch node _ = K1 <$> (buildLeaf node)
 
 instance GBranch f => GBranch (M1 D c f) where
-  gbuildBranch ptr fields = M1 <$> gbuildBranch ptr fields
+  gbuildBranch node fields = M1 <$> gbuildBranch node fields
 
 instance GBranch f => GBranch (M1 C c f) where
-  gbuildBranch ptr fields = M1 <$> gbuildBranch ptr fields
+  gbuildBranch node fields = M1 <$> gbuildBranch node fields
