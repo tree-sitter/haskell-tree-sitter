@@ -183,5 +183,6 @@ instance (GBranch f, Selector c) => GBranch (M1 S c f) where
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         node <- liftIO (alloca (\ ptr -> with node (flip ts_node_poke_p ptr) *> peek ptr))
+        -- FIXME: push the node and decode the fields before building
         M1 <$> gbuildBranch node fields
       Nothing -> empty
