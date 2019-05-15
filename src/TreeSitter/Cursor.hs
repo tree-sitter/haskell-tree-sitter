@@ -13,6 +13,7 @@ sizeOfCursor = 72
 
 foreign import ccall unsafe "src/bridge.c ts_tree_cursor_new_p" ts_tree_cursor_new_p :: Ptr TSNode -> Ptr Cursor -> IO ()
 foreign import ccall unsafe "ts_tree_cursor_delete" ts_tree_cursor_delete :: Ptr Cursor -> IO ()
+foreign import ccall unsafe "src/bridge.c ts_tree_cursor_reset_p" ts_tree_cursor_reset_p :: Ptr Cursor -> Ptr TSNode -> IO ()
 
 foreign import ccall unsafe "src/bridge.c ts_tree_cursor_current_node_p" ts_tree_cursor_current_node_p :: Ptr Cursor -> Ptr TSNode -> IO ()
 foreign import ccall unsafe "ts_tree_cursor_current_field_name" ts_tree_cursor_current_field_name :: Ptr Cursor -> IO CString
