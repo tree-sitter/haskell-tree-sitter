@@ -140,4 +140,4 @@ instance Monad m => Monad (MaybeC m) where
 newtype FieldName = FieldName { getFieldName :: String }
 
 class GBuild f where
-  gbuild :: Map.Map FieldName TSNode -> f a
+  gbuild :: MonadIO m => Map.Map FieldName TSNode -> m (f a)
