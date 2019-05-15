@@ -144,6 +144,12 @@ newtype FieldName = FieldName { getFieldName :: String }
 class Leaf a where
   buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
 
+instance Leaf Text.Text where
+  buildLeaf node = do
+    bytestring <- ask
+    let start = fromIntegral (nodeStartByte node)
+        end = fromIntegral (nodeEndByte node)
+    pure (decodeUtf8 (slice start end bytestring))
 
 class GBuild f where
   gbuild :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
