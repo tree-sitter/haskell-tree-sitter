@@ -141,10 +141,10 @@ instance Monad m => Monad (MaybeC m) where
 newtype FieldName = FieldName { getFieldName :: String }
 
 class GBuild f where
-  gbuild :: (Alternative m, MonadIO m) => Map.Map FieldName TSNode -> m (f a)
+  gbuild :: (Alternative m, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
 
 instance (GBuild f, GBuild g) => GBuild (f :*: g) where
-  gbuild fields = (:*:) <$> gbuild @f fields <*> gbuild @g fields
+  gbuild ptr fields = (:*:) <$> gbuild @f ptr fields <*> gbuild @g ptr fields
 
 instance (GBuild f, GBuild g) => GBuild (f :+: g) where
-  gbuild fields = L1 <$> gbuild @f fields <|> R1 <$> gbuild @g fields
+  gbuild ptr fields = L1 <$> gbuild @f ptr fields <|> R1 <$> gbuild @g ptr fields
