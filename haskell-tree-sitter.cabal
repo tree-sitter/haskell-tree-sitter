@@ -18,6 +18,7 @@ library
                      , aeson                 >= 1.2 && < 2
                      , bytestring           ^>= 0.10.8
                      , directory            ^>= 1.3
+                     , fused-effects         >= 0.3
                      , filepath             ^>= 1.4
                      , hedgehog             ^>= 0.6
                      , split                ^>= 0.2
@@ -33,6 +34,7 @@ library
                      , CodeGen.GenerateSyntax
                      , CodeGen.Deserialize
                      --, TreeSitter.Ptr
+                     , TreeSitter.Cursor
   Include-dirs:        includes
                      , vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
