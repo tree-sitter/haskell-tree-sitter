@@ -85,6 +85,12 @@ void ts_tree_cursor_new_p(TSNode *node, TSTreeCursor *outCursor) {
   *outCursor = ts_tree_cursor_new(*node);
 }
 
+void ts_tree_cursor_reset_p(TSTreeCursor *cursor, TSNode *node) {
+  assert(cursor != NULL);
+  assert(node != NULL);
+  ts_tree_cursor_reset(cursor, *node);
+}
+
 void ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, TSNode *outNode) {
   assert(cursor != NULL);
   assert(outNode != NULL);
