@@ -146,7 +146,7 @@ class Leaf a where
 
 
 class GBuild f where
-  gbuild :: (Alternative m, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
+  gbuild :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
 
 instance (GBuild f, GBuild g) => GBuild (f :*: g) where
   gbuild ptr fields = (:*:) <$> gbuild @f ptr fields <*> gbuild @g ptr fields
