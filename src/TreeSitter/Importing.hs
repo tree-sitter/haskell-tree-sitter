@@ -153,3 +153,6 @@ instance (GBuild f, GBuild g) => GBuild (f :*: g) where
 
 instance (GBuild f, GBuild g) => GBuild (f :+: g) where
   gbuild ptr fields = L1 <$> gbuild @f ptr fields <|> R1 <$> gbuild @g ptr fields
+
+instance Leaf c => GBuild (K1 i c) where
+  gbuild ptr _ = liftIO (peek ptr) >>= fmap K1 . buildLeaf
