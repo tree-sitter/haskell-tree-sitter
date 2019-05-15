@@ -115,6 +115,16 @@ instance Applicative m => Applicative (MaybeC m) where
   pure a = MaybeC (pure (Just a))
   liftA2 f (MaybeC a) (MaybeC b) = MaybeC $ liftA2 (liftA2 f) a b
 
+instance Applicative m => Alternative (MaybeC m) where
+  empty = MaybeC (pure Nothing)
+  MaybeC a <|> MaybeC b = MaybeC (liftA2 (<|>) a b)
+
+instance Monad m => Monad (MaybeC m) where
+  MaybeC a >>= f = MaybeC $ do
+    a' <- a
+    case a' of
+      Nothing -> pure Nothing
+      Just a -> runMaybeC $ f a
 
 -----------------
 -- | Notes
