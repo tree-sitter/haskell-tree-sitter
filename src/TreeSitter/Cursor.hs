@@ -7,6 +7,7 @@ import Foreign.Ptr
 import TreeSitter.Node
 
 data Cursor = Cursor
+  deriving (Show)
 
 sizeOfCursor :: Int
 sizeOfCursor = 72
