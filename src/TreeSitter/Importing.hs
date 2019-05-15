@@ -144,7 +144,7 @@ class GBuild f where
   gbuild :: (Alternative m, MonadIO m) => Map.Map FieldName TSNode -> m (f a)
 
 instance (GBuild f, GBuild g) => GBuild (f :*: g) where
-  gbuild fields = (:*:) <$> gbuild fields <*> gbuild fields
+  gbuild fields = (:*:) <$> gbuild @f fields <*> gbuild @g fields
 
 instance (GBuild f, GBuild g) => GBuild (f :+: g) where
-  gbuild fields = L1 <$> gbuild fields <|> R1 <$> gbuild fields
+  gbuild fields = L1 <$> gbuild @f fields <|> R1 <$> gbuild @g fields
