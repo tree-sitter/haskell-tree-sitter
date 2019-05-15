@@ -13,7 +13,7 @@ import TreeSitter.Node as TS
 import TreeSitter.Parser as TS
 import TreeSitter.Tree as TS
 import qualified Data.Text as Text
-import Control.Effect
+import Control.Effect hiding ((:+:))
 import Control.Effect.Reader
 import Control.Monad.IO.Class
 import Data.Text.Encoding
@@ -145,3 +145,6 @@ class GBuild f where
 
 instance (GBuild f, GBuild g) => GBuild (f :*: g) where
   gbuild fields = (:*:) <$> gbuild fields <*> gbuild fields
+
+instance (GBuild f, GBuild g) => GBuild (f :+: g) where
+  gbuild fields = L1 <$> gbuild fields <|> R1 <$> gbuild fields
