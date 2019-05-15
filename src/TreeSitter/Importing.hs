@@ -140,6 +140,11 @@ instance Monad m => Monad (MaybeC m) where
 
 newtype FieldName = FieldName { getFieldName :: String }
 
+
+class Leaf a where
+  buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
+
+
 class GBuild f where
   gbuild :: (Alternative m, MonadIO m) => Ptr Node -> Map.Map FieldName TSNode -> m (f a)
 
