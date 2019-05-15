@@ -1,4 +1,4 @@
-{-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
+{-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Importing where
 
 import Control.Exception as Exc
@@ -169,3 +169,6 @@ instance (GBranch f, GBranch g) => GBranch (f :+: g) where
 
 instance Leaf c => GBranch (K1 i c) where
   gbuildBranch ptr _ = liftIO (peek ptr) >>= fmap K1 . buildLeaf
+
+instance GBranch f => GBranch (M1 D c f) where
+  gbuildBranch ptr fields = M1 <$> gbuildBranch ptr fields
