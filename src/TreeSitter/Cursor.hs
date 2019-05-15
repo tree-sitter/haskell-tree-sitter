@@ -12,6 +12,7 @@ import TreeSitter.Node
 data Cursor = Cursor
   deriving (Show)
 
+-- | THe size of a 'Cursor' in bytes. The tests verify that this value is the same as @sizeof(TSTreeCursor)@.
 sizeOfCursor :: Int
 sizeOfCursor = 72
 
