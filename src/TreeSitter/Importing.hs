@@ -2,7 +2,7 @@
 module TreeSitter.Importing where
 
 import Control.Exception as Exc
-import Data.ByteString
+import Data.ByteString (ByteString)
 
 import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import           Foreign.Marshal.Alloc
