@@ -33,6 +33,11 @@ static inline void ts_node_poke(TSNode node, Node *out) {
   out->childCount = ts_node_child_count(node);
 }
 
+void ts_node_poke_p(TSNode *node, Node *out) {
+  assert(node != NULL);
+  ts_node_poke(*node, out);
+}
+
 void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
   assert(tree != NULL);
   assert(outNode != NULL);
@@ -67,4 +72,27 @@ size_t sizeof_tspoint() {
 
 size_t sizeof_node() {
   return sizeof(Node);
+}
+
+size_t sizeof_tstreecursor() {
+  return sizeof(TSTreeCursor);
+}
+
+
+void ts_tree_cursor_new_p(TSNode *node, TSTreeCursor *outCursor) {
+  assert(node != NULL);
+  assert(outCursor != NULL);
+  *outCursor = ts_tree_cursor_new(*node);
+}
+
+void ts_tree_cursor_reset_p(TSTreeCursor *cursor, TSNode *node) {
+  assert(cursor != NULL);
+  assert(node != NULL);
+  ts_tree_cursor_reset(cursor, *node);
+}
+
+void ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, TSNode *outNode) {
+  assert(cursor != NULL);
+  assert(outNode != NULL);
+  *outNode = ts_tree_cursor_current_node(cursor);
 }

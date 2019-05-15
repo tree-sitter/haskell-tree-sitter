@@ -2,6 +2,7 @@ import Foreign
 import Foreign.C.Types
 import Foreign.Storable
 import Test.Hspec
+import TreeSitter.Cursor
 import TreeSitter.Node
 import TreeSitter.Parser
 
@@ -28,6 +29,10 @@ main = hspec $ do
     it "roundtrips correctly" $
       with (Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8) peek `shouldReturn` Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8
 
+  describe "TSTreeCursor" $ do
+    it "has the same size as its C counterpart" $
+      sizeOfCursor `shouldBe` fromIntegral sizeof_node
+
   describe "Parser" $ do
     it "stores a timeout value" $ do
       parser <- ts_parser_new
@@ -41,3 +46,4 @@ main = hspec $ do
 foreign import ccall unsafe "src/bridge.c sizeof_tsnode" sizeof_tsnode :: CSize
 foreign import ccall unsafe "src/bridge.c sizeof_tspoint" sizeof_tspoint :: CSize
 foreign import ccall unsafe "src/bridge.c sizeof_node" sizeof_node :: CSize
+foreign import ccall unsafe "src/bridge.c sizeof_tstreecursor" sizeof_tstreecursor :: CSize
