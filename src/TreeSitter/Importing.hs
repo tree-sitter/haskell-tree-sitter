@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications #-}
+{-# LANGUAGE DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Importing where
 
 import Control.Exception as Exc
@@ -20,6 +20,7 @@ import Data.Text.Encoding
 import qualified Data.ByteString as B
 import Control.Applicative
 import Control.Monad (void)
+import GHC.Generics
 import qualified Data.Map as Map
 
 data Expression
@@ -141,3 +142,6 @@ newtype FieldName = FieldName { getFieldName :: String }
 
 class GBuild f where
   gbuild :: MonadIO m => Map.Map FieldName TSNode -> m (f a)
+
+instance (GBuild f, GBuild g) => GBuild (f :*: g) where
+  gbuild fields = (:*:) <$> gbuild fields <*> gbuild fields
