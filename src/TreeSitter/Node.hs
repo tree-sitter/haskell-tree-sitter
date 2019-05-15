@@ -1,9 +1,10 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving, InterruptibleFFI, RankNTypes, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Node
 ( Node(..)
 , TSPoint(..)
 , TSNode(..)
+, FieldId(..)
 , ts_node_copy_child_nodes
 ) where
 
@@ -28,6 +29,10 @@ data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }
 
 data TSNode = TSNode !Word32 !Word32 !Word32 !Word32 !(Ptr ()) !(Ptr ())
   deriving (Show, Eq, Generic)
+
+newtype FieldId = FieldId { getFieldId :: Word16 }
+  deriving (Eq, Ord, Show, Storable)
+
 
 -- | 'Struct' is a strict 'Monad' with automatic alignment & advancing, & inferred type.
 newtype Struct a = Struct { runStruct :: forall b . Ptr b -> IO (a, Ptr a) }

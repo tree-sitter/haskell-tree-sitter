@@ -26,6 +26,7 @@ library
                      , TreeSitter.Node
                      , TreeSitter.Tree
                      , TreeSitter.Ptr
+                     , TreeSitter.Cursor
   Include-dirs:        includes
                      , vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
