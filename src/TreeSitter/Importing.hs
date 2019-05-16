@@ -57,6 +57,11 @@ withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket_
   (ts_tree_cursor_delete cursor)
   (action cursor)
 
+instance Importing a => Importing [a] where
+  import' = push $ do
+    a <- import' @a
+    pure [a]
+
 
 instance (Importing a, Importing b) => Importing (a,b) where
   import' = push $ do
@@ -96,7 +101,6 @@ peekNode = do
     alloca $ \ nodePtr -> do
       ts_node_poke_p tsNodePtr nodePtr
       peek nodePtr
-
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
 slice :: Int -> Int -> ByteString -> ByteString
