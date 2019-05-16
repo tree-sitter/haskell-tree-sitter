@@ -107,6 +107,11 @@ peekNode = do
       ts_node_poke_p tsNodePtr nodePtr
       peek nodePtr
 
+goto :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => TSNode -> m ()
+goto node = do
+  cursor <- ask
+  liftIO (with node (ts_tree_cursor_reset_p cursor))
+
 peekNode' :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe Node)
 peekNode' = do
   cursor <- ask
