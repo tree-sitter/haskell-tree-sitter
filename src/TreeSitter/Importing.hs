@@ -154,7 +154,7 @@ class Leaf a where
 
 class Branch a where
   buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
-  default buildBranch :: (Alternative m, Carrier sig m, GBranch (Rep a), Generic a, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
+  default buildBranch :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
   buildBranch node fields = to <$> gbuildBranch node fields
 
 
@@ -166,22 +166,22 @@ instance Leaf Text.Text where
     pure (decodeUtf8 (slice start end bytestring))
 
 
-class GBranch f where
+class GBuilding f where
   gbuildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m (f a)
 
-instance (GBranch f, GBranch g) => GBranch (f :*: g) where
+instance (GBuilding f, GBuilding g) => GBuilding (f :*: g) where
   gbuildBranch node fields = (:*:) <$> gbuildBranch @f node fields <*> gbuildBranch @g node fields
 
-instance (GBranch f, GBranch g) => GBranch (f :+: g) where
+instance (GBuilding f, GBuilding g) => GBuilding (f :+: g) where
   gbuildBranch node fields = L1 <$> gbuildBranch @f node fields <|> R1 <$> gbuildBranch @g node fields
 
-instance GBranch f => GBranch (M1 D c f) where
+instance GBuilding f => GBuilding (M1 D c f) where
   gbuildBranch node fields = M1 <$> gbuildBranch node fields
 
-instance GBranch f => GBranch (M1 C c f) where
+instance GBuilding f => GBuilding (M1 C c f) where
   gbuildBranch node fields = M1 <$> gbuildBranch node fields
 
-instance (GImporting f, Selector c) => GBranch (M1 S c f) where
+instance (GImporting f, Selector c) => GBuilding (M1 S c f) where
   gbuildBranch node fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> import' node >>= fmap M1 . gimportNode
