@@ -194,8 +194,8 @@ class Leaf a where
   buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
 
 class Branch a where
-  buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
-  default buildBranch :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
+  buildBranch :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
+  default buildBranch :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m a
   buildBranch node fields = to <$> gbuildNode node fields
 
 
@@ -208,7 +208,7 @@ instance Leaf Text.Text where
 
 
 class GBuilding f where
-  gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m (f a)
+  gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> Map.Map FieldName TSNode -> m (f a)
 
 instance (GBuilding f, GBuilding g) => GBuilding (f :*: g) where
   gbuildNode node fields = (:*:) <$> gbuildNode @f node fields <*> gbuildNode @g node fields
