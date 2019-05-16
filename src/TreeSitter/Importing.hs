@@ -182,7 +182,7 @@ instance GBranch f => GBranch (M1 C c f) where
   gbuildBranch node fields = M1 <$> gbuildBranch node fields
 
 instance (GImporting f, Selector c) => GBranch (M1 S c f) where
-  gbuildBranch node fields = do
+  gbuildBranch node fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> import' node >>= fmap M1 . gimportNode
       Nothing -> empty
