@@ -175,9 +175,6 @@ instance (GBranch f, GBranch g) => GBranch (f :*: g) where
 instance (GBranch f, GBranch g) => GBranch (f :+: g) where
   gbuildBranch node fields = L1 <$> gbuildBranch @f node fields <|> R1 <$> gbuildBranch @g node fields
 
-instance Leaf c => GBranch (K1 i c) where
-  gbuildBranch node _ = K1 <$> buildLeaf node
-
 instance GBranch f => GBranch (M1 D c f) where
   gbuildBranch node fields = M1 <$> gbuildBranch node fields
 
@@ -196,3 +193,6 @@ instance (GImporting f, Selector c) => GBranch (M1 S c f) where
 
 class GImporting f where
   gimportNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> m (f a)
+
+instance Leaf c => GImporting (K1 i c) where
+  gimportNode node = K1 <$> buildLeaf node
