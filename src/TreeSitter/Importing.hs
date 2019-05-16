@@ -214,7 +214,7 @@ instance (GBuilding f, GBuilding g) => GBuilding (f :+: g) where
   gbuildNode fields = L1 <$> gbuildNode @f fields <|> R1 <$> gbuildNode @g fields
 
 instance GBuilding f => GBuilding (M1 D c f) where
-  gbuildNode fields = M1 <$> gbuildNode fields
+  gbuildNode _ = M1 <$> push (getFields >>= gbuildNode)
 
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode fields = M1 <$> gbuildNode fields
@@ -224,7 +224,7 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         goto (nodeTSNode node)
-        M1 <$> push (getFields >>= gbuildNode)
+        M1 <$> gbuildNode fields
       Nothing -> empty
 
 instance Building c => GBuilding (K1 i c) where
