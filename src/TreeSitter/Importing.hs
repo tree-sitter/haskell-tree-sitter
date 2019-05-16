@@ -220,6 +220,9 @@ instance Building Text.Text where
         pure (decodeUtf8 (slice start end bytestring))
       _ -> empty
 
+instance Building a => Building (Maybe a) where
+  buildNode = Just <$> buildNode
+
 
 class GBuilding f where
   gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
