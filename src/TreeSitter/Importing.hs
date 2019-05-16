@@ -194,9 +194,9 @@ class Leaf a where
   buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
 
 class Building a where
-  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> Map.Map FieldName Node -> m a
-  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> Map.Map FieldName Node -> m a
-  buildNode node fields = to <$> gbuildNode node fields
+  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m a
+  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m a
+  buildNode fields = to <$> gbuildNode fields
 
 
 instance Leaf Text.Text where
@@ -208,27 +208,27 @@ instance Leaf Text.Text where
 
 
 class GBuilding f where
-  gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> Map.Map FieldName Node -> m (f a)
+  gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 
 instance (GBuilding f, GBuilding g) => GBuilding (f :*: g) where
-  gbuildNode node fields = (:*:) <$> gbuildNode @f node fields <*> gbuildNode @g node fields
+  gbuildNode fields = (:*:) <$> gbuildNode @f fields <*> gbuildNode @g fields
 
 instance (GBuilding f, GBuilding g) => GBuilding (f :+: g) where
-  gbuildNode node fields = L1 <$> gbuildNode @f node fields <|> R1 <$> gbuildNode @g node fields
+  gbuildNode fields = L1 <$> gbuildNode @f fields <|> R1 <$> gbuildNode @g fields
 
 instance GBuilding f => GBuilding (M1 D c f) where
-  gbuildNode node fields = M1 <$> gbuildNode node fields
+  gbuildNode fields = M1 <$> gbuildNode fields
 
 instance GBuilding f => GBuilding (M1 C c f) where
-  gbuildNode node fields = M1 <$> gbuildNode node fields
+  gbuildNode fields = M1 <$> gbuildNode fields
 
 instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
-  gbuildNode node fields =
+  gbuildNode fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         goto (nodeTSNode node)
-        M1 <$> push (getFields >>= gbuildNode node)
+        M1 <$> push (getFields >>= gbuildNode)
       Nothing -> empty
 
 instance Leaf c => GBuilding (K1 i c) where
-  gbuildNode _ _ = K1 <$> (peekNode >>= buildLeaf)
+  gbuildNode _ = K1 <$> (peekNode >>= buildLeaf)
