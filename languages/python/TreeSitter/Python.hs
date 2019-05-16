@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DuplicateRecordFields, TemplateHaskell #-}
 module TreeSitter.Python
 ( tree_sitter_python
 ) where
