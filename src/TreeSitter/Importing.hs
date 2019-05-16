@@ -190,13 +190,13 @@ newtype FieldName = FieldName { getFieldName :: String }
 
 
 class Building a where
-  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m a
-  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m a
-  buildNode fields = to <$> gbuildNode fields
+  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  buildNode = to <$> push (getFields >>= gbuildNode)
 
 
 instance Building Text.Text where
-  buildNode _ = do
+  buildNode = do
     node <- peekNode
     bytestring <- ask
     let start = fromIntegral (nodeStartByte node)
@@ -214,7 +214,7 @@ instance (GBuilding f, GBuilding g) => GBuilding (f :+: g) where
   gbuildNode fields = L1 <$> gbuildNode @f fields <|> R1 <$> gbuildNode @g fields
 
 instance GBuilding f => GBuilding (M1 D c f) where
-  gbuildNode _ = M1 <$> push (getFields >>= gbuildNode)
+  gbuildNode fields = M1 <$> gbuildNode fields
 
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode fields = M1 <$> gbuildNode fields
@@ -228,7 +228,7 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
       Nothing -> empty
 
 instance Building c => GBuilding (K1 i c) where
-  gbuildNode fields = K1 <$> buildNode fields
+  gbuildNode _ = K1 <$> buildNode
 
 instance GBuilding U1 where
   gbuildNode _ = pure U1
