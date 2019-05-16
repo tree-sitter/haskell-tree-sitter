@@ -1,4 +1,4 @@
-{-# LANGUAGE DuplicateRecordFields, TemplateHaskell #-}
+{-# LANGUAGE DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TemplateHaskell #-}
 module TreeSitter.Python where
 
 import qualified Data.ByteString as B
