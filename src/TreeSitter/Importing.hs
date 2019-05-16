@@ -131,12 +131,12 @@ peekFieldName = do
 getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
 getFields = go Map.empty
   where go fs = do
-          fieldName <- peekFieldName
-          case fieldName of
-            Just fieldName' -> do
-              node <- peekNode
-              case node of
-                Just node' -> do
+          node <- peekNode
+          case node of
+            Just node' -> do
+              fieldName <- peekFieldName
+              case fieldName of
+                Just fieldName' -> do
                   step
                   go (Map.insert fieldName' node' fs)
                 _ -> pure fs
