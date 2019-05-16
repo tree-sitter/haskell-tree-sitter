@@ -2,9 +2,11 @@
 module TreeSitter.Python where
 
 import qualified Data.ByteString as B
-import Control.Monad.IO.Class (MonadIO(..))
+import qualified Control.Exception as Exc
 import Foreign.Ptr
+import qualified TreeSitter.Importing as TS
 import TreeSitter.Language
+import TreeSitter.Parser
 import CodeGen.Deserialize
 import CodeGen.GenerateSyntax
 import Control.Monad.IO.Class
@@ -19,5 +21,8 @@ $(do
   either fail (traverse datatypeForConstructors) input)
 
 
-parseByteString :: MonadIO m => B.ByteString -> m (Maybe Module)
-parseByteString _ = pure Nothing
+parseByteString :: B.ByteString -> IO (Maybe Module)
+parseByteString bytestring = Exc.bracket
+  ts_parser_new
+  ts_parser_delete
+  $ \ parser -> TS.parseByteString parser bytestring
