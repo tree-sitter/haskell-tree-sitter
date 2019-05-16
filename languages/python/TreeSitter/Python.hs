@@ -1,6 +1,8 @@
 {-# LANGUAGE DuplicateRecordFields, TemplateHaskell #-}
 module TreeSitter.Python where
 
+import qualified Data.ByteString as B
+import Control.Monad.IO.Class (MonadIO(..))
 import Foreign.Ptr
 import TreeSitter.Language
 import CodeGen.Deserialize
@@ -15,3 +17,7 @@ foreign import ccall unsafe "vendor/tree-sitter-python/src/parser.c tree_sitter_
 $(do
   input <- liftIO (eitherDecodeFileStrict' "./vendor/tree-sitter-python/src/node-types.json")
   either fail (traverse datatypeForConstructors) input)
+
+
+parseByteString :: MonadIO m => B.ByteString -> m (Maybe Module)
+parseByteString _ = pure Nothing
