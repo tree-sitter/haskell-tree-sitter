@@ -199,8 +199,9 @@ class Building a where
   buildNode fields = to <$> gbuildNode fields
 
 
-instance Leaf Text.Text where
-  buildLeaf node = do
+instance Building Text.Text where
+  buildNode _ = do
+    node <- peekNode
     bytestring <- ask
     let start = fromIntegral (nodeStartByte node)
         end = fromIntegral (nodeEndByte node)
