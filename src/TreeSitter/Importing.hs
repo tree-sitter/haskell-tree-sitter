@@ -126,6 +126,17 @@ peekFieldName = do
   fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
   FieldName <$> liftIO (peekCString fieldName)
 
+fields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
+fields = go Map.empty
+  where go fs = do
+          -- FIXME: this should be returning in Maybe
+          fieldName <- peekFieldName
+          node <- peekNode'
+          case node of
+            Just node' -> do
+              step
+              go (Map.insert fieldName node' fs)
+            _ -> pure fs
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
 slice :: Int -> Int -> ByteString -> ByteString
