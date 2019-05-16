@@ -79,10 +79,13 @@ instance (Importing a, Importing b) => Importing (a,b) where
 instance Importing Text.Text where
   import' = do
     node <- peekNode
-    bytestring <- ask
-    let start = fromIntegral (nodeStartByte node)
-        end = fromIntegral (nodeEndByte node)
-    pure (decodeUtf8 (slice start end bytestring))
+    case node of
+      Just node' -> do
+        bytestring <- ask
+        let start = fromIntegral (nodeStartByte node')
+            end = fromIntegral (nodeEndByte node')
+        pure (decodeUtf8 (slice start end bytestring))
+      _ -> empty
 
 
 instance (Importing a, Importing b) => Importing (Either a b) where
@@ -98,22 +101,13 @@ push m = do
   a <- m
   a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
 
-peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Node
-peekNode = do
-  cursor <- ask
-  liftIO $ alloca $ \ tsNodePtr -> do
-    ts_tree_cursor_current_node_p cursor tsNodePtr
-    alloca $ \ nodePtr -> do
-      ts_node_poke_p tsNodePtr nodePtr
-      peek nodePtr
-
 goto :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => TSNode -> m ()
 goto node = do
   cursor <- ask
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
-peekNode' :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe Node)
-peekNode' = do
+peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe Node)
+peekNode = do
   cursor <- ask
   liftIO $ alloca $ \ tsNodePtr -> do
     isValid <- ts_tree_cursor_current_node_p cursor tsNodePtr
@@ -140,7 +134,7 @@ getFields = go Map.empty
           fieldName <- peekFieldName
           case fieldName of
             Just fieldName' -> do
-              node <- peekNode'
+              node <- peekNode
               case node of
                 Just node' -> do
                   step
@@ -218,10 +212,13 @@ class Building a where
 instance Building Text.Text where
   buildNode = do
     node <- peekNode
-    bytestring <- ask
-    let start = fromIntegral (nodeStartByte node)
-        end = fromIntegral (nodeEndByte node)
-    pure (decodeUtf8 (slice start end bytestring))
+    case node of
+      Just node' -> do
+        bytestring <- ask
+        let start = fromIntegral (nodeStartByte node')
+            end = fromIntegral (nodeEndByte node')
+        pure (decodeUtf8 (slice start end bytestring))
+      _ -> empty
 
 
 class GBuilding f where
