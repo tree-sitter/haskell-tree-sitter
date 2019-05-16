@@ -17,21 +17,22 @@ import Control.Monad.IO.Class
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
+import qualified TreeSitter.Importing as TS
 
 -- Template Haskell functions that take the input types and auto-generate Haskell datatypes
 datatypeForConstructors :: MkDatatype -> Q Dec
 datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
   let name = toName' named datatypeName
   cons <- traverse (toSumCon datatypeName) subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
 datatypeForConstructors (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
 datatypeForConstructors (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
