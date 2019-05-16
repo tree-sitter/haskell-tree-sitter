@@ -62,10 +62,10 @@ importByteString parser bytestring =
       Exc.bracket acquire release go)
 
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
-withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket_
-  (ts_tree_cursor_new_p rootPtr cursor)
-  (ts_tree_cursor_delete cursor)
-  (action cursor)
+withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
+  (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
+  ts_tree_cursor_delete
+  action
 
 
 instance (Importing a, Importing b) => Importing (a,b) where
