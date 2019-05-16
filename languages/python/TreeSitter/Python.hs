@@ -1,7 +1,5 @@
 {-# LANGUAGE DuplicateRecordFields, TemplateHaskell #-}
-module TreeSitter.Python
-( tree_sitter_python
-) where
+module TreeSitter.Python where
 
 import Foreign.Ptr
 import TreeSitter.Language
