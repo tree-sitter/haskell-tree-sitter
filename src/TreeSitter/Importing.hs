@@ -4,7 +4,6 @@ module TreeSitter.Importing
 , importByteString
 , FieldName(..)
 , Building(..)
-, Leaf(..)
 ) where
 
 import Control.Exception as Exc
@@ -189,9 +188,6 @@ instance Monad m => Monad (MaybeC m) where
 newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
 
-
-class Leaf a where
-  buildLeaf :: (Carrier sig m, Member (Reader ByteString) sig) => Node -> m a
 
 class Building a where
   buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m a
