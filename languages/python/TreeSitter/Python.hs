@@ -25,4 +25,6 @@ parseByteString :: B.ByteString -> IO (Maybe Module)
 parseByteString bytestring = Exc.bracket
   ts_parser_new
   ts_parser_delete
-  $ \ parser -> TS.parseByteString parser bytestring
+  $ \ parser -> do
+    ts_parser_set_language parser tree_sitter_python
+    TS.parseByteString parser bytestring
