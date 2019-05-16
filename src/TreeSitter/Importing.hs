@@ -225,7 +225,9 @@ instance GBuilding f => GBuilding (M1 C c f) where
 instance (GImporting f, Selector c) => GBuilding (M1 S c f) where
   gbuildNode node fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
-      Just node -> import' node >>= fmap M1 . gimportNode
+      Just node -> do
+        goto node
+        import' node >>= fmap M1 . gimportNode
       Nothing -> empty
     where import' node = liftIO (alloca (\ ptr -> with node (flip ts_node_poke_p ptr) *> peek ptr))
 
