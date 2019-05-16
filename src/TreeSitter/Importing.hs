@@ -230,9 +230,5 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
         M1 <$> push (getFields >>= gbuildNode node)
       Nothing -> empty
 
-
-class GImporting f where
-  gimportNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> m (f a)
-
-instance Leaf c => GImporting (K1 i c) where
-  gimportNode node = K1 <$> buildLeaf node
+instance Leaf c => GBuilding (K1 i c) where
+  gbuildNode node _ = K1 <$> buildLeaf node
