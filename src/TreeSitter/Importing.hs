@@ -231,4 +231,4 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
       Nothing -> empty
 
 instance Leaf c => GBuilding (K1 i c) where
-  gbuildNode node _ = K1 <$> buildLeaf node
+  gbuildNode _ _ = K1 <$> (peekNode >>= buildLeaf)
