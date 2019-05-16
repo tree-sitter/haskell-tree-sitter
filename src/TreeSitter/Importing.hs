@@ -222,12 +222,12 @@ instance GBuilding f => GBuilding (M1 D c f) where
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode node fields = M1 <$> gbuildNode node fields
 
-instance (GImporting f, Selector c) => GBuilding (M1 S c f) where
+instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
   gbuildNode node fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         goto (nodeTSNode node)
-        M1 <$> gimportNode node
+        M1 <$> push (getFields >>= gbuildNode node)
       Nothing -> empty
 
 
