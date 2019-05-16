@@ -229,3 +229,6 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
 
 instance Building c => GBuilding (K1 i c) where
   gbuildNode fields = K1 <$> buildNode fields
+
+instance GBuilding U1 where
+  gbuildNode _ = pure U1
