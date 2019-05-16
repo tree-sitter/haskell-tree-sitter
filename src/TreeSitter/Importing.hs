@@ -176,7 +176,7 @@ instance (GBranch f, GBranch g) => GBranch (f :+: g) where
   gbuildBranch node fields = L1 <$> gbuildBranch @f node fields <|> R1 <$> gbuildBranch @g node fields
 
 instance Leaf c => GBranch (K1 i c) where
-  gbuildBranch node _ = K1 <$> (buildLeaf node)
+  gbuildBranch node _ = K1 <$> buildLeaf node
 
 instance GBranch f => GBranch (M1 D c f) where
   gbuildBranch node fields = M1 <$> gbuildBranch node fields
