@@ -132,11 +132,3 @@ instance Monad m => Monad (MaybeC m) where
 
 instance MonadIO m => MonadIO (MaybeC m) where
   liftIO = MaybeC . fmap Just . liftIO
-
-
------------------
--- | Notes
--- ToAST takes Node -> IO (value of datatype)
--- splice will generate instances of this class
--- CodeGen will import TreeSitter.Importing (why?)
--- Signal backtrackable failure
