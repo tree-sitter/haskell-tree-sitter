@@ -231,5 +231,5 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
         M1 <$> push (getFields >>= gbuildNode)
       Nothing -> empty
 
-instance Leaf c => GBuilding (K1 i c) where
-  gbuildNode _ = K1 <$> (peekNode >>= buildLeaf)
+instance Building c => GBuilding (K1 i c) where
+  gbuildNode fields = K1 <$> buildNode fields
