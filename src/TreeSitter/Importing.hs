@@ -67,6 +67,11 @@ withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
   ts_tree_cursor_delete
   action
 
+instance Importing a => Importing [a] where
+  import' = push $ do
+    a <- import' @a
+    pure [a]
+
 
 instance (Importing a, Importing b) => Importing (a,b) where
   import' = push $ do
@@ -170,12 +175,8 @@ instance Monad m => Monad (MaybeC m) where
       Nothing -> pure Nothing
       Just a -> runMaybeC $ f a
 
------------------
--- | Notes
--- ToAST takes Node -> IO (value of datatype)
--- splice will generate instances of this class
--- CodeGen will import TreeSitter.Importing (why?)
--- Signal backtrackable failure
+instance MonadIO m => MonadIO (MaybeC m) where
+  liftIO = MaybeC . fmap Just . liftIO
 
 
 ----
