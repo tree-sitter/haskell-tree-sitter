@@ -223,6 +223,9 @@ instance Building Text.Text where
 instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
 
+instance Building a => Building [a] where
+  buildNode = pure <$> buildNode
+
 
 class GBuilding f where
   gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
