@@ -197,7 +197,7 @@ parseByteString parser bytestring =
               else do
                 ts_tree_root_node_p treePtr rootPtr
                 withCursor (castPtr rootPtr) $ \ cursor ->
-                  Just <$> runM (runReader cursor (runReader bytestring buildNode))
+                  runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
       Exc.bracket acquire release go)
 
 newtype FieldName = FieldName { getFieldName :: String }
