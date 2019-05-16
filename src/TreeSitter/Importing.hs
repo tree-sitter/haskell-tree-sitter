@@ -184,11 +184,15 @@ instance GBranch f => GBranch (M1 D c f) where
 instance GBranch f => GBranch (M1 C c f) where
   gbuildBranch node fields = M1 <$> gbuildBranch node fields
 
-instance (GBranch f, Selector c) => GBranch (M1 S c f) where
+instance (GImporting f, Selector c) => GBranch (M1 S c f) where
   gbuildBranch node fields = do
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         node <- liftIO (alloca (\ ptr -> with node (flip ts_node_poke_p ptr) *> peek ptr))
         -- FIXME: push the node and decode the fields before building
-        M1 <$> gbuildBranch node fields
+        M1 <$> gimportNode node
       Nothing -> empty
+
+
+class GImporting f where
+  gimportNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, MonadIO m) => Node -> m (f a)
