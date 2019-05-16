@@ -223,6 +223,9 @@ instance Building Text.Text where
 instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
 
+instance (Building a, Building b) => Building (Either a b) where
+  buildNode = Left <$> buildNode <|> Right <$> buildNode
+
 instance Building a => Building [a] where
   -- FIXME: this is clearly wrong
   buildNode = pure <$> buildNode
