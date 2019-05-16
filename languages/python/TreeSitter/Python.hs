@@ -15,6 +15,5 @@ foreign import ccall unsafe "vendor/tree-sitter-python/src/parser.c tree_sitter_
 
 -- Auto-generate code from node-types.json
 $(do
-  input <- liftIO (eitherDecodeFileStrict' "./vendor/tree-sitter-python/src/node-types.json") >>= either fail pure
-  liftIO (print input)
-  traverse datatypeForConstructors input)
+  input <- liftIO (eitherDecodeFileStrict' "./vendor/tree-sitter-python/src/node-types.json")
+  either fail (traverse datatypeForConstructors) input)
