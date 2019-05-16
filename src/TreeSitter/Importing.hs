@@ -134,8 +134,8 @@ peekFieldName = do
   else
     Just . FieldName <$> liftIO (peekCString fieldName)
 
-fields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
-fields = go Map.empty
+getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
+getFields = go Map.empty
   where go fs = do
           fieldName <- peekFieldName
           case fieldName of
