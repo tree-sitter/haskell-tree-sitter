@@ -11,6 +11,7 @@ import Control.Exception as Exc
 import Data.ByteString (ByteString)
 
 import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
+import           Foreign.C.String
 import           Foreign.Marshal.Alloc
 import           Foreign.Marshal.Utils
 import           Foreign.Ptr
@@ -118,6 +119,12 @@ peekNode' = do
       pure (Just node)
     else
       pure Nothing
+
+peekFieldName :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m FieldName
+peekFieldName = do
+  cursor <- ask
+  fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
+  FieldName <$> liftIO (peekCString fieldName)
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
