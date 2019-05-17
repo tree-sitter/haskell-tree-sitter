@@ -30,9 +30,10 @@ import           TreeSitter.Tree as TS
 
 parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Maybe t)
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
-  alloca $ \ rootPtr -> if treePtr == nullPtr
-    then pure Nothing
-    else do
+  if treePtr == nullPtr then
+    pure Nothing
+  else
+    alloca $ \ rootPtr -> do
       ts_tree_root_node_p treePtr rootPtr
       withCursor (castPtr rootPtr) $ \ cursor ->
         runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
