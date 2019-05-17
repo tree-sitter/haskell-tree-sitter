@@ -61,12 +61,6 @@ importByteString parser bytestring =
                   Just <$> runM (runReader cursor (runReader bytestring import'))
       Exc.bracket acquire release go)
 
-withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
-withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
-  (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
-  ts_tree_cursor_delete
-  action
-
 instance Importing a => Importing [a] where
   import' = push $ do
     a <- import' @a
@@ -199,6 +193,12 @@ parseByteString parser bytestring =
                 withCursor (castPtr rootPtr) $ \ cursor ->
                   runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
       Exc.bracket acquire release go)
+
+withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
+withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
+  (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
+  ts_tree_cursor_delete
+  action
 
 newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
