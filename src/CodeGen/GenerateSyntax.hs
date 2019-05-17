@@ -9,27 +9,30 @@ module CodeGen.GenerateSyntax where
 import Data.Aeson as Aeson
 import Data.Char
 import Language.Haskell.TH
+import qualified Data.HashSet as HashSet
+import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
 import GHC.Generics hiding (Constructor, Datatype)
 import Control.Monad.IO.Class
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
+import qualified TreeSitter.Importing as TS
 
 -- Template Haskell functions that take the input types and auto-generate Haskell datatypes
 datatypeForConstructors :: MkDatatype -> Q Dec
 datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
   let name = toName' named datatypeName
   cons <- traverse (toSumCon datatypeName) subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
 datatypeForConstructors (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
 datatypeForConstructors (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
@@ -60,7 +63,8 @@ toBangType (MkType (DatatypeName n) named) = do
 toVarBangType :: String -> MkField -> Q VarBangType
 toVarBangType name (MkField required fieldType multiplicity) = do
   ty' <- ty
-  pure (mkName name, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
+  let newName = mkName . addTickIfNecessary . removeUnderscore $ name
+  pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
   where ty = case required of
           Optional -> [t|Maybe $(mult)|]
           Required -> mult
@@ -80,9 +84,17 @@ toType xs = foldr1 combine $ map convertToQType xs
 toCamelCase :: String -> String
 toCamelCase = initUpper . mapOperator . removeUnderscore
 
+clashingNames :: HashSet String
+clashingNames = HashSet.fromList ["type"]
+
+addTickIfNecessary :: String -> String
+addTickIfNecessary s
+  | HashSet.member s clashingNames = s ++ "'"
+  | otherwise                        = s
+
 -- | Convert snake_case string to CamelCase Name
 toName :: String -> Name
-toName = mkName . toCamelCase
+toName = mkName . addTickIfNecessary . toCamelCase
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName' :: MkNamed -> String -> Name

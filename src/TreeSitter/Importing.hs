@@ -136,12 +136,12 @@ peekFieldName = do
 getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
 getFields = go Map.empty
   where go fs = do
-          fieldName <- peekFieldName
-          case fieldName of
-            Just fieldName' -> do
-              node <- peekNode
-              case node of
-                Just node' -> do
+          node <- peekNode
+          case node of
+            Just node' -> do
+              fieldName <- peekFieldName
+              case fieldName of
+                Just fieldName' -> do
                   step
                   go (Map.insert fieldName' node' fs)
                 _ -> pure fs
@@ -197,7 +197,7 @@ parseByteString parser bytestring =
               else do
                 ts_tree_root_node_p treePtr rootPtr
                 withCursor (castPtr rootPtr) $ \ cursor ->
-                  Just <$> runM (runReader cursor (runReader bytestring buildNode))
+                  runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
       Exc.bracket acquire release go)
 
 newtype FieldName = FieldName { getFieldName :: String }
@@ -220,6 +220,16 @@ instance Building Text.Text where
             end = fromIntegral (nodeEndByte node')
         pure (decodeUtf8 (slice start end bytestring))
       _ -> empty
+
+instance Building a => Building (Maybe a) where
+  buildNode = Just <$> buildNode
+
+instance (Building a, Building b) => Building (Either a b) where
+  buildNode = Left <$> buildNode <|> Right <$> buildNode
+
+instance Building a => Building [a] where
+  -- FIXME: this is clearly wrong
+  buildNode = pure <$> buildNode
 
 
 class GBuilding f where
