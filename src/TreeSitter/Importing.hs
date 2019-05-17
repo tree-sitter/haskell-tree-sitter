@@ -29,17 +29,6 @@ import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 
-data Expression
-      = NumberExpression Number | IdentifierExpression Identifier
-      deriving (Eq, Ord, Show)
-
-data Number = Number
-      deriving (Eq, Ord, Show)
-
-data Identifier = Identifier
-      deriving (Eq, Ord, Show)
-
-
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
