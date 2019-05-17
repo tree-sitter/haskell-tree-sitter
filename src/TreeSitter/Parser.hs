@@ -6,7 +6,7 @@ import Foreign.C
 import TreeSitter.Language
 import TreeSitter.Tree
 
-newtype Parser = Parser ()
+data Parser = Parser
   deriving (Show, Eq)
 
 withParser :: Ptr Language -> (Ptr Parser -> IO a) -> IO a
