@@ -4,6 +4,12 @@ module TreeSitter.Importing
 ( parseByteString
 , FieldName(..)
 , Building(..)
+, step
+, push
+, goto
+, peekNode
+, peekFieldName
+, getFields
 ) where
 
 import           Control.Applicative
