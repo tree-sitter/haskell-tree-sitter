@@ -1,4 +1,15 @@
-module TreeSitter.Parser where
+module TreeSitter.Parser
+( Parser
+, withParser
+, ts_parser_new
+, ts_parser_halt_on_error
+, ts_parser_parse_string
+, ts_parser_delete
+, ts_parser_set_language
+, ts_parser_timeout_micros
+, ts_parser_set_timeout_micros
+, ts_parser_log_to_stderr
+) where
 
 import Control.Exception as Exc
 import Foreign
