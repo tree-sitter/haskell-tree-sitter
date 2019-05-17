@@ -157,6 +157,11 @@ newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
 
 
+-- | Generic construction of ASTs from a 'Map.Map' of named fields.
+--
+--   Product types (specifically, record types) are constructed by looking up the node for each corresponding field name in the map, moving the cursor to it, and then invoking 'buildNode' to construct the value for that field. Leaf types are constructed as a special case of product types.
+--
+--   Sum types are constructed by attempting to build each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GBuilding f where
   gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 
