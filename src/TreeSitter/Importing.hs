@@ -37,6 +37,9 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
       withCursor (castPtr rootPtr) $ \ cursor ->
         runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
 
+-- | Building is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
+--
+--   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'buildNode' providing that they have a suitable 'Generic' instance.
 class Building a where
   buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
@@ -65,20 +68,24 @@ instance Building a => Building [a] where
   buildNode = pure <$> buildNode
 
 
+-- | Advance the cursor to the next sibling of the current node.
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
+-- | Run an action over the children of the current node.
 push :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
 push m = do
   void $ ask >>= liftIO . ts_tree_cursor_goto_first_child
   a <- m
   a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
 
+-- | Move the cursor to point at the passed 'TSNode'.
 goto :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => TSNode -> m ()
 goto node = do
   cursor <- ask
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
+-- | Return the 'Node' that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe Node)
 peekNode = do
   cursor <- ask
@@ -92,6 +99,7 @@ peekNode = do
     else
       pure Nothing
 
+-- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekFieldName :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe FieldName)
 peekFieldName = do
   cursor <- ask
@@ -101,6 +109,7 @@ peekFieldName = do
   else
     Just . FieldName <$> liftIO (peekCString fieldName)
 
+-- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
 getFields = go Map.empty
   where go fs = do
@@ -115,7 +124,7 @@ getFields = go Map.empty
                 _ -> pure fs
             _ -> step *> go fs
 
--- | Return a 'ByteString' that contains a slice of the given 'Source'.
+-- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
 slice :: Int -> Int -> ByteString -> ByteString
 slice start end = take . drop
   where drop = B.drop start
