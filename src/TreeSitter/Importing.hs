@@ -9,12 +9,10 @@ module TreeSitter.Importing
 import           Control.Applicative
 import           Control.Effect hiding ((:+:))
 import           Control.Effect.Reader
-import           Control.Exception as Exc
 import           Control.Monad (void)
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import           Data.Text.Encoding
@@ -31,24 +29,13 @@ import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 
 parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Maybe t)
-parseByteString language bytestring = withParser language $ \ parser ->
-  unsafeUseAsCStringLen bytestring $ \ (source, len) -> alloca (\ rootPtr -> do
-      let acquire =
-            ts_parser_parse_string parser nullPtr source len
-
-      let release t
-            | t == nullPtr = pure ()
-            | otherwise = ts_tree_delete t
-
-      let go treePtr =
-            if treePtr == nullPtr
-              then pure Nothing
-              else do
-                ts_tree_root_node_p treePtr rootPtr
-                withCursor (castPtr rootPtr) $ \ cursor ->
-                  runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
-      Exc.bracket acquire release go)
-
+parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
+  alloca $ \ rootPtr -> if treePtr == nullPtr
+    then pure Nothing
+    else do
+      ts_tree_root_node_p treePtr rootPtr
+      withCursor (castPtr rootPtr) $ \ cursor ->
+        runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
 
 class Building a where
   buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
