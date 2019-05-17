@@ -156,8 +156,6 @@ instance MonadIO m => MonadIO (MaybeC m) where
   liftIO = MaybeC . fmap Just . liftIO
 
 
-----
-
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
 withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
   (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
