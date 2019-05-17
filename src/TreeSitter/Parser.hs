@@ -1,5 +1,6 @@
 module TreeSitter.Parser where
 
+import Control.Exception as Exc
 import Foreign
 import Foreign.C
 import TreeSitter.Language
@@ -7,6 +8,14 @@ import TreeSitter.Tree
 
 newtype Parser = Parser ()
   deriving (Show, Eq)
+
+withParser :: Ptr Language -> (Ptr Parser -> IO a) -> IO a
+withParser language action = Exc.bracket
+  ts_parser_new
+  ts_parser_delete
+  $ \ parser -> do
+    ts_parser_set_language parser language
+    action parser
 
 foreign import ccall safe "ts_parser_new" ts_parser_new :: IO (Ptr Parser)
 foreign import ccall safe "ts_parser_halt_on_error" ts_parser_halt_on_error :: Ptr Parser -> CBool -> IO ()
