@@ -1,14 +1,12 @@
 cabal-version:       2.2
 name:                codegen
 version:             0.1.0.0
--- synopsis:
--- description:
-homepage:            https://github.com/patrickt/codegen#readme
+homepage:            https://github.com/tree-sitter/haskell-tree-sitter
 license:             BSD-3-Clause
-author:              Patrick Thomson
-maintainer:          patrickt@github.com
-copyright:           Patrick Thomson
-category:            Web
+author:              Ayman Nadeem
+maintainer:          opensource+semantic@github.com
+copyright:           2019 GitHub Inc.
+category:            Parsing
 build-type:          Simple
 
 executable codegen
