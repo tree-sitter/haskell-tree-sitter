@@ -7,7 +7,7 @@ import TreeSitter.Language
 import TreeSitter.Tree
 
 data Parser = Parser
-  deriving (Show, Eq)
+  deriving (Show)
 
 withParser :: Ptr Language -> (Ptr Parser -> IO a) -> IO a
 withParser language action = Exc.bracket
