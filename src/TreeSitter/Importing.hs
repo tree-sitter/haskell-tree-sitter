@@ -33,8 +33,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   if treePtr == nullPtr then
     pure Nothing
   else
-    alloca $ \ rootPtr -> do
-      ts_tree_root_node_p treePtr rootPtr
+    withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
         runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
 
