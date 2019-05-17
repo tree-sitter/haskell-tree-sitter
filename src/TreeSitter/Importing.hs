@@ -29,6 +29,26 @@ import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 
+parseByteString :: Building t => Ptr TS.Parser -> ByteString -> IO (Maybe t)
+parseByteString parser bytestring =
+  unsafeUseAsCStringLen bytestring $ \ (source, len) -> alloca (\ rootPtr -> do
+      let acquire =
+            ts_parser_parse_string parser nullPtr source len
+
+      let release t
+            | t == nullPtr = pure ()
+            | otherwise = ts_tree_delete t
+
+      let go treePtr =
+            if treePtr == nullPtr
+              then pure Nothing
+              else do
+                ts_tree_root_node_p treePtr rootPtr
+                withCursor (castPtr rootPtr) $ \ cursor ->
+                  runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
+      Exc.bracket acquire release go)
+
+
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
@@ -109,25 +129,6 @@ instance MonadIO m => MonadIO (MaybeC m) where
 
 
 ----
-
-parseByteString :: Building t => Ptr TS.Parser -> ByteString -> IO (Maybe t)
-parseByteString parser bytestring =
-  unsafeUseAsCStringLen bytestring $ \ (source, len) -> alloca (\ rootPtr -> do
-      let acquire =
-            ts_parser_parse_string parser nullPtr source len
-
-      let release t
-            | t == nullPtr = pure ()
-            | otherwise = ts_tree_delete t
-
-      let go treePtr =
-            if treePtr == nullPtr
-              then pure Nothing
-              else do
-                ts_tree_root_node_p treePtr rootPtr
-                withCursor (castPtr rootPtr) $ \ cursor ->
-                  runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
-      Exc.bracket acquire release go)
 
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
 withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
