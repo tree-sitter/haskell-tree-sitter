@@ -1,5 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
-module TreeSitter.Language where
+module TreeSitter.Language
+( Language
+, Symbol(..)
+, SymbolType(..)
+, mkSymbolDatatype
+, addDependentFileRelative
+) where
 
 import Data.Char
 import Data.Function ((&))
