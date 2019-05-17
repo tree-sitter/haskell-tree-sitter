@@ -1,8 +1,6 @@
 {-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Importing
-( Importing(..)
-, importByteString
-, parseByteString
+( parseByteString
 , FieldName(..)
 , Building(..)
 ) where
@@ -41,55 +39,6 @@ data Number = Number
 data Identifier = Identifier
       deriving (Eq, Ord, Show)
 
-
-importByteString :: (Importing t) => Ptr TS.Parser -> ByteString -> IO (Maybe t)
-importByteString parser bytestring =
-  unsafeUseAsCStringLen bytestring $ \ (source, len) -> alloca (\ rootPtr -> do
-      let acquire =
-            ts_parser_parse_string parser nullPtr source len
-
-      let release t
-            | t == nullPtr = pure ()
-            | otherwise = ts_tree_delete t
-
-      let go treePtr =
-            if treePtr == nullPtr
-              then pure Nothing
-              else do
-                ts_tree_root_node_p treePtr rootPtr
-                withCursor (castPtr rootPtr) $ \ cursor ->
-                  Just <$> runM (runReader cursor (runReader bytestring import'))
-      Exc.bracket acquire release go)
-
-instance Importing a => Importing [a] where
-  import' = push $ do
-    a <- import' @a
-    pure [a]
-
-
-instance (Importing a, Importing b) => Importing (a,b) where
-  import' = push $ do
-    a <- import' @a
-    step
-    b <- import' @b
-    pure (a, b)
-
-
-instance Importing Text.Text where
-  import' = do
-    node <- peekNode
-    case node of
-      Just node' -> do
-        bytestring <- ask
-        let start = fromIntegral (nodeStartByte node')
-            end = fromIntegral (nodeEndByte node')
-        pure (decodeUtf8 (slice start end bytestring))
-      _ -> empty
-
-
-instance (Importing a, Importing b) => Importing (Either a b) where
-  import' = push $
-    Left <$> import' @a <|> Right <$> import' @b
 
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
@@ -147,9 +96,6 @@ slice start end = take . drop
   where drop = B.drop start
         take = B.take (end - start)
 
-class Importing type' where
-
-  import' :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m type'
 
 newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
   deriving (Functor)
