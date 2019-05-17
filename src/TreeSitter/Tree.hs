@@ -1,4 +1,8 @@
-module TreeSitter.Tree where
+module TreeSitter.Tree
+( Tree
+, ts_tree_delete
+, ts_tree_root_node_p
+) where
 
 import Foreign
 import TreeSitter.Node
