@@ -1,8 +1,10 @@
 module TreeSitter.Cursor where
 
+import Control.Exception as Exc
 import Data.Int
 import Data.Word
 import Foreign.C
+import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import TreeSitter.Node
 
@@ -11,6 +13,12 @@ import TreeSitter.Node
 --   Note that we do not define 'Eq', 'Ord', or 'Storable' instances, as the underlying @TSTreeCursor@ type is not usefully copyable.
 data Cursor = Cursor
   deriving (Show)
+
+withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
+withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
+  (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
+  ts_tree_cursor_delete
+  action
 
 -- | THe size of a 'Cursor' in bytes. The tests verify that this value is the same as @sizeof(TSTreeCursor)@.
 sizeOfCursor :: Int

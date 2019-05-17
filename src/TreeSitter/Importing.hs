@@ -127,12 +127,6 @@ getFields = go Map.empty
                 _ -> pure fs
             _ -> step *> go fs
 
-withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
-withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
-  (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
-  ts_tree_cursor_delete
-  action
-
 -- | Return a 'ByteString' that contains a slice of the given 'Source'.
 slice :: Int -> Int -> ByteString -> ByteString
 slice start end = take . drop
