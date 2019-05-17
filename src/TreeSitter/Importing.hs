@@ -1,33 +1,33 @@
-{-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications, TypeOperators #-}
+{-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving,
+             ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Importing
 ( parseByteString
 , FieldName(..)
 , Building(..)
 ) where
 
-import Control.Exception as Exc
-import Data.ByteString (ByteString)
-
+import           Control.Applicative
+import           Control.Effect hiding ((:+:))
+import           Control.Effect.Reader
+import           Control.Exception as Exc
+import           Control.Monad (void)
+import           Control.Monad.IO.Class
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
+import qualified Data.Map as Map
+import qualified Data.Text as Text
+import           Data.Text.Encoding
 import           Foreign.C.String
 import           Foreign.Marshal.Alloc
 import           Foreign.Marshal.Utils
 import           Foreign.Ptr
 import           Foreign.Storable
-import TreeSitter.Cursor as TS
-import TreeSitter.Node as TS
-import TreeSitter.Parser as TS
-import TreeSitter.Tree as TS
-import qualified Data.Text as Text
-import Control.Effect hiding ((:+:))
-import Control.Effect.Reader
-import Control.Monad.IO.Class
-import Data.Text.Encoding
-import qualified Data.ByteString as B
-import Control.Applicative
-import Control.Monad (void)
-import GHC.Generics
-import qualified Data.Map as Map
+import           GHC.Generics
+import           TreeSitter.Cursor as TS
+import           TreeSitter.Node as TS
+import           TreeSitter.Parser as TS
+import           TreeSitter.Tree as TS
 
 data Expression
       = NumberExpression Number | IdentifierExpression Identifier
@@ -113,7 +113,7 @@ instance Monad m => Monad (MaybeC m) where
     a' <- a
     case a' of
       Nothing -> pure Nothing
-      Just a -> runMaybeC $ f a
+      Just a  -> runMaybeC $ f a
 
 instance MonadIO m => MonadIO (MaybeC m) where
   liftIO = MaybeC . fmap Just . liftIO
