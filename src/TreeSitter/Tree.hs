@@ -3,7 +3,7 @@ module TreeSitter.Tree where
 import Foreign
 import TreeSitter.Node
 
-newtype Tree = Tree ()
+data Tree = Tree
   deriving (Show, Eq)
 
 foreign import ccall safe "ts_tree_delete" ts_tree_delete :: Ptr Tree -> IO ()
