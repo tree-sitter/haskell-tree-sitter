@@ -1,4 +1,18 @@
-module TreeSitter.Cursor where
+module TreeSitter.Cursor
+( Cursor
+, withCursor
+, sizeOfCursor
+, ts_tree_cursor_new_p
+, ts_tree_cursor_delete
+, ts_tree_cursor_reset_p
+, ts_tree_cursor_current_node_p
+, ts_tree_cursor_current_field_name
+, ts_tree_cursor_current_field_id
+, ts_tree_cursor_goto_parent
+, ts_tree_cursor_goto_next_sibling
+, ts_tree_cursor_goto_first_child
+, ts_tree_cursor_goto_first_child_for_byte
+) where
 
 import Control.Exception as Exc
 import Data.Int
