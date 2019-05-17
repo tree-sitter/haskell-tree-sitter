@@ -49,6 +49,34 @@ parseByteString parser bytestring =
       Exc.bracket acquire release go)
 
 
+class Building a where
+  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  buildNode = to <$> push (getFields >>= gbuildNode)
+
+
+instance Building Text.Text where
+  buildNode = do
+    node <- peekNode
+    case node of
+      Just node' -> do
+        bytestring <- ask
+        let start = fromIntegral (nodeStartByte node')
+            end = fromIntegral (nodeEndByte node')
+        pure (decodeUtf8 (slice start end bytestring))
+      _ -> empty
+
+instance Building a => Building (Maybe a) where
+  buildNode = Just <$> buildNode
+
+instance (Building a, Building b) => Building (Either a b) where
+  buildNode = Left <$> buildNode <|> Right <$> buildNode
+
+instance Building a => Building [a] where
+  -- FIXME: this is clearly wrong
+  buildNode = pure <$> buildNode
+
+
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
 step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
@@ -138,34 +166,6 @@ withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
 
 newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
-
-
-class Building a where
-  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  buildNode = to <$> push (getFields >>= gbuildNode)
-
-
-instance Building Text.Text where
-  buildNode = do
-    node <- peekNode
-    case node of
-      Just node' -> do
-        bytestring <- ask
-        let start = fromIntegral (nodeStartByte node')
-            end = fromIntegral (nodeEndByte node')
-        pure (decodeUtf8 (slice start end bytestring))
-      _ -> empty
-
-instance Building a => Building (Maybe a) where
-  buildNode = Just <$> buildNode
-
-instance (Building a, Building b) => Building (Either a b) where
-  buildNode = Left <$> buildNode <|> Right <$> buildNode
-
-instance Building a => Building [a] where
-  -- FIXME: this is clearly wrong
-  buildNode = pure <$> buildNode
 
 
 class GBuilding f where
