@@ -25,12 +25,13 @@ import           Foreign.Ptr
 import           Foreign.Storable
 import           GHC.Generics
 import           TreeSitter.Cursor as TS
+import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 
-parseByteString :: Building t => Ptr TS.Parser -> ByteString -> IO (Maybe t)
-parseByteString parser bytestring =
+parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Maybe t)
+parseByteString language bytestring = withParser language $ \ parser ->
   unsafeUseAsCStringLen bytestring $ \ (source, len) -> alloca (\ rootPtr -> do
       let acquire =
             ts_parser_parse_string parser nullPtr source len
