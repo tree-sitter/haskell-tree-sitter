@@ -26,10 +26,14 @@ datatypeForConstructors (ProductType (DatatypeName datatypeName) named fields) =
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
   pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+datatypeForConstructors (LeafType (DatatypeName datatypeName) Anonymous) = do
+  let name = toName' Anonymous datatypeName
+  con <- toConLeaf Anonymous (DatatypeName datatypeName)
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
 datatypeForConstructors (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
@@ -46,7 +50,15 @@ toConProduct constructorName fields = RecC (toName constructorName) <$> fieldLis
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 toConLeaf :: MkNamed -> MkDatatypeName -> Q Con
-toConLeaf named (DatatypeName name) = pure (NormalC (toName' named name) [])
+toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName' Anonymous name) [])
+toConLeaf named (DatatypeName name) = RecC (toName' named name) <$> leafRecords
+  where leafRecords = pure <$> toLeafVarBangTypes
+
+-- | Produce VarBangTypes required to construct records of leaf types
+toLeafVarBangTypes :: Q VarBangType
+toLeafVarBangTypes = do
+  leafVarBangTypes <- conT (mkName "ByteString")
+  pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
 
 -- | Construct toBangType for use in above toConSum
 toBangType :: MkType -> Q BangType
