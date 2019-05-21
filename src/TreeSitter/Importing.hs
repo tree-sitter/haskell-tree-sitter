@@ -1,3 +1,4 @@
+-- WIP: Do not depend on this yet!
 {-# LANGUAGE DeriveFunctor, FlexibleContexts, GeneralizedNewtypeDeriving, ScopedTypeVariables, TypeApplications #-}
 module TreeSitter.Importing where
 
