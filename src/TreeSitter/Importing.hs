@@ -51,6 +51,8 @@ class Building a where
   default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   buildNode = to <$> push (getFields >>= gbuildNode)
 
+  buildEmpty :: Alternative m => m a
+  buildEmpty = empty
 
 instance Building Text.Text where
   buildNode = do
@@ -65,6 +67,7 @@ instance Building Text.Text where
 
 instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
+  buildEmpty = pure Nothing
 
 instance (Building a, Building b) => Building (Either a b) where
   buildNode = Left <$> buildNode <|> Right <$> buildNode
@@ -72,6 +75,7 @@ instance (Building a, Building b) => Building (Either a b) where
 instance Building a => Building [a] where
   -- FIXME: this is clearly wrong
   buildNode = pure <$> buildNode
+  buildEmpty = pure []
 
 
 -- | Advance the cursor to the next sibling of the current node.
@@ -171,17 +175,24 @@ newtype FieldName = FieldName { getFieldName :: String }
 class GBuilding f where
   gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 
+-- Build an empty node of given type
+  gbuildEmpty :: Alternative m => m (f a)
+
 instance (GBuilding f, GBuilding g) => GBuilding (f :*: g) where
   gbuildNode fields = (:*:) <$> gbuildNode @f fields <*> gbuildNode @g fields
+  gbuildEmpty = (:*:) <$> gbuildEmpty @f <*> gbuildEmpty @g
 
 instance (GBuilding f, GBuilding g) => GBuilding (f :+: g) where
   gbuildNode fields = L1 <$> gbuildNode @f fields <|> R1 <$> gbuildNode @g fields
+  gbuildEmpty = L1 <$> gbuildEmpty @f <|> R1 <$> gbuildEmpty @g
 
 instance GBuilding f => GBuilding (M1 D c f) where
   gbuildNode fields = M1 <$> gbuildNode fields
+  gbuildEmpty = M1 <$> gbuildEmpty
 
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode fields = M1 <$> gbuildNode fields
+  gbuildEmpty = M1 <$> gbuildEmpty
 
 instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
   gbuildNode fields =
@@ -190,9 +201,12 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
         goto (nodeTSNode node)
         M1 <$> gbuildNode fields
       Nothing -> empty
+  gbuildEmpty = M1 <$> gbuildEmpty
 
 instance Building c => GBuilding (K1 i c) where
   gbuildNode _ = K1 <$> buildNode
+  gbuildEmpty = K1 <$> buildEmpty
 
 instance GBuilding U1 where
   gbuildNode _ = pure U1
+  gbuildEmpty = empty
