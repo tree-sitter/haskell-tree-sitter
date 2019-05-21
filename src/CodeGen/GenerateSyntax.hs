@@ -15,6 +15,7 @@ import Control.Monad.IO.Class
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
+import Data.Text (Text)
 
 -- Template Haskell functions that take the input types and auto-generate Haskell datatypes
 datatypeForConstructors :: MkDatatype -> Q Dec
@@ -57,7 +58,7 @@ toConLeaf named (DatatypeName name) = RecC (toName' named name) <$> leafRecords
 -- | Produce VarBangTypes required to construct records of leaf types
 toLeafVarBangTypes :: Q VarBangType
 toLeafVarBangTypes = do
-  leafVarBangTypes <- conT (mkName "ByteString")
+  leafVarBangTypes <- conT ''Text
   pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
 
 -- | Construct toBangType for use in above toConSum
