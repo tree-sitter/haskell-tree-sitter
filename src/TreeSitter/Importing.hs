@@ -79,8 +79,8 @@ instance Building a => Building [a] where
 
 
 -- | Advance the cursor to the next sibling of the current node.
-step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m ()
-step = void $ ask >>= liftIO . ts_tree_cursor_goto_next_sibling
+step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Bool
+step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
 push :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
@@ -127,12 +127,13 @@ getFields = go Map.empty
           case node of
             Just node' -> do
               fieldName <- peekFieldName
-              case fieldName of
-                Just fieldName' -> do
-                  step
-                  go (Map.insert fieldName' node' fs)
-                _ -> pure fs
-            _ -> step *> go fs
+              keepGoing <- step
+              let fs' = case fieldName of
+                    Just fieldName' -> Map.insert fieldName' node' fs
+                    _ -> fs
+              if keepGoing then go fs'
+              else pure fs'
+            _ -> pure fs
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
 slice :: Int -> Int -> ByteString -> ByteString
