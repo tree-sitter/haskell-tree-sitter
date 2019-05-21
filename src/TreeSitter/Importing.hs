@@ -121,7 +121,7 @@ peekFieldName = do
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
-getFields = go Map.empty
+getFields = go Map.empty >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
   where go fs = do
           node <- peekNode
           case node of
@@ -201,7 +201,7 @@ instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
       Just node -> do
         goto (nodeTSNode node)
         M1 <$> gbuildNode fields
-      Nothing -> empty
+      Nothing -> M1 <$> gbuildEmpty
   gbuildEmpty = M1 <$> gbuildEmpty
 
 instance Building c => GBuilding (K1 i c) where
