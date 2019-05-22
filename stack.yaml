@@ -2,7 +2,6 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-- 'codegen'
 - location: languages/go
   extra-dep: true
 - location: languages/php
@@ -17,6 +16,6 @@ packages:
   extra-dep: true
 - location: languages/haskell
   extra-dep: true
-resolver: lts-13.13
+resolver: lts-12.17
 extra-deps:
   - fused-effects-0.4.0.0
