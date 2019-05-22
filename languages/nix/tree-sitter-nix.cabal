@@ -1,0 +1,22 @@
+name:                tree-sitter-nix
+version:             0.1.0
+synopsis:            tree-sitter Nix language bindings
+description:         Please see README.md
+-- homepage:
+author:              Robert Hensing
+-- maintainer:
+copyright:           Hercules Labs OÜ
+category:            Web
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     TreeSitter.Nix
+  build-depends:       base >= 4.7 && < 5
+                     , haskell-tree-sitter
+  default-language:    Haskell2010
+  Include-dirs:        vendor/tree-sitter-nix/src
+  c-sources:           vendor/tree-sitter-nix/src/parser.c
+                       vendor/tree-sitter-nix/src/scanner.cc
+  extra-libraries:     stdc++

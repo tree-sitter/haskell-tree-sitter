@@ -25,3 +25,6 @@
 [submodule "languages/java/vendor/tree-sitter-java"]
 	path = languages/java/vendor/tree-sitter-java
 	url = https://github.com/tree-sitter/tree-sitter-java.git
+[submodule "languages/nix/vendor/tree-sitter-nix"]
+	path = languages/nix/vendor/tree-sitter-nix
+	url = https://github.com/cstrahan/tree-sitter-nix
