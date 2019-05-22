@@ -1,26 +1,19 @@
-{-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls #-}
+module TreeSitter.Ptr (TreeSitter_Ptr (..), ts_ptr_init, funptr_ts_ptr_free, ts_ptr_goto_first_child, ts_ptr_goto_next_sibling, ts_ptr_current_type) where
 
-#include "tree_sitter/api.h"
-#include <tree_sitter_ptr.h>
-
-#if __GLASGOW_HASKELL__ < 800
-#let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
-#endif
-
-module TreeSitter.Ptr (TreeSitter_Ptr, ts_ptr_init, funptr_ts_ptr_free, ts_ptr_goto_first_child, ts_ptr_goto_next_sibling, ts_ptr_current_type) where
-
+import Foreign.C
 import Foreign.Ptr
 import Foreign.Storable
-import Foreign.C.String
 
 import TreeSitter.Tree
 
+foreign import ccall unsafe "src/bridge.c sizeof_tsnode" sizeof_tsnode :: CSize
+foreign import ccall unsafe "src/bridge.c sizeof_tstreecursor" sizeof_tstreecursor :: CSize
 
-data TreeSitter_Ptr
+newtype TreeSitter_Ptr = TreeSitter_Ptr ()
 
 instance Storable TreeSitter_Ptr where
-    alignment _ = #{alignment tree_sitter_ptr}
-    sizeOf _ = #{size tree_sitter_ptr}
+    alignment _ = alignment nullPtr
+    sizeOf _    = fromIntegral (sizeof_tsnode + sizeof_tstreecursor)
     peek _ = error "Cant peek"
     poke _ _ = error "Cant poke"
 

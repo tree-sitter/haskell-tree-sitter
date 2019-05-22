@@ -6,6 +6,7 @@ module TreeSitter.Node
 , TSNode(..)
 , FieldId(..)
 , ts_node_copy_child_nodes
+, ts_node_poke_p
 ) where
 
 import Foreign
@@ -133,3 +134,4 @@ instance Monad Struct where
 
 
 foreign import ccall interruptible "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr TSNode -> Ptr Node -> IO ()
+foreign import ccall unsafe "src/bridge.c ts_node_poke_p" ts_node_poke_p :: Ptr TSNode -> Ptr Node -> IO ()

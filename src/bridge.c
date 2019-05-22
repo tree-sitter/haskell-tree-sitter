@@ -33,6 +33,11 @@ static inline void ts_node_poke(TSNode node, Node *out) {
   out->childCount = ts_node_child_count(node);
 }
 
+void ts_node_poke_p(TSNode *node, Node *out) {
+  assert(node != NULL);
+  ts_node_poke(*node, out);
+}
+
 void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
   assert(tree != NULL);
   assert(outNode != NULL);
