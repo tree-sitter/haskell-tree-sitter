@@ -4,7 +4,10 @@
 {-# LANGUAGE LambdaCase #-}
 
 -- {-# LANGUAGE TypeOperators #-}
-module CodeGen.GenerateSyntax where
+module CodeGen.GenerateSyntax
+(
+datatypeForConstructors
+) where
 
 import Data.Aeson as Aeson
 import Data.Char
