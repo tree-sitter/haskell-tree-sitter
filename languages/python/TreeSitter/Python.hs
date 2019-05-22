@@ -3,14 +3,20 @@ module TreeSitter.Python where
 
 import Foreign.Ptr
 import TreeSitter.Language
-import CodeGen.Deserialize
 import CodeGen.GenerateSyntax
 import Control.Monad.IO.Class
-import Language.Haskell.TH
-import Data.Aeson as Aeson
+import Data.Aeson
+import Prelude hiding (Float, Integer, String)
+import System.Directory
+import System.FilePath.Posix
+import Language.Haskell.TH.Syntax (loc_filename, location, runIO)
 
 foreign import ccall unsafe "vendor/tree-sitter-python/src/parser.c tree_sitter_python" tree_sitter_python :: Ptr Language
 
--- Read JSON as input
-input :: Q [MkDatatype]
-input = liftIO (eitherDecodeFileStrict' "./src/node-types.json") >>= either fail pure
+-- Auto-generate code from node-types.json
+$(do
+  currentFilename <- loc_filename <$> location
+  pwd             <- runIO getCurrentDirectory
+  let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> "../vendor/tree-sitter-python/src/node-types.json"
+  input <- liftIO (eitherDecodeFileStrict' invocationRelativePath)
+  either fail (traverse datatypeForConstructors) input)
