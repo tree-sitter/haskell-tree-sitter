@@ -1,0 +1,21 @@
+cabal-version:       2.2
+name:                codegen
+version:             0.1.0.0
+homepage:            https://github.com/tree-sitter/haskell-tree-sitter
+license:             BSD-3-Clause
+author:              Ayman Nadeem
+maintainer:          opensource+semantic@github.com
+copyright:           2019 GitHub Inc.
+category:            Parsing
+build-type:          Simple
+
+executable codegen
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  build-depends:       base
+                     , haskell-tree-sitter
+                     , template-haskell
+                     , tree-sitter-python
+                     , aeson
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
