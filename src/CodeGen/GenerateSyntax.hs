@@ -16,6 +16,8 @@ import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), 
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
+import qualified Data.HashSet as HashSet
+import Data.HashSet (HashSet)
 
 -- Template Haskell functions that take the input types and auto-generate Haskell datatypes
 datatypeForConstructors :: MkDatatype -> Q Dec
@@ -73,7 +75,8 @@ toBangType (MkType (DatatypeName n) named) = do
 toVarBangType :: String -> MkField -> Q VarBangType
 toVarBangType name (MkField required fieldType multiplicity) = do
   ty' <- ty
-  pure (mkName name, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
+  let newName = mkName . addTickIfNecessary . removeUnderscore $ name
+  pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
   where ty = case required of
           Optional -> [t|Maybe $(mult)|]
           Required -> mult
@@ -92,6 +95,14 @@ toType xs = foldr1 combine $ map convertToQType xs
 -- | Convert snake_case string to CamelCase String
 toCamelCase :: String -> String
 toCamelCase = initUpper . mapOperator . removeUnderscore
+
+clashingNames :: HashSet String
+clashingNames = HashSet.fromList ["type", "module", "data"]
+
+addTickIfNecessary :: String -> String
+addTickIfNecessary s
+  | HashSet.member s clashingNames = s ++ "'"
+  | otherwise                        = s
 
 -- | Convert snake_case string to CamelCase Name
 toName :: String -> Name
