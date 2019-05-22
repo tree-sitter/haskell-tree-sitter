@@ -11,6 +11,8 @@ datatypeForConstructors
 
 import Data.Char
 import Language.Haskell.TH
+import qualified Data.HashSet as HashSet
+import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
@@ -73,7 +75,8 @@ toBangType (MkType (DatatypeName n) named) = do
 toVarBangType :: String -> MkField -> Q VarBangType
 toVarBangType name (MkField required fieldType multiplicity) = do
   ty' <- ty
-  pure (mkName name, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
+  let newName = mkName . addTickIfNecessary . removeUnderscore $ name
+  pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
   where ty = case required of
           Optional -> [t|Maybe $(mult)|]
           Required -> mult
@@ -93,9 +96,17 @@ toType xs = foldr1 combine $ map convertToQType xs
 toCamelCase :: String -> String
 toCamelCase = initUpper . mapOperator . removeUnderscore
 
+clashingNames :: HashSet String
+clashingNames = HashSet.fromList ["type"]
+
+addTickIfNecessary :: String -> String
+addTickIfNecessary s
+  | HashSet.member s clashingNames = s ++ "'"
+  | otherwise                        = s
+
 -- | Convert snake_case string to CamelCase Name
 toName :: String -> Name
-toName = mkName . toCamelCase
+toName = mkName . addTickIfNecessary . toCamelCase
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName' :: MkNamed -> String -> Name
