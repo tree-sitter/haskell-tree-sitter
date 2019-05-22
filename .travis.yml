@@ -16,6 +16,7 @@ before_cache:
 
   - rm -rfv $HOME/.cabal/packages/head.hackage
 
+
 matrix:
   include:
     - compiler: "ghc-8.6.2"
