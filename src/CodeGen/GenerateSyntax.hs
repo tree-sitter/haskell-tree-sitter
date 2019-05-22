@@ -19,7 +19,7 @@ import Data.Text (Text)
 import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
 
--- Template Haskell functions that take the input types and auto-generate Haskell datatypes
+-- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: MkDatatype -> Q Dec
 datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
   let name = toName' named datatypeName
