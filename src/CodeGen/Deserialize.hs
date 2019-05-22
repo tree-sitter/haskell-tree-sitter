@@ -14,18 +14,10 @@ module CodeGen.Deserialize
 import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Data.Char
-import Language.Haskell.TH
-import Language.Haskell.TH.Syntax as TH
 import GHC.Generics hiding (Constructor, Datatype)
-import Control.Monad.IO.Class
-import Control.Applicative
-import Data.Bool
-import Debug.Trace
 import Data.Text (Text, unpack)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.HashMap.Strict as HM
-
-newtype File = File [(MkDatatypeName, MkDatatype)]
 
 -- Types to deserialize into:
 data MkDatatype
