@@ -5,8 +5,10 @@
 
 -- {-# LANGUAGE TypeOperators #-}
 module CodeGen.GenerateSyntax
-(
-datatypeForConstructors
+( datatypeForConstructors
+, removeUnderscore
+, initUpper
+, mapOperator
 ) where
 
 import Data.Char
