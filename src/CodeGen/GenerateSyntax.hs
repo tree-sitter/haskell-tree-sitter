@@ -12,6 +12,7 @@ module CodeGen.GenerateSyntax
 ) where
 
 import Data.Char
+import Data.Semigroup
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
