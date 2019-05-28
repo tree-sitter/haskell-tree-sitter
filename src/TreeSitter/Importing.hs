@@ -34,6 +34,7 @@ import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 
+-- Parse source code and produce AST
 parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Maybe t)
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
   if treePtr == nullPtr then
