@@ -32,8 +32,6 @@ ts_parse_parse_lazily :: Ptr Parser -> Ptr Tree -> Lazy.ByteString -> IO (Ptr Tr
 ts_parse_parse_lazily parser old source = do
   marker <- newIORef source
   callback <- mkReadCallback $ \offset bytesReadPtr -> do
-    wasRead <- peek bytesReadPtr
-    print ("Callback recieved, offset ", offset, " bytes read ", wasRead)
     val <- readIORef marker
     case val of
       Lazy.Empty -> nullPtr <$ poke bytesReadPtr 0
