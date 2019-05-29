@@ -38,5 +38,5 @@ install:
 - cabal new-build --only-dependencies
 
 script:
-- cabal new-build
+- cabal new-build all
 - cabal new-test
