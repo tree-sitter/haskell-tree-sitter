@@ -33,6 +33,24 @@ static inline void ts_node_poke(TSNode node, Node *out) {
   out->childCount = ts_node_child_count(node);
 }
 
+const char* ts_parser_read_shim(void *payload, uint32_t byte_offset, TSPoint position, uint32_t *bytes_read)
+{
+  const char* (*callback)(uint32_t, uint32_t*) = payload;
+  return callback(byte_offset, bytes_read);
+}
+
+TSTree *ts_parser_parse_with_callback(TSParser *parser, TSTree *old_tree, const char* (*callback)(uint32_t, uint32_t *))
+{
+  TSInput givenInput =
+    {
+     .payload = callback,
+     .read = ts_parser_read_shim,
+     .encoding = TSInputEncodingUTF8,
+    };
+
+  return ts_parser_parse(parser, old_tree, givenInput);
+}
+
 void ts_node_poke_p(TSNode *node, Node *out) {
   assert(node != NULL);
   ts_node_poke(*node, out);
