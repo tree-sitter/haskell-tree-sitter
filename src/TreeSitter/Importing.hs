@@ -188,6 +188,10 @@ instance GBuilding f => GBuilding (M1 C c f) where
 instance GBuilding U1 where
   gbuildNode = pure U1
 
+-- For regular leaf nodes:
+instance (Building k) => GBuilding (M1 S s (K1 c k)) where
+  gbuildNode = M1 . K1 <$> buildNode
+
 
 class GBuildingSum f where
   gbuildSumNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
