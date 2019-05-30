@@ -213,8 +213,11 @@ instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
 instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = L1 <$> gbuildSumNode @f <|> R1 <$> gbuildSumNode @g
 
+
+-- | Generically build products
 class GBuildingProduct f where
   gbuildProductNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
+
 -- Product structure
 instance (GBuildingProduct f, GBuildingProduct g) => GBuildingProduct (f :*: g) where
   gbuildProductNode fields = (:*:) <$> gbuildProductNode @f fields <*> gbuildProductNode @g fields
