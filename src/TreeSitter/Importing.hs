@@ -50,7 +50,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
 class Building a where
   buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  buildNode = to <$> push (getFields >>= gbuildNode)
+  buildNode = to <$> gbuildNode
 
   buildEmpty :: Alternative m => m a
   buildEmpty = empty
