@@ -198,6 +198,8 @@ instance GBuilding f => GBuilding (M1 C c f) where
 
 instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
   gbuildNode fields =
+class GBuildingProduct f where
+  gbuildProductNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         goto (nodeTSNode node)
