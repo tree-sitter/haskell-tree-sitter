@@ -184,6 +184,9 @@ instance GBuilding f => GBuilding (M1 D c f) where
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode = M1 <$> gbuildNode
 
+-- Possibly for anonymous leaf nodes:
+instance GBuilding U1 where
+  gbuildNode = pure U1
 
 
 class GBuildingSum f where
