@@ -10,4 +10,4 @@ parseByteString = TS.parseByteString tree_sitter_python
 
 main :: IO ()
 main = do
-  parseByteString "" >>= print
+  parseByteString "from __future__ import absolute_import" >>= print
