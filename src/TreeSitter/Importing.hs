@@ -195,9 +195,16 @@ instance GBuilding f => GBuilding (M1 D c f) where
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode fields = M1 <$> gbuildNode fields
   gbuildEmpty = M1 <$> gbuildEmpty
+class GBuildingSum f where
+  gbuildSumNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
+-- we'd only build the map when we know we're looking at a product
 
-instance (GBuilding f, Selector c) => GBuilding (M1 S c f) where
-  gbuildNode fields =
+instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
+  gbuildSumNode = M1 . M1 . K1 <$> buildNode
+
+instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
+  gbuildSumNode = L1 <$> gbuildSumNode @f <|> R1 <$> gbuildSumNode @g
+
 class GBuildingProduct f where
   gbuildProductNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 -- Product structure
