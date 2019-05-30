@@ -203,17 +203,11 @@ class GBuildingProduct f where
 instance (GBuildingProduct f, GBuildingProduct g) => GBuildingProduct (f :*: g) where
   gbuildProductNode fields = (:*:) <$> gbuildProductNode @f fields <*> gbuildProductNode @g fields
 
+-- Contents of product types (ie., the leaves of the product tree)
+instance (Building k, Selector c) => GBuildingProduct (M1 S c (K1 i k)) where
+  gbuildProductNode fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         goto (nodeTSNode node)
-        M1 <$> gbuildNode fields
-      Nothing -> M1 <$> gbuildEmpty
-  gbuildEmpty = M1 <$> gbuildEmpty
-
-instance Building c => GBuilding (K1 i c) where
-  gbuildNode _ = K1 <$> buildNode
-  gbuildEmpty = K1 <$> buildEmpty
-
-instance GBuilding U1 where
-  gbuildNode _ = pure U1
-  gbuildEmpty = empty
+        M1 . K1 <$> buildNode
+      Nothing -> M1 . K1 <$> buildEmpty
