@@ -18,5 +18,5 @@ $(do
   currentFilename <- loc_filename <$> location
   pwd             <- runIO getCurrentDirectory
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> "../vendor/tree-sitter-python/src/node-types.json"
-  input <- liftIO (eitherDecodeFileStrict' invocationRelativePath)
+  input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
   either fail (traverse datatypeForConstructors) input)
