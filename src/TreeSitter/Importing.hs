@@ -196,6 +196,12 @@ instance (Building k) => GBuilding (M1 S s (K1 c k)) where
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
   gbuildNode = push $ gbuildSumNode @(f :+: g)
 
+-- For product datatypes:
+instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
+  gbuildNode = push $ do
+    fields <- getFields
+    gbuildProductNode @(f :*: g) fields
+
 
 class GBuildingSum f where
   gbuildSumNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
