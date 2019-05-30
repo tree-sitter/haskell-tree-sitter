@@ -9,6 +9,6 @@ packages:
 - location: languages/json
 - location: languages/ruby
 - location: languages/haskell
-resolver: lts-12.17
+resolver: lts-13.13
 extra-deps:
   - fused-effects-0.4.0.0
