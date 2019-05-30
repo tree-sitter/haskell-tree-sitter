@@ -181,8 +181,8 @@ class GBuilding f where
 instance GBuilding f => GBuilding (M1 D c f) where
   gbuildNode = M1 <$> gbuildNode -- current node, not first child like above in original Building definition
 
-instance (GBuilding f, GBuilding g) => GBuilding (f :*: g) where
-  gbuildNode fields = (:*:) <$> gbuildNode @f fields <*> gbuildNode @g fields
+instance GBuilding f => GBuilding (M1 C c f) where
+  gbuildNode = M1 <$> gbuildNode
 
 instance (GBuilding f, GBuilding g) => GBuilding (f :+: g) where
   gbuildNode fields = L1 <$> gbuildNode @f fields <|> R1 <$> gbuildNode @g fields
