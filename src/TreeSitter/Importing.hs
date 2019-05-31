@@ -208,7 +208,7 @@ instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
 
 
 class GBuildingSum f where
-  gbuildSumNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
+  gbuildSumNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
 -- we'd only build the map when we know we're looking at a product
 
   gSymbolMatch :: proxy f -> Node -> Bool
