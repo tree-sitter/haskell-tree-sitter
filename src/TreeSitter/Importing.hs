@@ -194,11 +194,11 @@ instance (Building k) => GBuilding (M1 S s (K1 c k)) where
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
-  gbuildNode = push $ do -- FIXME: unclear whether we need to push or not
-    currentNode <- peekNode
-    case currentNode of
-      Just node -> pure $ gbuildSumNode @(f :+: g) node
-      Nothing -> empty
+  gbuildNode = push $ gbuildSumNode @(f :+: g) -- FIXME: unclear whether we need to push or not
+  --   currentNode <- peekNode
+  --   case currentNode of
+  --     Just node -> pure $ gbuildSumNode @(f :+: g) node
+  --     Nothing -> empty
 
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
@@ -208,7 +208,12 @@ instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
 
 
 class GBuildingSum f where
-  gbuildSumNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
+  gbuildSumNode :: (Alternative m
+                   , Carrier sig m
+                   , Member (Reader ByteString) sig
+                   , Member (Reader (Ptr Cursor)) sig
+                   , MonadIO m)
+                   => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
   gSymbolMatch :: proxy f -> Node -> Bool
