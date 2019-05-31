@@ -216,17 +216,21 @@ class GBuildingSum f where
                    => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
-  gSymbolMatch :: proxy f -> Node -> Bool
+  gSymbolMatch :: proxy f -> Maybe Node -> Bool
 
 instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
 
 instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
-  gbuildSumNode currentNode = do
+  gbuildSumNode = do
+    currentNode <- peekNode
+    -- case currentNode of
+    --   Just node -> pure $ gSymbolMatch @f undefined node
+    --   Nothing -> empty
     let doesSymbolMatchLHS = gSymbolMatch @f undefined currentNode
     if doesSymbolMatchLHS -- FIXME: check both sides and report error
-    then L1 <$> gbuildSumNode @f
-    else R1 <$> gbuildSumNode @g
+      then L1 <$> gbuildSumNode @f
+      else R1 <$> gbuildSumNode @g
   gSymbolMatch _ currentNode = gSymbolMatch @f undefined currentNode || gSymbolMatch @g undefined currentNode
 
 -- | Generically build products
