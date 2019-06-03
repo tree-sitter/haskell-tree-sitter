@@ -20,12 +20,22 @@ library
                      , filepath >= 1.4.1.2 && < 1.5
                      , split >= 0.2.3.2 && < 0.3
                      , template-haskell >= 2.12.0.0 && < 2.15.0.0
+                     , unordered-containers
+                     , aeson
+                     , text
+                     , hedgehog
+                     , bytestring
+                     , fused-effects
   default-language:    Haskell2010
   exposed-modules:     TreeSitter.Parser
+                     , TreeSitter.Importing
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Tree
+                     , CodeGen.GenerateSyntax
+                     , CodeGen.Deserialize
                      , TreeSitter.Ptr
+                     , TreeSitter.Cursor
   Include-dirs:        includes
                      , vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
@@ -46,6 +56,14 @@ test-suite test
                      , hspec
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
+
+test-suite codegen-test
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test-codegen
+  main-is: test-codegen.hs
+  build-depends: hedgehog
+               , base >= 4.7 && < 5
+               , haskell-tree-sitter
 
 source-repository head
   type:     git
