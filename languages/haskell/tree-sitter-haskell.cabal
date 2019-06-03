@@ -36,6 +36,15 @@ library
   exposed-modules:     TreeSitter.Haskell
   build-depends:       base >= 4.7 && < 5
                      , haskell-tree-sitter
+                     , template-haskell
+                     , tree-sitter-haskell-internal
+  default-language:    Haskell2010
+
+library tree-sitter-haskell-internal
+  exposed-modules:     TreeSitter.Haskell.Internal
+  hs-source-dirs:      internal
+  build-depends:       base >= 4.7 && < 5
+                     , haskell-tree-sitter
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-haskell/src
   c-sources:           vendor/tree-sitter-haskell/src/parser.c
