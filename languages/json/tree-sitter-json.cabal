@@ -18,8 +18,6 @@ library
                      , template-haskell
                      , tree-sitter-json-internal
   default-language:    Haskell2010
-  Include-dirs:        vendor/tree-sitter-json/src
-  c-sources:           vendor/tree-sitter-json/src/parser.c
   ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations
   if (impl(ghc >= 8.6))
     ghc-options:       -Wno-star-is-type
