@@ -1,8 +1,15 @@
+{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Java
 ( tree_sitter_java
+, Grammar(..)
 ) where
 
-import Foreign.Ptr
+import Language.Haskell.TH
+import TreeSitter.Java.Internal
 import TreeSitter.Language
 
-foreign import ccall unsafe "vendor/tree-sitter-java/src/parser.c tree_sitter_java" tree_sitter_java :: Ptr Language
+-- Regenerate template haskell code when these files change:
+addDependentFileRelative "../vendor/tree-sitter-java/src/parser.c"
+
+-- | Statically-known rules corresponding to symbols in the grammar.
+mkSymbolDatatype (mkName "Grammar") tree_sitter_java
