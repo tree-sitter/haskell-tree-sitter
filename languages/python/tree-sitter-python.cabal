@@ -15,6 +15,15 @@ library
   exposed-modules:     TreeSitter.Python
   build-depends:       base >= 4.7 && < 5
                      , haskell-tree-sitter
+                     , template-haskell
+                     , tree-sitter-python-internal
+  default-language:    Haskell2010
+
+library tree-sitter-python-internal
+  exposed-modules:     TreeSitter.Python.Internal
+  hs-source-dirs:      internal
+  build-depends:       base >= 4.7 && < 5
+                     , haskell-tree-sitter
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-python/src
   c-sources:           vendor/tree-sitter-python/src/parser.c
