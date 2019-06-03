@@ -13,6 +13,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     TreeSitter.Python
+                     , TreeSitter.Python.AST
   build-depends:       base >= 4.7 && < 5
                      , directory >= 1.3.0.2 && < 1.4
                      , filepath >= 1.4.1.2 && < 1.5
