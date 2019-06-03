@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.JSON
 ( tree_sitter_json
+, Grammar(..)
 ) where
 
 import Language.Haskell.TH
