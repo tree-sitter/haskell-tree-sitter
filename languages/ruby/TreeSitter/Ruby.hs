@@ -1,8 +1,15 @@
+{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Ruby
 ( tree_sitter_ruby
+, Grammar(..)
 ) where
 
-import Foreign.Ptr
+import Language.Haskell.TH
+import TreeSitter.Ruby.Internal
 import TreeSitter.Language
 
-foreign import ccall unsafe "vendor/tree-sitter-ruby/src/parser.c tree_sitter_ruby" tree_sitter_ruby :: Ptr Language
+-- Regenerate template haskell code when these files change:
+addDependentFileRelative "../vendor/tree-sitter-ruby/src/parser.c"
+
+-- | Statically-known rules corresponding to symbols in the grammar.
+mkSymbolDatatype (mkName "Grammar") tree_sitter_ruby

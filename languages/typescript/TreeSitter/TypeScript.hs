@@ -1,8 +1,15 @@
+{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.TypeScript
 ( tree_sitter_typescript
+, Grammar(..)
 ) where
 
-import Foreign.Ptr
+import Language.Haskell.TH
+import TreeSitter.TypeScript.Internal
 import TreeSitter.Language
 
-foreign import ccall unsafe "vendor/tree-sitter-typescript/src/parser.c tree_sitter_typescript" tree_sitter_typescript :: Ptr Language
+-- Regenerate template haskell code when these files change:
+addDependentFileRelative "../vendor/tree-sitter-typescript/src/parser.c"
+
+-- | Statically-known rules corresponding to symbols in the grammar.
+mkSymbolDatatype (mkName "Grammar") tree_sitter_typescript
