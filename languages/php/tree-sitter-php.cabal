@@ -14,7 +14,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     TreeSitter.PHP
   build-depends:       base >= 4.7 && < 5
-                     , haskell-tree-sitter
+                     , tree-sitter
                      , template-haskell
                      , tree-sitter-php-internal
   default-language:    Haskell2010
@@ -23,7 +23,7 @@ library tree-sitter-php-internal
   exposed-modules:     TreeSitter.PHP.Internal
   hs-source-dirs:      internal
   build-depends:       base >= 4.7 && < 5
-                     , haskell-tree-sitter
+                     , tree-sitter
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-php/src
   c-sources:           vendor/tree-sitter-php/src/parser.c

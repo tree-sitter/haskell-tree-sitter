@@ -14,7 +14,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:     TreeSitter.JSON
   build-depends:       base >= 4.7 && < 5
-                     , haskell-tree-sitter
+                     , tree-sitter
                      , template-haskell
                      , tree-sitter-json-internal
   default-language:    Haskell2010
@@ -23,7 +23,7 @@ library tree-sitter-json-internal
   exposed-modules:     TreeSitter.JSON.Internal
   hs-source-dirs:      internal
   build-depends:       base >= 4.7 && < 5
-                     , haskell-tree-sitter
+                     , tree-sitter
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-json/src
   c-sources:           vendor/tree-sitter-json/src/parser.c
