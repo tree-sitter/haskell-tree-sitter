@@ -38,7 +38,7 @@ library
                      , TreeSitter.Node
                      , TreeSitter.Parser
                      , TreeSitter.Tree
-  Include-dirs:        vendor/tree-sitter/lib/include
+  include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
   c-sources:           src/bridge.c
