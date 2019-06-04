@@ -35,12 +35,10 @@ library
                      , CodeGen.Deserialize
                      , TreeSitter.Ptr
                      , TreeSitter.Cursor
-  Include-dirs:        includes
-                     , vendor/tree-sitter/lib/include
+  Include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
   c-sources:           src/bridge.c
-                     , src/bridge_ptr.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99 -Os
   ghc-options:         -Wall -fno-warn-name-shadowing -O -j
