@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter
-version:             0.1.0
+version:             0.1.0.0
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
                      .
@@ -14,7 +14,8 @@ author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, 
 maintainer:          rob.rix@github.com
 copyright:           2015 GitHub
 category:            Parsing, Tree-sitter
-build-type:          Custom
+build-type:          Simple
+tested-with:         GHC == 8.6.4
 
 library
   hs-source-dirs:      src
@@ -41,6 +42,9 @@ library
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
+  install-includes:    tree_sitter/api.h
+                     , tree_sitter/parser.h
+                     , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
@@ -59,9 +63,3 @@ test-suite test
 source-repository head
   type:     git
   location: https://github.com/tree-sitter/haskell-tree-sitter
-
-custom-setup
-  setup-depends:  base >= 4.8 && < 5
-                , Cabal
-                , directory ^>= 1.3
-                , process   ^>= 1.6.3
