@@ -1,6 +1,3 @@
-[submodule "vendor/tree-sitter"]
-	path = tree-sitter/vendor/tree-sitter
-	url = https://github.com/tree-sitter/tree-sitter.git
 [submodule "vendor/tree-sitter-go"]
 	path = languages/go/vendor/tree-sitter-go
 	url = https://github.com/tree-sitter/tree-sitter-go.git
