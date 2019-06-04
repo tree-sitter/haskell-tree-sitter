@@ -29,9 +29,3 @@ can be found [here](https://github.com/tree-sitter/tree-sitter/blob/master/langu
 To build these executables, pass the `build-examples` flag to your build tool.
 
 [tree-sitter]: https://github.com/tree-sitter/tree-sitter
-
-# Building
-
-1. Run `script/bootstrap` to pull in all submodules.
-2. Adjust `stack.yaml`'s `resolver` field to target whatever LTS you want.
-3. `stack build` (or `stack build --flag tree-sitter-haskell:build-examples`)
