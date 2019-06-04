@@ -22,3 +22,6 @@
 [submodule "languages/java/vendor/tree-sitter-java"]
 	path = languages/java/vendor/tree-sitter-java
 	url = https://github.com/tree-sitter/tree-sitter-java.git
+[submodule "tree-sitter/vendor/tree-sitter"]
+	path = tree-sitter/vendor/tree-sitter
+	url = https://github.com/tree-sitter/tree-sitter.git
