@@ -1,4 +1,4 @@
-#include "tree_sitter/api.h"
+#include <tree_sitter/api.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
