@@ -1,8 +1,14 @@
+{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Nix (
   tree_sitter_nix
 ) where
 
-import Foreign.Ptr
+import Language.Haskell.TH
 import TreeSitter.Language
+import TreeSitter.Nix.Internal
 
-foreign import ccall unsafe "vendor/tree-sitter-nix/src/parser.c tree_sitter_nix" tree_sitter_nix :: Ptr Language
+-- Regenerate template haskell code when these files change:
+addDependentFileRelative "../vendor/tree-sitter-nix/src/parser.c"
+
+-- | Statically-known rules corresponding to symbols in the grammar.
+mkSymbolDatatype (mkName "Grammar") tree_sitter_nix
