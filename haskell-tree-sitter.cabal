@@ -1,31 +1,35 @@
+cabal-version:       2.2
 name:                haskell-tree-sitter
-version:             0.1.0
-synopsis:            haskell tree-sitter bindings
-description:         Please see README.md
+version:             0.1.0.0
+synopsis:            Unstable bindings for the tree-sitter parsing library.
+description:         Tree-sitter is a parser generator tool and an incremental parsing library.
+                     .
+                     We strongly recommend against depending on this library at this time;
+                     the data types and API are subject to rapid change. Future versions
+                     will provide more reliable parsers and a more stable API.
 homepage:            http://github.com/tree-sitter/haskell-tree-sitter#readme
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, Ayman Nadeem, Patrick Thomson
 maintainer:          rob.rix@github.com
 copyright:           2015 GitHub
-category:            Web
-build-type:          Custom
--- extra-source-files:
-cabal-version:       >=1.10
+category:            Parsing, Tree-sitter
+build-type:          Simple
+tested-with:         GHC == 8.6.4
 
 library
   hs-source-dirs:      src
-  build-depends:       base >= 4.7 && < 5
-                     , directory >= 1.3.0.2 && < 1.4
-                     , filepath >= 1.4.1.2 && < 1.5
-                     , split >= 0.2.3.2 && < 0.3
-                     , template-haskell >= 2.12.0.0 && < 2.15.0.0
-                     , unordered-containers
-                     , aeson
-                     , text
-                     , hedgehog
-                     , bytestring
-                     , fused-effects
+  build-depends:       base                  >= 4.7 && < 5
+                     , aeson                ^>= 1.4.2
+                     , bytestring           ^>= 0.10.8.2
+                     , directory            ^>= 1.3
+                     , filepath             ^>= 1.4.1
+                     , fused-effects         >= 0.4 && <1
+                     , hedgehog              >= 0.6 && <2
+                     , split                ^>= 0.2.3
+                     , template-haskell      >= 2.12.0.0 && < 2.15.0.0
+                     , text                 ^>= 1.2.3.1
+                     , unordered-containers ^>= 0.2.9
   default-language:    Haskell2010
   exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Importing
@@ -49,24 +53,19 @@ test-suite test
   main-is:             Spec.hs
   build-depends:       base
                      , haskell-tree-sitter
-                     , hspec
+                     , hspec ^>= 2.6.1
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 test-suite codegen-test
-  type: exitcode-stdio-1.0
+  type:           exitcode-stdio-1.0
   hs-source-dirs: test-codegen
-  main-is: test-codegen.hs
-  build-depends: hedgehog
-               , base >= 4.7 && < 5
-               , haskell-tree-sitter
+  main-is:        test-codegen.hs
+
+  build-depends:  base
+                , haskell-tree-sitter
+                , hedgehog >= 0.6 && <2
 
 source-repository head
   type:     git
   location: https://github.com/tree-sitter/haskell-tree-sitter
-
-custom-setup
-  setup-depends:  base >= 4.8 && < 5
-                , Cabal
-                , directory
-                , process
