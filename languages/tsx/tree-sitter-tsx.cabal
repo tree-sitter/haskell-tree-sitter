@@ -7,9 +7,8 @@ homepage:            https://github.com/tree-sitter/tree-sitter-typescript#readm
 author:              Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey, Ayman Nadeem, Patrick Thomson
 maintainer:          vera@github.com
 copyright:           2017 GitHub
-category:            Web
+category:            Tree-sitter, TypeScript
 build-type:          Simple
--- extra-source-files
 
 library
   exposed-modules:     TreeSitter.TSX
