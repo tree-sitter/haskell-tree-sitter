@@ -26,6 +26,7 @@ library tree-sitter-java-internal
                      , tree-sitter ^>= 0.1.0.0
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-java/src
+  install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-java/src/parser.c
   extra-libraries:     stdc++
 
