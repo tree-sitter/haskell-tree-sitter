@@ -39,13 +39,16 @@ library
                      , CodeGen.GenerateSyntax
                      , CodeGen.Deserialize
                      , TreeSitter.Cursor
-  Include-dirs:        vendor/tree-sitter/lib/include
+  include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
+  install-includes:    tree_sitter/api.h
+                     , tree_sitter/parser.h
+                     , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
-  cc-options:          -std=c99 -Os
-  ghc-options:         -Wall -fno-warn-name-shadowing -O -j
+  cc-options:          -std=c99
+  ghc-options:         -Wall -fno-warn-name-shadowing
 
 test-suite test
   type:                exitcode-stdio-1.0
