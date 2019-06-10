@@ -8,6 +8,7 @@ author:              Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey, 
 maintainer:          vera@github.com
 copyright:           2017 GitHub
 category:            Tree-sitter, TypeScript
+license:             BSD-3-Clause
 build-type:          Simple
 
 library
