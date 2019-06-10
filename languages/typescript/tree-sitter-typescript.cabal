@@ -24,9 +24,9 @@ library tree-sitter-typescript-internal
   build-depends:       base         >= 4.12 && < 5
                      , tree-sitter ^>= 0.1.0.0
   default-language:    Haskell2010
-  Include-dirs:        vendor/tree-sitter-typescript/src
-  c-sources:           vendor/tree-sitter-typescript/src/parser.c
-                     , vendor/tree-sitter-typescript/src/scanner.c
+  Include-dirs:        vendor/tree-sitter-typescript/typescript/src
+  c-sources:           vendor/tree-sitter-typescript/typescript/src/parser.c
+                     , vendor/tree-sitter-typescript/typescript/src/scanner.c
 
 source-repository head
   type:     git
