@@ -28,3 +28,6 @@
 [submodule "languages/nix/vendor/tree-sitter-nix"]
 	path = languages/nix/vendor/tree-sitter-nix
 	url = https://github.com/cstrahan/tree-sitter-nix
+[submodule "languages/tsx/vendor/tree-sitter-typescript"]
+	path = languages/tsx/vendor/tree-sitter-typescript
+	url = https://github.com/tree-sitter/tree-sitter-typescript
