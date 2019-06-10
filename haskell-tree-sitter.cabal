@@ -16,6 +16,10 @@ copyright:           2015 GitHub
 category:            Parsing, Tree-sitter
 build-type:          Simple
 tested-with:         GHC == 8.6.4
+extra-source-files:  vendor/tree-sitter/lib/src/*.c
+                   , vendor/tree-sitter/lib/src/*.h
+                   , vendor/tree-sitter/lib/utf8proc/utf8proc.c
+                   , vendor/tree-sitter/lib/utf8proc/utf8proc_data.c
 
 library
   hs-source-dirs:      src
@@ -44,8 +48,8 @@ library
                      , vendor/tree-sitter/lib/utf8proc
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
-  cc-options:          -std=c99 -Os
-  ghc-options:         -Wall -fno-warn-name-shadowing -O -j
+  cc-options:          -std=c99
+  ghc-options:         -Wall -fno-warn-name-shadowing
 
 test-suite test
   type:                exitcode-stdio-1.0
