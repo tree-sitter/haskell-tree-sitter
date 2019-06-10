@@ -13,20 +13,20 @@ build-type:          Simple
 library
   exposed-modules:     TreeSitter.Python
                      , TreeSitter.Python.AST
-  build-depends:       base                 >= 4.12 && < 5
-                     , haskell-tree-sitter ^>= 0.1.0.0
-                     , aeson               ^>= 1.4.2.0
-                     , directory           ^>= 1.3
-                     , filepath            ^>= 1.4
-                     , template-haskell     >= 2.12.0.0 && < 2.15.0.0
+  build-depends:       base              >= 4.12 && < 5
+                     , tree-sitter      ^>= 0.1.0.0
+                     , aeson            ^>= 1.4.2.0
+                     , directory        ^>= 1.3
+                     , filepath         ^>= 1.4
+                     , template-haskell  >= 2.12.0.0 && < 2.15.0.0
                      , tree-sitter-python-internal
   default-language:    Haskell2010
 
 library tree-sitter-python-internal
   exposed-modules:     TreeSitter.Python.Internal
   hs-source-dirs:      internal
-  build-depends:       base                 >= 4.12 && < 5
-                     , haskell-tree-sitter ^>= 0.1.0.0
+  build-depends:       base         >= 4.12 && < 5
+                     , tree-sitter  ^>= 0.1.0.0
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-python/src
   c-sources:           vendor/tree-sitter-python/src/parser.c
