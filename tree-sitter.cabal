@@ -1,5 +1,5 @@
 cabal-version:       2.2
-name:                haskell-tree-sitter
+name:                tree-sitter
 version:             0.1.0.0
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
@@ -43,9 +43,12 @@ library
                      , CodeGen.GenerateSyntax
                      , CodeGen.Deserialize
                      , TreeSitter.Cursor
-  Include-dirs:        vendor/tree-sitter/lib/include
+  include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
+  install-includes:    tree_sitter/api.h
+                     , tree_sitter/parser.h
+                     , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
@@ -56,7 +59,7 @@ test-suite test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , haskell-tree-sitter
+                     , tree-sitter
                      , hspec ^>= 2.6.1
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
@@ -67,7 +70,7 @@ test-suite codegen-test
   main-is:          test-codegen.hs
   default-language: Haskell2010
   build-depends:    base
-                  , haskell-tree-sitter
+                  , tree-sitter
                   , hedgehog >= 0.6 && <2
 
 source-repository head
