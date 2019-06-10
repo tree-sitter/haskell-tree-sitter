@@ -47,6 +47,18 @@ library
                      , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
+                     , vendor/tree-sitter/lib/src/get_changed_ranges.c
+                     , vendor/tree-sitter/lib/src/language.c
+                     , vendor/tree-sitter/lib/src/lexer.c
+                     , vendor/tree-sitter/lib/src/node.c
+                     , vendor/tree-sitter/lib/src/parser.c
+                     , vendor/tree-sitter/lib/src/stack.c
+                     , vendor/tree-sitter/lib/src/subtree.c
+                     , vendor/tree-sitter/lib/src/tree_cursor.c
+                     , vendor/tree-sitter/lib/src/tree.c
+                     , vendor/tree-sitter/lib/src/utf16.c
+                     , vendor/tree-sitter/lib/utf8proc.c
+                     , vendor/tree-sitter/lib/utf8proc_data.c
   cc-options:          -std=c99
   ghc-options:         -Wall -fno-warn-name-shadowing
 
