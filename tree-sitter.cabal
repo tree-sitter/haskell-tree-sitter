@@ -44,8 +44,8 @@ library
                      , vendor/tree-sitter/lib/utf8proc
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
-  cc-options:          -std=c99 -Os
-  ghc-options:         -Wall -fno-warn-name-shadowing -O -j
+  cc-options:          -std=c99
+  ghc-options:         -Wall -fno-warn-name-shadowing
 
 test-suite test
   type:                exitcode-stdio-1.0
