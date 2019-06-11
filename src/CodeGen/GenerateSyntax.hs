@@ -22,6 +22,8 @@ import Data.Foldable
 import Data.Text (Text)
 import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
+import qualified TreeSitter.Importing as TS
+import GHC.Generics hiding (Constructor, Datatype)
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: MkDatatype -> Q Dec
