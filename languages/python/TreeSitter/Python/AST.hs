@@ -1,7 +1,7 @@
+{-# OPTIONS_GHC -ddump-splices #-}
 {-# LANGUAGE DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TemplateHaskell #-}
 module TreeSitter.Python.AST where
 
-import TreeSitter.Python.Internal
 import TreeSitter.Language
 import CodeGen.GenerateSyntax
 import Control.Monad.IO.Class
