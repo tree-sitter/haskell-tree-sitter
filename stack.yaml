@@ -13,3 +13,6 @@ packages:
 resolver: lts-13.13
 extra-deps:
   - fused-effects-0.4.0.0
+ghc-options:
+    "$targets": -Werror -ddump-splices
+    "$everything": -O0
