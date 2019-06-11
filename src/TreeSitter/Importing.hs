@@ -225,14 +225,14 @@ instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
 instance forall f g . (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
-    -- case currentNode of
-    --   Just node -> pure $ gSymbolMatch @f undefined node
-    --   Nothing -> empty
-    let doesSymbolMatchLHS = gSymbolMatch @f undefined currentNode
-    if doesSymbolMatchLHS -- FIXME: check both sides and report error
+    lhsSymbolMatch <- case currentNode of
+      Just node -> pure $ gSymbolMatch (Proxy @f) node
+      Nothing -> empty
+    if lhsSymbolMatch -- FIXME: check both sides and report error
       then L1 <$> gbuildSumNode @f
       else R1 <$> gbuildSumNode @g
-  gSymbolMatch _ currentNode = gSymbolMatch @f undefined currentNode || gSymbolMatch @g undefined currentNode
+  gSymbolMatch _ currentNode = gSymbolMatch (Proxy @f) currentNode || gSymbolMatch (Proxy @g) currentNode
+
 
 -- | Generically build products
 class GBuildingProduct f where
