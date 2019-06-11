@@ -222,7 +222,7 @@ class GBuildingSum f where
 instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
 
-instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
+instance forall f g . (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
     -- case currentNode of
