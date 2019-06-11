@@ -44,7 +44,7 @@ executable python
   main-is:             Main.hs
   build-depends:       base
                      , bytestring
-                     , haskell-tree-sitter
+                     , tree-sitter
                      , tree-sitter-python
   default-language:    Haskell2010
 
