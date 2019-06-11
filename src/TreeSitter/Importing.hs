@@ -33,6 +33,7 @@ import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
+import           Data.Proxy
 
 -- Parse source code and produce AST
 parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Maybe t)
@@ -216,7 +217,7 @@ class GBuildingSum f where
                    => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
-  gSymbolMatch :: proxy f -> Maybe Node -> Bool
+  gSymbolMatch :: Proxy f -> Node -> Bool
 
 instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
