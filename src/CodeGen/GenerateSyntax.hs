@@ -6,6 +6,9 @@
 -- {-# LANGUAGE TypeOperators #-}
 module CodeGen.GenerateSyntax
 ( datatypeForConstructors
+, removeUnderscore
+, initUpper
+, mapOperator
 ) where
 
 import Data.Char
@@ -13,13 +16,14 @@ import Language.Haskell.TH
 import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import GHC.Generics hiding (Constructor, Datatype)
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
-import qualified TreeSitter.Importing as TS
+import Data.Text (Text)
+import qualified Data.HashSet as HashSet
+import Data.HashSet (HashSet)
 
--- Template Haskell functions that take the input types and auto-generate Haskell datatypes
+-- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: MkDatatype -> Q Dec
 datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
   let name = toName' named datatypeName
@@ -28,11 +32,15 @@ datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = d
 datatypeForConstructors (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+datatypeForConstructors (LeafType (DatatypeName datatypeName) Anonymous) = do
+  let name = toName' Anonymous datatypeName
+  con <- toConLeaf Anonymous (DatatypeName datatypeName)
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
 datatypeForConstructors (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
+  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
@@ -49,7 +57,15 @@ toConProduct constructorName fields = RecC (toName constructorName) <$> fieldLis
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 toConLeaf :: MkNamed -> MkDatatypeName -> Q Con
-toConLeaf named (DatatypeName name) = pure (NormalC (toName' named name) [])
+toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName' Anonymous name) [])
+toConLeaf named (DatatypeName name) = RecC (toName' named name) <$> leafRecords
+  where leafRecords = pure <$> toLeafVarBangTypes
+
+-- | Produce VarBangTypes required to construct records of leaf types
+toLeafVarBangTypes :: Q VarBangType
+toLeafVarBangTypes = do
+  leafVarBangTypes <- conT ''Text
+  pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
 
 -- | Construct toBangType for use in above toConSum
 toBangType :: MkType -> Q BangType
@@ -85,7 +101,7 @@ toCamelCase :: String -> String
 toCamelCase = initUpper . mapOperator . removeUnderscore
 
 clashingNames :: HashSet String
-clashingNames = HashSet.fromList ["type"]
+clashingNames = HashSet.fromList ["type", "module", "data"]
 
 addTickIfNecessary :: String -> String
 addTickIfNecessary s

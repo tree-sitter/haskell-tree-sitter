@@ -1,8 +1,15 @@
+{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.PHP
 ( tree_sitter_php
+, Grammar(..)
 ) where
 
-import Foreign.Ptr
+import Language.Haskell.TH
+import TreeSitter.PHP.Internal
 import TreeSitter.Language
 
-foreign import ccall unsafe "vendor/tree-sitter-php/src/parser.c tree_sitter_php" tree_sitter_php :: Ptr Language
+-- Regenerate template haskell code when these files change:
+addDependentFileRelative "../vendor/tree-sitter-php/src/parser.c"
+
+-- | Statically-known rules corresponding to symbols in the grammar.
+mkSymbolDatatype (mkName "Grammar") tree_sitter_php

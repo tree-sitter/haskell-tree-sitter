@@ -23,6 +23,8 @@ import qualified Data.Map as Map
 import qualified Data.Text as Text
 import           Data.Text.Encoding
 import           Foreign.C.String
+import           Control.Exception as Exc
+import           Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import           Foreign.Marshal.Alloc
 import           Foreign.Marshal.Utils
 import           Foreign.Ptr
