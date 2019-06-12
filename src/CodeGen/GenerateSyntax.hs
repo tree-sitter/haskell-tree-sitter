@@ -14,7 +14,6 @@ module CodeGen.GenerateSyntax
 
 import Data.Char
 import Language.Haskell.TH
-import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
@@ -22,7 +21,6 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
 import qualified Data.HashSet as HashSet
-import Data.HashSet (HashSet)
 import qualified TreeSitter.Importing as TS
 import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
