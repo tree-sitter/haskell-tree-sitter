@@ -48,8 +48,6 @@ symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
   tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
   [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = nodeSymbol node == $(litE (integerL (fromIntegral tsSymbol)))|]
-  -- InstanceD Nothing [] (AppT (ConT ''TS.SymbolMatching) (ConT name)) [FunD (mkName "symbolMatch") [Clause [WildP, VarP (mkName "node")] quasi []]]
-
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
