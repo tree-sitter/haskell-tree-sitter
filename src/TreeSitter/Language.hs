@@ -5,6 +5,7 @@ module TreeSitter.Language
 , SymbolType(..)
 , mkSymbolDatatype
 , addDependentFileRelative
+, ts_language_symbol_for_name
 ) where
 
 import Data.Char
@@ -31,6 +32,7 @@ data SymbolType = Regular | Anonymous | Auxiliary
 foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> Word32
 foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> CString
 foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type :: Ptr Language -> TSSymbol -> Int
+foreign import ccall unsafe "ts_language_symbol_for_name" ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
 
 
 class (Bounded s, Enum s, Ix s, Ord s, Show s) => Symbol s where
