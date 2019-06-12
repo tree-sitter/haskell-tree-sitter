@@ -198,6 +198,8 @@ class GBuilding f where
   gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
+  gSymbolMatch :: Proxy f -> Node -> Bool
+
 instance GBuilding f => GBuilding (M1 D c f) where
   gbuildNode = M1 <$> gbuildNode -- current node, not first child like above in original Building definition
 
