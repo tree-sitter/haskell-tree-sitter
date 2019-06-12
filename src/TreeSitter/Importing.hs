@@ -240,8 +240,9 @@ class GBuildingSum f where
 
   gSymbolSumMatch :: Proxy f -> Node -> Bool
 
-instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
+instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
+  gSymbolSumMatch _ = symbolMatch (Proxy @k)
 
 instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
