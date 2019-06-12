@@ -210,10 +210,12 @@ instance GBuilding f => GBuilding (M1 C c f) where
 -- Possibly for anonymous leaf nodes:
 instance GBuilding U1 where
   gbuildNode = pure U1
+  gSymbolMatch _ _ = False
 
 -- For regular leaf nodes:
 instance (Building k) => GBuilding (M1 S s (K1 c k)) where
   gbuildNode = M1 . K1 <$> buildNode
+  gSymbolMatch _ _ = False
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
