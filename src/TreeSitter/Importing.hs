@@ -4,6 +4,7 @@ module TreeSitter.Importing
 ( parseByteString
 , FieldName(..)
 , Building(..)
+, SymbolMatching(..)
 , step
 , push
 , goto
