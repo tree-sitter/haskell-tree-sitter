@@ -25,25 +25,33 @@ import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
 import qualified TreeSitter.Importing as TS
 import GHC.Generics hiding (Constructor, Datatype)
+import Foreign.Ptr
+import qualified TreeSitter.Language as TS
+import Foreign.C.String
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
-datatypeForConstructors :: MkDatatype -> Q Dec
-datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
+datatypeForConstructors :: Ptr TS.Language -> MkDatatype -> Q [Dec]
+datatypeForConstructors language (SumType (DatatypeName datatypeName) named subtypes) = do
   let name = toName' named datatypeName
   cons <- traverse (toSumCon datatypeName) subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]
-datatypeForConstructors (ProductType (DatatypeName datatypeName) named fields) = do
+  result <- symbolMatchingInstance language name datatypeName
+  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
+datatypeForConstructors language (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
-datatypeForConstructors (LeafType (DatatypeName datatypeName) Anonymous) = do
+  result <- symbolMatchingInstance language name datatypeName
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+datatypeForConstructors language (LeafType (DatatypeName datatypeName) Anonymous) = do
   let name = toName' Anonymous datatypeName
   con <- toConLeaf Anonymous (DatatypeName datatypeName)
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
-datatypeForConstructors (LeafType (DatatypeName datatypeName) named) = do
+  result <- symbolMatchingInstance language name datatypeName
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
-  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
+  result <- symbolMatchingInstance language name datatypeName
+  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
   tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
