@@ -202,6 +202,7 @@ class GBuilding f where
 
 instance GBuilding f => GBuilding (M1 D c f) where
   gbuildNode = M1 <$> gbuildNode -- current node, not first child like above in original Building definition
+  gSymbolMatch _ = gSymbolMatch (Proxy @f)
 
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode = M1 <$> gbuildNode
