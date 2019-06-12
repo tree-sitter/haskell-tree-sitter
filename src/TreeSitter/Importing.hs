@@ -81,6 +81,22 @@ instance Building a => Building [a] where
   buildNode = pure <$> buildNode
   buildEmpty = pure []
 
+class SymbolMatching a where
+  symbolMatch :: Proxy a -> Node -> Bool
+
+instance SymbolMatching Text.Text where
+  symbolMatch _ _ = False
+  -- Text is never going to be an adequate way to match any complete node
+  -- strictly for fields of leaves
+
+instance SymbolMatching a => SymbolMatching (Maybe a) where
+  symbolMatch _ = symbolMatch (Proxy @a)
+
+instance (SymbolMatching a, SymbolMatching b) => SymbolMatching (Either a b) where
+  symbolMatch _ = (||) <$> symbolMatch (Proxy @a) <*> symbolMatch (Proxy @b)
+
+instance SymbolMatching a => SymbolMatching [a] where
+  symbolMatch _ = symbolMatch (Proxy @a)
 
 -- | Advance the cursor to the next sibling of the current node.
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Bool
