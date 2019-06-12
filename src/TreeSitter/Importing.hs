@@ -219,11 +219,8 @@ instance (Building k) => GBuilding (M1 S s (K1 c k)) where
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
-  gbuildNode = push $ gbuildSumNode @(f :+: g) -- FIXME: unclear whether we need to push or not
-  --   currentNode <- peekNode
-  --   case currentNode of
-  --     Just node -> pure $ gbuildSumNode @(f :+: g) node
-  --     Nothing -> empty
+  gbuildNode = push $ gbuildSumNode @(f :+: g) -- FIXME: unclear whether we need to push or not (here we assume we do get a node for a Sum type)
+  gSymbolMatch = gSymbolSumMatch
 
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
@@ -246,16 +243,16 @@ class GBuildingSum f where
 instance Building k => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
 
-instance forall f g . (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
+instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
     lhsSymbolMatch <- case currentNode of
-      Just node -> pure $ gSymbolMatch (Proxy @f) node
+      Just node -> pure $ gSymbolSumMatch (Proxy @f) node
       Nothing -> empty
     if lhsSymbolMatch -- FIXME: check both sides and report error
       then L1 <$> gbuildSumNode @f
       else R1 <$> gbuildSumNode @g
-  gSymbolMatch _ currentNode = gSymbolMatch (Proxy @f) currentNode || gSymbolMatch (Proxy @g) currentNode
+  gSymbolSumMatch _ currentNode = gSymbolSumMatch (Proxy @f) currentNode || gSymbolSumMatch (Proxy @g) currentNode
 
 
 -- | Generically build products
