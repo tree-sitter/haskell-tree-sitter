@@ -10,6 +10,8 @@ import Prelude hiding (Float, Integer, String)
 import System.Directory
 import System.FilePath.Posix
 import Language.Haskell.TH.Syntax (loc_filename, location, runIO)
+import TreeSitter.Python.Internal
+import TreeSitter.Node
 
 -- Regenerate template haskell code when these files change:
 addDependentFileRelative "../../vendor/tree-sitter-python/src/node-types.json"
@@ -20,4 +22,4 @@ $(do
   pwd             <- runIO getCurrentDirectory
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> "../../vendor/tree-sitter-python/src/node-types.json"
   input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
-  either fail (traverse datatypeForConstructors) input)
+  either fail (fmap (concat @[]) . traverse (datatypeForConstructors tree_sitter_python)) input)
