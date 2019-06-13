@@ -28,7 +28,7 @@ withParser language action = Exc.bracket
   ts_parser_new
   ts_parser_delete
   $ \ parser -> do
-    ts_parser_set_language parser language
+    _ <- ts_parser_set_language parser language
     action parser
 
 withParseTree :: Ptr Parser -> ByteString -> (Ptr Tree -> IO a) -> IO a
