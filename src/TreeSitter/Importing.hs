@@ -196,11 +196,10 @@ class GBuilding f where
   gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
-  gSymbolMatch :: Proxy f -> Node -> Bool
 
 instance GBuilding f => GBuilding (M1 D c f) where
   gbuildNode = M1 <$> gbuildNode -- current node, not first child like above in original Building definition
-  gSymbolMatch _ = gSymbolMatch (Proxy @f)
+  -- gSymbolMatch _ = gSymbolMatch (Proxy @f)
 
 instance GBuilding f => GBuilding (M1 C c f) where
   gbuildNode = M1 <$> gbuildNode
@@ -208,17 +207,14 @@ instance GBuilding f => GBuilding (M1 C c f) where
 -- Possibly for anonymous leaf nodes:
 instance GBuilding U1 where
   gbuildNode = pure U1
-  gSymbolMatch _ _ = False
 
 -- For regular leaf nodes:
 instance (Building k) => GBuilding (M1 S s (K1 c k)) where
   gbuildNode = M1 . K1 <$> buildNode
-  gSymbolMatch _ _ = False
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
   gbuildNode = push $ gbuildSumNode @(f :+: g) -- FIXME: unclear whether we need to push or not (here we assume we do get a node for a Sum type)
-  gSymbolMatch = gSymbolSumMatch
 
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
