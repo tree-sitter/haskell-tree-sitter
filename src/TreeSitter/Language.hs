@@ -3,6 +3,7 @@ module TreeSitter.Language
 ( Language
 , Symbol(..)
 , SymbolType(..)
+, symbolToName
 , mkSymbolDatatype
 , addDependentFileRelative
 , ts_language_symbol_for_name
