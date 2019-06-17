@@ -85,8 +85,6 @@ class SymbolMatching a where
 
 instance SymbolMatching Text.Text where
   symbolMatch _ _ = False
-  -- Text is never going to be an adequate way to match any complete node
-  -- strictly for fields of leaves
 
 instance SymbolMatching a => SymbolMatching (Maybe a) where
   symbolMatch _ = symbolMatch (Proxy @a)
