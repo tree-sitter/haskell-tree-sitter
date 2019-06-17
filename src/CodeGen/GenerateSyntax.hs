@@ -56,26 +56,6 @@ symbolMatchingInstance language name str = do
   tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
   [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = nodeSymbol node == $(litE (integerL (fromIntegral tsSymbol)))|]
 
--- get symbol datatype, which has constructors representing each production rule
--- use toEnum to have its constructors represented by enum types
--- then figure out which of those enums match the Word16s, to get an idea of whether or not we're producing the correct instances?
-
-
--- so instead of using `MkSymbolDatatype` we wanna do something similar,
--- but rather than doing it for the entirety of the language we just want to do it
--- for the production rules we get for that node given by `nodeSymbol`?
--- we want to pick the relevant constructor for the `Word16`
--- The symbol datatypes have an `Enum` instance so there’s `toEnum`/`fromEnum`
-
--- toAST :: forall grammar . (Bounded grammar, Enum grammar) => TS.Node -> IO (Base (AST [] grammar) TS.Node)
--- toAST node@TS.Node{..} = do
---   let count = fromIntegral nodeChildCount
---   children <- allocaArray count $ \ childNodesPtr -> do
---     _ <- with nodeTSNode (`TS.ts_node_copy_child_nodes` childNodesPtr)
---     peekArray count childNodesPtr
---   pure $! In (Node (toEnum (min (fromIntegral nodeSymbol) (fromEnum (maxBound :: grammar)))) (Location (nodeRange node) (nodeSpan node))) children
-
-
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
 toSumCon str (MkType (DatatypeName n) named) = toConSum (n ++ str) [MkType (DatatypeName n) named]
