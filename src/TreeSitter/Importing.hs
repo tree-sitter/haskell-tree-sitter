@@ -212,7 +212,8 @@ instance (Building k) => GBuilding (M1 S s (K1 c k)) where
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
-  gbuildNode = push $ gbuildSumNode @(f :+: g) -- FIXME: unclear whether we need to push or not (here we assume we do get a node for a Sum type)
+  gbuildNode = gbuildSumNode @(f :+: g)
+
 
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
