@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE LambdaCase #-}
-{-# OPTIONS_GHC -ddump-splices #-}
 
 -- {-# LANGUAGE TypeOperators #-}
 module CodeGen.GenerateSyntax
@@ -64,6 +63,7 @@ symbolMatchingInstanceForSums language name subtypes =
   where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) node|] -- can this be matched by ForStatement, etc.
         mkOr lhs rhs = [e| $(lhs) || $(rhs) |]
 
+        mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
