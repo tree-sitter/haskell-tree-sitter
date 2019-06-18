@@ -26,13 +26,14 @@ import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
 import qualified TreeSitter.Language as TS
 import Foreign.C.String
+import Data.Proxy
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: Ptr TS.Language -> MkDatatype -> Q [Dec]
 datatypeForConstructors language (SumType (DatatypeName datatypeName) named subtypes) = do
   let name = toName' named datatypeName
   cons <- traverse (toSumCon datatypeName) subtypes
-  result <- symbolMatchingInstance language name datatypeName
+  result <- symbolMatchingInstanceForSums language name subtypes
   pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
 datatypeForConstructors language (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
@@ -53,8 +54,16 @@ datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
-  tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
-  [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = nodeSymbol node == $(litE (integerL (fromIntegral tsSymbol)))|]
+  tsSymbol <- runIO $ withCString str (pure . toEnum . fromIntegral . TS.ts_language_symbol_for_name language) -- get the symbol name -- ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
+  tsSymbolType <- pure . toEnum $ TS.ts_language_symbol_type language tsSymbol
+  [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = toEnum (fromIntegral (nodeSymbol node)) == $(conE (mkName $ "Grammar." <> snd (TS.symbolToName tsSymbolType str)))|]
+
+symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
+symbolMatchingInstanceForSums language name subtypes =
+  [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = $(foldr1 mkOr (perMkType `map` subtypes)) |] -- subtypes + handwaving
+  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) node|] -- can this be matched by ForStatement, etc.
+        mkOr lhs rhs = [e| $(lhs) || $(rhs) |]
+
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
