@@ -16,6 +16,7 @@ module TreeSitter.Importing
 import           Control.Applicative
 import           Control.Effect hiding ((:+:))
 import           Control.Effect.Reader
+import           Control.Effect.Fail
 import           Control.Monad (void)
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
@@ -35,27 +36,29 @@ import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 import           Data.Proxy
+import           Prelude hiding (fail)
+import           Type.Reflection
 
 -- Parse source code and produce AST
-parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Maybe t)
+parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Either String t)
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
   if treePtr == nullPtr then
-    pure Nothing
+    pure (Left "error: didn't get a root node")
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runMaybeC (runM (runReader cursor (runReader bytestring buildNode)))
+        runM (runFail (runReader cursor (runReader bytestring buildNode)))
 
 -- | Building is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'buildNode' providing that they have a suitable 'Generic' instance.
 class Building a where
-  buildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  default buildNode :: (Alternative m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  buildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  default buildNode :: (MonadFail m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   buildNode = to <$> gbuildNode
 
-  buildEmpty :: Alternative m => m a
-  buildEmpty = empty
+  buildEmpty :: MonadFail m => m a
+  buildEmpty = fail "expected a node" -- TODO: log what type actually expected the node / what `a` is
 
 instance Building Text.Text where
   buildNode = do
@@ -66,23 +69,25 @@ instance Building Text.Text where
         let start = fromIntegral (nodeStartByte node')
             end = fromIntegral (nodeEndByte node')
         pure (decodeUtf8 (slice start end bytestring))
-      _ -> empty
+      _ -> fail "expected a node for Text"
+  -- Text is never going to be an adequate way to match any complete node
+  -- strictly for fields of leaves
 
 instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
   buildEmpty = pure Nothing
 
-instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Building (Either a b) where
+instance (Building a, Building b, SymbolMatching a, SymbolMatching b, Typeable a, Typeable b) => Building (Either a b) where
   buildNode = do
       currentNode <- peekNode
       (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
-        Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node )
-        Nothing -> empty
+        Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node)
+        Nothing -> fail "expected a node; didn't get one"
       if lhsSymbolMatch -- FIXME: report error
         then Left <$> buildNode @a
         else if rhsSymbolMatch
           then Right <$> buildNode @b
-          else empty
+          else fail ("got a node; couldn't match with Either (" <> show (typeRep @a) <> ") (" <> show (typeRep @b) <> ") ") -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
 
 instance Building a => Building [a] where
   -- FIXME: this is clearly wrong
@@ -91,6 +96,9 @@ instance Building a => Building [a] where
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
+
+  -- some method that would return a string describing the type (a)
+  -- returnCondition :: Proxy a -> String
 
 instance SymbolMatching Text.Text where
   symbolMatch _ _ = False
@@ -168,28 +176,6 @@ slice start end = take . drop
         take = B.take (end - start)
 
 
-newtype MaybeC m a = MaybeC { runMaybeC :: m (Maybe a) }
-  deriving (Functor)
-
-instance Applicative m => Applicative (MaybeC m) where
-  pure a = MaybeC (pure (Just a))
-  liftA2 f (MaybeC a) (MaybeC b) = MaybeC $ liftA2 (liftA2 f) a b
-
-instance Applicative m => Alternative (MaybeC m) where
-  empty = MaybeC (pure Nothing)
-  MaybeC a <|> MaybeC b = MaybeC (liftA2 (<|>) a b)
-
-instance Monad m => Monad (MaybeC m) where
-  MaybeC a >>= f = MaybeC $ do
-    a' <- a
-    case a' of
-      Nothing -> pure Nothing
-      Just a  -> runMaybeC $ f a
-
-instance MonadIO m => MonadIO (MaybeC m) where
-  liftIO = MaybeC . fmap Just . liftIO
-
-
 newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
 
@@ -200,7 +186,7 @@ newtype FieldName = FieldName { getFieldName :: String }
 --
 --   Sum types are constructed by attempting to build each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GBuilding f where
-  gbuildNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
+  gbuildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
 
@@ -232,7 +218,7 @@ instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
 
 
 class GBuildingSum f where
-  gbuildSumNode :: (Alternative m
+  gbuildSumNode :: (MonadFail m
                    , Carrier sig m
                    , Member (Reader ByteString) sig
                    , Member (Reader (Ptr Cursor)) sig
@@ -251,18 +237,17 @@ instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
     currentNode <- peekNode
     (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
       Just node -> pure (gSymbolSumMatch (Proxy @f) node, gSymbolSumMatch (Proxy @g) node)
-      Nothing -> empty
+      Nothing -> fail "expected a node; got none"
     if lhsSymbolMatch -- FIXME: report error
       then L1 <$> gbuildSumNode @f
       else if rhsSymbolMatch
         then R1 <$> gbuildSumNode @g
-        else empty
+        else fail "got a node, but couldn't match f :+: g" -- FIXME: show what f and g are
   gSymbolSumMatch _ currentNode = gSymbolSumMatch (Proxy @f) currentNode || gSymbolSumMatch (Proxy @g) currentNode
-
 
 -- | Generically build products
 class GBuildingProduct f where
-  gbuildProductNode :: (Alternative m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
+  gbuildProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 
 -- Product structure
 instance (GBuildingProduct f, GBuildingProduct g) => GBuildingProduct (f :*: g) where
