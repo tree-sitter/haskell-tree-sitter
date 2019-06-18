@@ -59,10 +59,9 @@ symbolMatchingInstance language name str = do
 
 symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
 symbolMatchingInstanceForSums language name subtypes =
-  [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = $(foldr1 mkOr (perMkType `map` subtypes)) |] -- subtypes + handwaving
-  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) node|] -- can this be matched by ForStatement, etc.
-        mkOr lhs rhs = [e| $(lhs) || $(rhs) |]
-
+  [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |] -- subtypes + handwaving
+  -- [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = $(foldr1 mkOr (perMkType `map` subtypes)) |] -- subtypes + handwaving
+  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) |] -- can this be matched by ForStatement, etc.
         mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
