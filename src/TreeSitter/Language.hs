@@ -5,6 +5,7 @@ module TreeSitter.Language
 , SymbolType(..)
 , symbolToName
 , mkSymbolDatatype
+, ts_language_symbol_type
 , addDependentFileRelative
 , ts_language_symbol_for_name
 ) where
