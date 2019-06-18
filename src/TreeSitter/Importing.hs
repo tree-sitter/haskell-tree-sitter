@@ -72,8 +72,17 @@ instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
   buildEmpty = pure Nothing
 
-instance (Building a, Building b) => Building (Either a b) where
-  buildNode = Left <$> buildNode <|> Right <$> buildNode
+instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Building (Either a b) where
+  buildNode = do
+      currentNode <- peekNode
+      (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
+        Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node )
+        Nothing -> empty
+      if lhsSymbolMatch -- FIXME: report error
+        then Left <$> buildNode @a
+        else if rhsSymbolMatch
+          then Right <$> buildNode @b
+          else empty
 
 instance Building a => Building [a] where
   -- FIXME: this is clearly wrong
@@ -240,12 +249,14 @@ instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k)
 instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
-    lhsSymbolMatch <- case currentNode of
-      Just node -> pure $ gSymbolSumMatch (Proxy @f) node
+    (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
+      Just node -> pure (gSymbolSumMatch (Proxy @f) node, gSymbolSumMatch (Proxy @g) node)
       Nothing -> empty
-    if lhsSymbolMatch -- FIXME: check both sides and report error
+    if lhsSymbolMatch -- FIXME: report error
       then L1 <$> gbuildSumNode @f
-      else R1 <$> gbuildSumNode @g
+      else if rhsSymbolMatch
+        then R1 <$> gbuildSumNode @g
+        else empty
   gSymbolSumMatch _ currentNode = gSymbolSumMatch (Proxy @f) currentNode || gSymbolSumMatch (Proxy @g) currentNode
 
 
