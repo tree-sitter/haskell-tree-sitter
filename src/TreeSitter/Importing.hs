@@ -1,5 +1,5 @@
 {-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving,
-             ScopedTypeVariables, TypeApplications, TypeOperators #-}
+             ScopedTypeVariables, TypeApplications, TypeOperators, FunctionalDependencies, UndecidableInstances #-}
 module TreeSitter.Importing
 ( parseByteString
 , FieldName(..)
@@ -40,7 +40,7 @@ import           Prelude hiding (fail)
 import           Type.Reflection
 
 -- Parse source code and produce AST
-parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Either String t)
+parseByteString :: Building symbol t => Ptr TS.Language -> ByteString -> IO (Either String t)
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
   if treePtr == nullPtr then
     pure (Left "error: didn't get a root node")
@@ -52,7 +52,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
 -- | Building is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'buildNode' providing that they have a suitable 'Generic' instance.
-class Building a where
+class Building symbol a | a -> symbol where
   buildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   default buildNode :: (MonadFail m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   buildNode = to <$> gbuildNode
@@ -60,36 +60,23 @@ class Building a where
   buildEmpty :: MonadFail m => m a
   buildEmpty = fail "expected a node" -- TODO: log what type actually expected the node / what `a` is
 
-instance Building Text.Text where
-  buildNode = do
-    node <- peekNode
-    case node of
-      Just node' -> do
-        bytestring <- ask
-        let start = fromIntegral (nodeStartByte node')
-            end = fromIntegral (nodeEndByte node')
-        pure (decodeUtf8 (slice start end bytestring))
-      _ -> fail "expected a node for Text"
-  -- Text is never going to be an adequate way to match any complete node
-  -- strictly for fields of leaves
-
-instance Building a => Building (Maybe a) where
+instance Building symbol a => Building symbol (Maybe a) where
   buildNode = Just <$> buildNode
   buildEmpty = pure Nothing
 
-instance (Building a, Building b, SymbolMatching a, SymbolMatching b, Typeable a, Typeable b) => Building (Either a b) where
+instance (Building symbol a, Building symbol b, SymbolMatching a, SymbolMatching b, Typeable a, Typeable b) => Building symbol (Either a b) where
   buildNode = do
       currentNode <- peekNode
       (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
         Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node)
         Nothing -> fail "expected a node; didn't get one"
       if lhsSymbolMatch -- FIXME: report error
-        then Left <$> buildNode @a
+        then Left <$> buildNode @_ @a
         else if rhsSymbolMatch
-          then Right <$> buildNode @b
+          then Right <$> buildNode @_ @b
           else fail ("got a node; couldn't match with Either (" <> show (typeRep @a) <> ") (" <> show (typeRep @b) <> ") ") -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
 
-instance Building a => Building [a] where
+instance Building symbol a => Building symbol [a] where
   -- FIXME: this is clearly wrong
   buildNode = pure <$> buildNode
   buildEmpty = pure []
@@ -98,7 +85,7 @@ class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
 
   -- some method that would return a string describing the type (a)
-  -- returnCondition :: Proxy a -> String
+  -- returnCondition :: Proxy a -> Node -> String
 
 instance SymbolMatching Text.Text where
   symbolMatch _ _ = False
@@ -202,8 +189,16 @@ instance GBuilding U1 where
   gbuildNode = pure U1
 
 -- For regular leaf nodes:
-instance (Building k) => GBuilding (M1 S s (K1 c k)) where
-  gbuildNode = M1 . K1 <$> buildNode
+instance GBuilding (M1 S s (K1 c Text.Text)) where
+  gbuildNode = M1 . K1 <$> do
+    node <- peekNode
+    case node of
+      Just node' -> do
+        bytestring <- ask
+        let start = fromIntegral (nodeStartByte node')
+            end = fromIntegral (nodeEndByte node')
+        pure (decodeUtf8 (slice start end bytestring))
+      _ -> fail "expected a node for Text"
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
@@ -228,7 +223,7 @@ class GBuildingSum f where
 
   gSymbolSumMatch :: Proxy f -> Node -> Bool
 
-instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
+instance (Building symbol k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
   gSymbolSumMatch _ = symbolMatch (Proxy @k)
 
@@ -254,7 +249,7 @@ instance (GBuildingProduct f, GBuildingProduct g) => GBuildingProduct (f :*: g) 
   gbuildProductNode fields = (:*:) <$> gbuildProductNode @f fields <*> gbuildProductNode @g fields
 
 -- Contents of product types (ie., the leaves of the product tree)
-instance (Building k, Selector c) => GBuildingProduct (M1 S c (K1 i k)) where
+instance (Building symbol k, Selector c) => GBuildingProduct (M1 S c (K1 i k)) where
   gbuildProductNode fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do

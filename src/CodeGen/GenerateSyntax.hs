@@ -33,29 +33,32 @@ datatypeForConstructors language (SumType (DatatypeName datatypeName) named subt
   let name = toName' named datatypeName
   cons <- traverse (toSumCon datatypeName) subtypes
   result <- symbolMatchingInstanceForSums language name subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
+  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ AppT (ConT ''TS.Building) (ConT (mkName "Grammar.Grammar")), ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
 datatypeForConstructors language (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
   result <- symbolMatchingInstance language name datatypeName
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ AppT (ConT ''TS.Building) (ConT (mkName "Grammar.Grammar")), ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
 datatypeForConstructors language (LeafType (DatatypeName datatypeName) Anonymous) = do
   let name = toName' Anonymous datatypeName
   con <- toConLeaf Anonymous (DatatypeName datatypeName)
   result <- symbolMatchingInstance language name datatypeName
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ AppT (ConT ''TS.Building) (ConT (mkName "Grammar.Grammar")), ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
 datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
   result <- symbolMatchingInstance language name datatypeName
-  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ AppT (ConT ''TS.Building) (ConT (mkName "Grammar.Grammar")), ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
+-- FIXME: Grammar.Grammar isn't great
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
+-- where SymbolMatching is a class defined in Importing
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
   tsSymbol <- runIO $ withCString str (pure . toEnum . fromIntegral . TS.ts_language_symbol_for_name language) -- get the symbol name -- ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
   tsSymbolType <- pure . toEnum $ TS.ts_language_symbol_type language tsSymbol
   [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = toEnum (fromIntegral (nodeSymbol node)) == $(conE (mkName $ "Grammar." <> snd (TS.symbolToName tsSymbolType str)))|]
+-- FIXME: avoid hardcoding Grammar. etc
 
 symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
 symbolMatchingInstanceForSums language name subtypes =
@@ -63,6 +66,10 @@ symbolMatchingInstanceForSums language name subtypes =
   -- [d|instance TS.SymbolMatching $(conT name) where symbolMatch _ node = $(foldr1 mkOr (perMkType `map` subtypes)) |] -- subtypes + handwaving
   where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) |] -- can this be matched by ForStatement, etc.
         mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
+
+    -- CompoundStatement = ForStatement | IfStatement | ...
+    -- combine using fold, inserting || in between
+  -- make a loop that does the generation -- but not generate the loop
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
