@@ -77,7 +77,7 @@ instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
   buildEmpty = pure Nothing
 
-instance (Building a, Building b, SymbolMatching a, SymbolMatching b, Typeable a, Typeable b) => Building (Either a b) where
+instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Building (Either a b) where
   buildNode = do
       currentNode <- peekNode
       (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
