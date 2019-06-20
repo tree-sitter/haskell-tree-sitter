@@ -107,12 +107,15 @@ instance SymbolMatching Text.Text where
 
 instance SymbolMatching a => SymbolMatching (Maybe a) where
   symbolMatch _ = symbolMatch (Proxy @a)
+  showFailure _ = showFailure (Proxy @a)
 
 instance (SymbolMatching a, SymbolMatching b) => SymbolMatching (Either a b) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @a) <*> symbolMatch (Proxy @b)
+  showFailure _ = (<>) <$> showFailure (Proxy @a) <*> showFailure (Proxy @b)
 
 instance SymbolMatching a => SymbolMatching [a] where
   symbolMatch _ = symbolMatch (Proxy @a)
+  showFailure _ = showFailure (Proxy @a)
 
 -- | Advance the cursor to the next sibling of the current node.
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Bool
