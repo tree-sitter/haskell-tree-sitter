@@ -240,14 +240,14 @@ instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k)
 instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
-    (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
-      Just node -> pure (gSymbolSumMatch (Proxy @f) node, gSymbolSumMatch (Proxy @g) node)
+    (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
+      Just node -> pure (gSymbolSumMatch (Proxy @f) node, gSymbolSumMatch (Proxy @g) node, node)
       Nothing -> fail "expected a node; got none"
     if lhsSymbolMatch -- FIXME: report error
       then L1 <$> gbuildSumNode @f
       else if rhsSymbolMatch
         then R1 <$> gbuildSumNode @g
-        else fail "got a node, but couldn't match f :+: g" -- FIXME: show what f and g are
+        else fail $ showFailure (Proxy @f) currentNode <> showFailure (Proxy @g) currentNode -- FIXME: show what f and g are
   gSymbolSumMatch _ currentNode = gSymbolSumMatch (Proxy @f) currentNode || gSymbolSumMatch (Proxy @g) currentNode
 
 -- | Generically build products
