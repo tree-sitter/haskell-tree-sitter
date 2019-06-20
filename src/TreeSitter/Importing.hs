@@ -80,14 +80,14 @@ instance Building a => Building (Maybe a) where
 instance (Building a, Building b, SymbolMatching a, SymbolMatching b, Typeable a, Typeable b) => Building (Either a b) where
   buildNode = do
       currentNode <- peekNode
-      (lhsSymbolMatch, rhsSymbolMatch) <- case currentNode of
-        Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node)
+      (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
+        Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
         Nothing -> fail "expected a node; didn't get one"
       if lhsSymbolMatch -- FIXME: report error
         then Left <$> buildNode @a
         else if rhsSymbolMatch
           then Right <$> buildNode @b
-          else fail ("got a node; couldn't match with Either (" <> show (typeRep @a) <> ") (" <> show (typeRep @b) <> ") ") -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
+          else fail $ showFailure (Proxy @a) currentNode <> showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
 
 instance Building a => Building [a] where
   -- FIXME: this is clearly wrong
