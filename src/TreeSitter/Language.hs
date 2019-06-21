@@ -26,13 +26,11 @@ mkSymbolDatatype name language = do
   let namedSymbols = renameDups [] $ ((,) . fst <*> uncurry symbolToName) <$> symbols
 
   Module _ modName <- thisModule
-  pure
-    [ DataD [] name [] Nothing (flip NormalC [] . mkName . snd <$> namedSymbols) [ DerivClause Nothing [ ConT ''Show, ConT ''Enum, ConT ''Eq, ConT ''Ord, ConT ''Bounded, ConT ''Ix ] ]
-    , InstanceD Nothing [] (AppT (ConT ''Symbol) (ConT name)) [ FunD 'symbolType (uncurry (clause modName) <$> namedSymbols) ] ]
-  where clause modName symbolType str = Clause [ ConP (Name (OccName str) (NameQ modName)) [] ] (NormalB (ConE (promote symbolType))) []
-        promote Regular = 'Regular
-        promote Anonymous = 'Anonymous
-        promote Auxiliary = 'Auxiliary
+  symbolInstance <- [d|
+    instance Symbol $(conT name) where
+      symbolType = $(lamCaseE (uncurry (mkMatch modName) <$> namedSymbols)) |]
+  pure (DataD [] name [] Nothing (flip NormalC [] . mkName . snd <$> namedSymbols) [ DerivClause Nothing [ ConT ''Show, ConT ''Enum, ConT ''Eq, ConT ''Ord, ConT ''Bounded, ConT ''Ix ] ] : symbolInstance)
+  where mkMatch modName symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
         renameDups done [] = reverse done
         renameDups done ((ty, name):queue) = if elem name (snd <$> done)
                                       then renameDups done ((ty, name ++ "'") : queue)
