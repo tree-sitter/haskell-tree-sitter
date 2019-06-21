@@ -2,6 +2,7 @@
 module TreeSitter.Language where
 
 import Data.Ix (Ix)
+import qualified Data.Set as Set
 import Data.Traversable (for)
 import Data.Word
 import Foreign.C.String
@@ -33,11 +34,9 @@ mkSymbolDatatype name language = do
       symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
 
 renameDups :: [(a, String)] -> [(a, String)]
-renameDups = go []
-  where go done [] = reverse done
-        go done ((ty, name):queue)
-          | elem name (snd <$> done) = go done ((ty, name ++ "'") : queue)
-          | otherwise                = go ((ty, name) : done) queue
+renameDups = go mempty
+  where go _ [] = []
+        go done ((ty, name):rest) = let name' = if name `Set.member` done then name ++ "'" else name in (ty, name') : go (Set.insert name' done) rest
 
 -- https://stackoverflow.com/questions/16163948/how-do-i-use-templatehaskells-adddependentfile-on-a-file-relative-to-the-file-b
 addDependentFileRelative :: FilePath -> Q [Dec]
