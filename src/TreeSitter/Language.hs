@@ -35,9 +35,9 @@ mkSymbolDatatype name language = do
 renameDups :: [(a, String)] -> [(a, String)]
 renameDups = go []
   where go done [] = reverse done
-        go done ((ty, name):queue) = if elem name (snd <$> done)
-                                      then go done ((ty, name ++ "'") : queue)
-                                      else go ((ty, name) : done) queue
+        go done ((ty, name):queue)
+          | elem name (snd <$> done) = go done ((ty, name ++ "'") : queue)
+          | otherwise                = go ((ty, name) : done) queue
 
 -- https://stackoverflow.com/questions/16163948/how-do-i-use-templatehaskells-adddependentfile-on-a-file-relative-to-the-file-b
 addDependentFileRelative :: FilePath -> Q [Dec]
