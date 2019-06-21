@@ -39,7 +39,9 @@ mkSymbolDatatype name language = do
 renameDups :: [(a, String)] -> [(a, String)]
 renameDups = go mempty
   where go _    []                = []
-        go done ((ty, name):rest) = let name' = if name `Set.member` done then name ++ "'" else name in (ty, name') : go (Set.insert name' done) rest
+        go done ((ty, name):rest) = let name' = rename done name in (ty, name') : go (Set.insert name' done) rest
+        rename done name | name `Set.member` done = rename done (name ++ "'")
+                         | otherwise              = name
 
 -- https://stackoverflow.com/questions/16163948/how-do-i-use-templatehaskells-adddependentfile-on-a-file-relative-to-the-file-b
 addDependentFileRelative :: FilePath -> Q [Dec]
