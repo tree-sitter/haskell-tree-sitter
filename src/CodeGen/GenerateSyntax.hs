@@ -53,7 +53,7 @@ datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
-  tsSymbol <- runIO $ withCString str (pure . toEnum . fromIntegral . TS.ts_language_symbol_for_name language) -- get the symbol name -- ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
+  tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language) -- get the symbol name -- ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
   tsSymbolType <- pure . toEnum $ TS.ts_language_symbol_type language tsSymbol
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
