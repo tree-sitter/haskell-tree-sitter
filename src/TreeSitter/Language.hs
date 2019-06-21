@@ -31,8 +31,10 @@ mkSymbolDatatype name language = do
       <*> [d|
     instance Symbol $(conT name) where
       symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
-  where renameDups done [] = reverse done
-        renameDups done ((ty, name):queue) = if elem name (snd <$> done)
+
+renameDups :: [(a, String)] -> [(a, String)] -> [(a, String)]
+renameDups done [] = reverse done
+renameDups done ((ty, name):queue) = if elem name (snd <$> done)
                                       then renameDups done ((ty, name ++ "'") : queue)
                                       else renameDups ((ty, name) : done) queue
 
