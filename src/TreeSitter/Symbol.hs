@@ -10,6 +10,9 @@ import Language.Haskell.TH.Syntax
 
 type TSSymbol = Word16
 
+-- | Map a 'TSSymbol' to the corresponding value of a 'Symbol' datatype.
+--
+--   This should be used instead of 'toEnum' to perform this conversion, because tree-sitter represents parse errors with the unsigned short @65535@, which is generally not contiguous with the other symbols.
 toSymbol :: forall symbol . Symbol symbol => TSSymbol -> symbol
 toSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
 
