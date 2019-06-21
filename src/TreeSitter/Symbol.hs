@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveLift, ScopedTypeVariables #-}
 module TreeSitter.Symbol where
 
 import Data.Char (isAlpha, toUpper)
@@ -6,6 +6,7 @@ import Data.Function ((&))
 import Data.Ix (Ix)
 import Data.List.Split (condense, split, whenElt)
 import Data.Word (Word16)
+import Language.Haskell.TH.Syntax
 
 type TSSymbol = Word16
 
@@ -14,7 +15,7 @@ toSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbo
 
 
 data SymbolType = Regular | Anonymous | Auxiliary
-  deriving (Enum, Eq, Ord, Show)
+  deriving (Enum, Eq, Lift, Ord, Show)
 
 class (Bounded s, Enum s, Ix s, Ord s, Show s) => Symbol s where
   symbolType :: s -> SymbolType
