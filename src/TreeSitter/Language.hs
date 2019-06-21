@@ -23,7 +23,7 @@ foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type ::
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
 mkSymbolDatatype name language = do
   symbols <- (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
-  let namedSymbols = renameDups [] $ ((,) . fst <*> uncurry symbolToName) <$> symbols
+  let namedSymbols = renameDups $ ((,) . fst <*> uncurry symbolToName) <$> symbols
 
   Module _ modName <- thisModule
   let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
@@ -32,11 +32,12 @@ mkSymbolDatatype name language = do
     instance Symbol $(conT name) where
       symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
 
-renameDups :: [(a, String)] -> [(a, String)] -> [(a, String)]
-renameDups done [] = reverse done
-renameDups done ((ty, name):queue) = if elem name (snd <$> done)
-                                      then renameDups done ((ty, name ++ "'") : queue)
-                                      else renameDups ((ty, name) : done) queue
+renameDups :: [(a, String)] -> [(a, String)]
+renameDups = go []
+  where go done [] = reverse done
+        go done ((ty, name):queue) = if elem name (snd <$> done)
+                                      then go done ((ty, name ++ "'") : queue)
+                                      else go ((ty, name) : done) queue
 
 -- https://stackoverflow.com/questions/16163948/how-do-i-use-templatehaskells-adddependentfile-on-a-file-relative-to-the-file-b
 addDependentFileRelative :: FilePath -> Q [Dec]
