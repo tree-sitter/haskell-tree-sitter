@@ -1,5 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
-module TreeSitter.Language where
+module TreeSitter.Language
+( module TreeSitter.Language
+, module TreeSitter.Symbol
+) where
 
 import           Data.Ix (Ix)
 import qualified Data.Set as Set
