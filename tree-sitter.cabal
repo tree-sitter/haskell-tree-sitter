@@ -39,6 +39,7 @@ library
                      , TreeSitter.Importing
                      , TreeSitter.Language
                      , TreeSitter.Node
+                     , TreeSitter.Symbol
                      , TreeSitter.Tree
                      , CodeGen.GenerateSyntax
                      , CodeGen.Deserialize
