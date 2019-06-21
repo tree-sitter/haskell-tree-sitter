@@ -1,17 +1,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Language where
 
-import Data.Ix (Ix)
+import           Data.Ix (Ix)
 import qualified Data.Set as Set
-import Data.Traversable (for)
-import Data.Word
-import Foreign.C.String
-import Foreign.Ptr
-import Language.Haskell.TH
-import Language.Haskell.TH.Syntax
-import System.Directory
-import System.FilePath.Posix
-import TreeSitter.Symbol
+import           Data.Traversable (for)
+import           Data.Word
+import           Foreign.C.String
+import           Foreign.Ptr
+import           Language.Haskell.TH
+import           Language.Haskell.TH.Syntax
+import           System.Directory
+import           System.FilePath.Posix
+import           TreeSitter.Symbol
 
 newtype Language = Language ()
   deriving (Show, Eq)
