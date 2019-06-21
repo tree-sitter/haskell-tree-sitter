@@ -20,7 +20,7 @@ class (Bounded s, Enum s, Ix s, Ord s, Show s) => Symbol s where
   symbolType :: s -> SymbolType
 
 
-symbolToName :: SymbolType -> String -> (SymbolType, String)
+symbolToName :: SymbolType -> String -> String
 symbolToName ty name
   = prefixHidden name
   & toWords
@@ -28,7 +28,6 @@ symbolToName ty name
   & map (>>= toDescription)
   & (>>= initUpper)
   & (prefix ++)
-  & (,) ty
   where toWords = split (condense (whenElt (not . isAlpha)))
 
         prefixHidden s@('_':_) = "Hidden" ++ s
