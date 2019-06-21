@@ -1,11 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Language where
 
-import Data.Char
-import Data.Function ((&))
 import Data.Ix (Ix)
 import Data.Traversable (for)
-import Data.List.Split
 import Data.Word
 import Foreign.C.String
 import Foreign.Ptr
@@ -59,61 +56,3 @@ languageSymbols language = for [0..fromIntegral (pred count)] $ \ symbol -> do
   name <- peekCString (ts_language_symbol_name language symbol)
   pure (toEnum (ts_language_symbol_type language symbol), name)
   where count = ts_language_symbol_count language
-
-symbolToName :: SymbolType -> String -> (SymbolType, String)
-symbolToName ty name
-  = prefixHidden name
-  & toWords
-  & filter (not . all (== '_'))
-  & map (>>= toDescription)
-  & (>>= initUpper)
-  & (prefix ++)
-  & (,) ty
-  where toWords = split (condense (whenElt (not . isAlpha)))
-
-        prefixHidden s@('_':_) = "Hidden" ++ s
-        prefixHidden s = s
-
-        initUpper (c:cs) = toUpper c : cs
-        initUpper "" = ""
-
-        toDescription '{' = "LBrace"
-        toDescription '}' = "RBrace"
-        toDescription '(' = "LParen"
-        toDescription ')' = "RParen"
-        toDescription '.' = "Dot"
-        toDescription ':' = "Colon"
-        toDescription ',' = "Comma"
-        toDescription '|' = "Pipe"
-        toDescription ';' = "Semicolon"
-        toDescription '*' = "Star"
-        toDescription '&' = "Ampersand"
-        toDescription '=' = "Equal"
-        toDescription '<' = "LAngle"
-        toDescription '>' = "RAngle"
-        toDescription '[' = "LBracket"
-        toDescription ']' = "RBracket"
-        toDescription '+' = "Plus"
-        toDescription '-' = "Minus"
-        toDescription '/' = "Slash"
-        toDescription '\\' = "Backslash"
-        toDescription '^' = "Caret"
-        toDescription '!' = "Bang"
-        toDescription '%' = "Percent"
-        toDescription '@' = "At"
-        toDescription '~' = "Tilde"
-        toDescription '?' = "Question"
-        toDescription '`' = "Backtick"
-        toDescription '#' = "Hash"
-        toDescription '$' = "Dollar"
-        toDescription '"' = "DQuote"
-        toDescription '\'' = "SQuote"
-        toDescription '\t' = "Tab"
-        toDescription '\n' = "LF"
-        toDescription '\r' = "CR"
-        toDescription c = [c]
-
-        prefix = case ty of
-          Regular -> ""
-          Anonymous -> "Anon"
-          Auxiliary -> "Aux"
