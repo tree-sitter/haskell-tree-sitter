@@ -13,23 +13,14 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import System.Directory
 import System.FilePath.Posix
+import TreeSitter.Symbol
 
 newtype Language = Language ()
   deriving (Show, Eq)
 
-type TSSymbol = Word16
-
-data SymbolType = Regular | Anonymous | Auxiliary
-  deriving (Enum, Eq, Ord, Show)
-
 foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> Word32
 foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> CString
 foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type :: Ptr Language -> TSSymbol -> Int
-
-
-class (Bounded s, Enum s, Ix s, Ord s, Show s) => Symbol s where
-  symbolType :: s -> SymbolType
-
 
 -- | TemplateHaskell construction of a datatype for the referenced Language.
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
