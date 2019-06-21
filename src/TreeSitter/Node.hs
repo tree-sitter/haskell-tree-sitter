@@ -12,11 +12,12 @@ module TreeSitter.Node
 import Foreign
 import Foreign.C
 import GHC.Generics
+import TreeSitter.Symbol (TSSymbol)
 
 data Node = Node
   { nodeTSNode :: !TSNode
   , nodeType :: !CString
-  , nodeSymbol :: !Word16
+  , nodeSymbol :: !TSSymbol
   , nodeStartPoint :: !TSPoint
   , nodeEndPoint :: !TSPoint
   , nodeStartByte :: !Word32
