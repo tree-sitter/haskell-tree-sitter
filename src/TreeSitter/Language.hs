@@ -23,12 +23,12 @@ foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type ::
 -- | TemplateHaskell construction of a datatype for the referenced Language.
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
 mkSymbolDatatype name language = do
-  symbols <- (++ [("ParseError", Regular)]) <$> runIO (languageSymbols language)
-  let namedSymbols = renameDups $ (flip (,) . fst <*> uncurry (flip symbolToName)) <$> symbols
+  symbols <- (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
+  let namedSymbols = renameDups $ ((,) . fst <*> uncurry symbolToName) <$> symbols
 
   Module _ modName <- thisModule
   let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
-  (:) <$> dataD (pure []) name [] Nothing (flip normalC [] . mkName . fst <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
+  (:) <$> dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
       <*> [d|
     instance Symbol $(conT name) where
       symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
@@ -51,8 +51,8 @@ addDependentFileRelative relativeFile = do
     return []
 
 
-languageSymbols :: Ptr Language -> IO [(String, SymbolType)]
+languageSymbols :: Ptr Language -> IO [(SymbolType, String)]
 languageSymbols language = for [0..fromIntegral (pred count)] $ \ symbol -> do
   name <- peekCString (ts_language_symbol_name language symbol)
-  pure (name, toEnum (ts_language_symbol_type language symbol))
+  pure (toEnum (ts_language_symbol_type language symbol), name)
   where count = ts_language_symbol_count language
