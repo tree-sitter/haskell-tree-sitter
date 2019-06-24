@@ -28,10 +28,9 @@ foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type ::
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
 mkSymbolDatatype name language = do
   symbols <- (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
-  let namedSymbols = renameDups $ ((,) . fst <*> uncurry symbolToName) <$> symbols
-
   Module _ modName <- thisModule
-  let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
+  let namedSymbols = renameDups $ ((,) . fst <*> uncurry symbolToName) <$> symbols
+      mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
       datatype = dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
       symbolInstance = [d|
         instance Symbol $(conT name) where
