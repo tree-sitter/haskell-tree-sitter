@@ -238,7 +238,6 @@ class GBuildingSum f where
                    , Member (Reader (Ptr Cursor)) sig
                    , MonadIO m)
                    => m (f a)
--- we'd only build the map when we know we're looking at a product
 
 instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
