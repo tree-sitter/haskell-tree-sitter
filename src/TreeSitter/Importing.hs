@@ -217,7 +217,7 @@ instance (Building k) => GBuilding (M1 S s (K1 c k)) where
   gbuildNode = M1 . K1 <$> buildNode
 
 -- For sum datatypes:
-instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
+instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) => GBuilding (f :+: g) where
   gbuildNode = gbuildSumNode @(f :+: g)
 
 -- For product datatypes:
