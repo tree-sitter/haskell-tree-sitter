@@ -58,7 +58,7 @@ class Building a where
   buildNode = to <$> gbuildNode
 
   buildEmpty :: MonadFail m => m a
-  buildEmpty = fail "expected a node" -- TODO: log what type actually expected the node / what `a` is
+  buildEmpty = fail "expected a node"
 
 instance Building Text.Text where
   buildNode = do
@@ -70,8 +70,6 @@ instance Building Text.Text where
             end = fromIntegral (nodeEndByte node')
         pure (decodeUtf8 (slice start end bytestring))
       _ -> fail "expected a node for Text"
-  -- Text is never going to be an adequate way to match any complete node
-  -- strictly for fields of leaves
 
 instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
