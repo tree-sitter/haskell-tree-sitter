@@ -53,7 +53,7 @@ datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
-  tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language) -- get the symbol name -- ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
+  tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
   tsSymbolType <- pure . toEnum $ TS.ts_language_symbol_type language tsSymbol
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
@@ -63,8 +63,8 @@ symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
 symbolMatchingInstanceForSums language name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
-      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |] -- subtypes + handwaving
-  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) |] -- can this be matched by ForStatement, etc.
+      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
+  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) |]
         mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
         extractn (MkType (DatatypeName n) Named) = toCamelCase n
         extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
