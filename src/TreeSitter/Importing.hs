@@ -97,7 +97,7 @@ instance Building a => Building [a] where
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
 
--- | Return the String describing the type received
+  -- | Return the String describing the type received
   showFailure :: Proxy a -> Node -> String
 
 instance SymbolMatching a => SymbolMatching (Maybe a) where
@@ -208,7 +208,6 @@ instance (Building k) => GBuilding (M1 S s (K1 c k)) where
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g) => GBuilding (f :+: g) where
   gbuildNode = gbuildSumNode @(f :+: g)
-
 
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
