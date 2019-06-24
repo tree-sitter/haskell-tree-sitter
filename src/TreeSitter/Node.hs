@@ -12,15 +12,16 @@ module TreeSitter.Node
 import Foreign
 import Foreign.C
 import GHC.Generics
+import TreeSitter.Symbol (TSSymbol)
 
 data Node = Node
-  { nodeTSNode :: !TSNode
-  , nodeType :: !CString
-  , nodeSymbol :: !Word16
+  { nodeTSNode     :: !TSNode
+  , nodeType       :: !CString
+  , nodeSymbol     :: !TSSymbol
   , nodeStartPoint :: !TSPoint
-  , nodeEndPoint :: !TSPoint
-  , nodeStartByte :: !Word32
-  , nodeEndByte :: !Word32
+  , nodeEndPoint   :: !TSPoint
+  , nodeStartByte  :: !Word32
+  , nodeEndByte    :: !Word32
   , nodeChildCount :: !Word32
   }
   deriving (Show, Eq, Generic)
