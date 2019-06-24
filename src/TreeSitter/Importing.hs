@@ -88,7 +88,7 @@ instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Buildin
         then Left <$> buildNode @a
         else if rhsSymbolMatch
           then Right <$> buildNode @b
-          else fail $ showFailure (Proxy @a) currentNode <> showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
+          else fail $ showFailure (Proxy @a) currentNode `sep` showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
 
 instance Building a => Building [a] where
   -- FIXME: this is clearly wrong
@@ -107,7 +107,7 @@ instance SymbolMatching a => SymbolMatching (Maybe a) where
 
 instance (SymbolMatching a, SymbolMatching b) => SymbolMatching (Either a b) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @a) <*> symbolMatch (Proxy @b)
-  showFailure _ = (<>) <$> showFailure (Proxy @a) <*> showFailure (Proxy @b)
+  showFailure _ = sep <$> showFailure (Proxy @a) <*> showFailure (Proxy @b)
 
 instance SymbolMatching a => SymbolMatching [a] where
   symbolMatch _ = symbolMatch (Proxy @a)
