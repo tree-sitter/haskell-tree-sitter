@@ -252,7 +252,7 @@ instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) =>
       then L1 <$> gbuildSumNode @f
       else if rhsSymbolMatch
         then R1 <$> gbuildSumNode @g
-        else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode -- FIXME: show what f and g are
+        else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode
 
 -- | Generically build products
 class GBuildingProduct f where
