@@ -212,9 +212,15 @@ instance GBuilding f => GBuilding (M1 C c f) where
 instance GBuilding U1 where
   gbuildNode = pure U1
 
--- For regular leaf nodes:
-instance (Building k) => GBuilding (M1 S s (K1 c k)) where
+-- For regular leaf nodes
+instance {-# Overlappable #-} GBuilding (M1 S s (K1 c Text.Text)) where
   gbuildNode = M1 . K1 <$> buildNode
+
+-- For unary products
+instance {-# Overlappable #-} (Selector s, Building k) => GBuilding (M1 S s (K1 c k)) where
+  gbuildNode = push $ do
+    fields <- getFields
+    gbuildProductNode fields
 
 -- For sum datatypes:
 instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) => GBuilding (f :+: g) where
