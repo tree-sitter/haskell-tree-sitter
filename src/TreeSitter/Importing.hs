@@ -229,24 +229,20 @@ class GBuildingSum f where
                    => m (f a)
 -- we'd only build the map when we know we're looking at a product
 
-  gSymbolSumMatch :: Proxy f -> Node -> Bool
-
 instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
-  gSymbolSumMatch _ = symbolMatch (Proxy @k)
 
-instance (GBuildingSum f, GBuildingSum g) => GBuildingSum (f :+: g) where
+instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) => GBuildingSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
     (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
-      Just node -> pure (gSymbolSumMatch (Proxy @f) node, gSymbolSumMatch (Proxy @g) node, node)
+      Just node -> pure (symbolMatch (Proxy @f) node, symbolMatch (Proxy @g) node, node)
       Nothing -> fail "expected a node; got none"
     if lhsSymbolMatch -- FIXME: report error
       then L1 <$> gbuildSumNode @f
       else if rhsSymbolMatch
         then R1 <$> gbuildSumNode @g
-        else fail $ showFailure (Proxy @f) currentNode <> showFailure (Proxy @g) currentNode -- FIXME: show what f and g are
-  gSymbolSumMatch _ currentNode = gSymbolSumMatch (Proxy @f) currentNode || gSymbolSumMatch (Proxy @g) currentNode
+        else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode -- FIXME: show what f and g are
 
 -- | Generically build products
 class GBuildingProduct f where
