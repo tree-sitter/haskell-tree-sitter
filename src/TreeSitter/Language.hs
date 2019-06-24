@@ -5,6 +5,7 @@ module TreeSitter.Language
 ) where
 
 import           Data.Ix (Ix)
+import           Data.List (mapAccumL)
 import qualified Data.Set as Set
 import           Data.Traversable (for)
 import           Data.Word
@@ -37,9 +38,8 @@ mkSymbolDatatype name language = do
       symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
 
 renameDups :: [(a, String)] -> [(a, String)]
-renameDups = go mempty
-  where go _    []                = []
-        go done ((ty, name):rest) = let name' = rename done name in (ty, name') : go (Set.insert name' done) rest
+renameDups = snd . mapAccumL go mempty
+  where go done (ty, name) = let name' = rename done name in (Set.insert name' done, (ty, name'))
         rename done name | name `Set.member` done = rename done (name ++ "'")
                          | otherwise              = name
 
