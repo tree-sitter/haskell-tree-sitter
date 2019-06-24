@@ -5,6 +5,7 @@ module TreeSitter.Language
 ) where
 
 import           Data.Ix (Ix)
+import           Data.List (mapAccumL)
 import qualified Data.Set as Set
 import           Data.Traversable (for)
 import           Data.Word
@@ -27,22 +28,21 @@ foreign import ccall unsafe "ts_language_symbol_for_name" ts_language_symbol_for
 -- | TemplateHaskell construction of a datatype for the referenced Language.
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
 mkSymbolDatatype name language = do
-  symbols <- (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
-  let namedSymbols = renameDups $ ((,) . fst <*> uncurry symbolToName) <$> symbols
-
+  symbols <- renameDups . map ((,) . fst <*> uncurry symbolToName) . (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
   Module _ modName <- thisModule
   let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
-  (:) <$> dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
-      <*> [d|
+  datatype <- dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> symbols)
+    [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
+  symbolInstance <- [d|
     instance Symbol $(conT name) where
-      symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
+      symbolType = $(lamCaseE (uncurry mkMatch <$> symbols)) |]
+  pure (datatype : symbolInstance)
 
 renameDups :: [(a, String)] -> [(a, String)]
-renameDups = go mempty
-  where go _    []                = []
-        go done ((ty, name):rest) = let name' = rename done name in (ty, name') : go (Set.insert name' done) rest
-        rename done name | name `Set.member` done = rename done (name ++ "'")
-                         | otherwise              = name
+renameDups = snd . mapAccumL go mempty
+  where go done (ty, name) = let name' = rename name in (Set.insert name' done, (ty, name'))
+          where rename name | name `Set.member` done = rename (name ++ "'")
+                            | otherwise              = name
 
 -- https://stackoverflow.com/questions/16163948/how-do-i-use-templatehaskells-adddependentfile-on-a-file-relative-to-the-file-b
 addDependentFileRelative :: FilePath -> Q [Dec]
