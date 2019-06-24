@@ -30,7 +30,8 @@ mkSymbolDatatype name language = do
   symbols <- renameDups . map ((,) . fst <*> uncurry symbolToName) . (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
   Module _ modName <- thisModule
   let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
-  datatype <- dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> symbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
+  datatype <- dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> symbols)
+    [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
   symbolInstance <- [d|
     instance Symbol $(conT name) where
       symbolType = $(lamCaseE (uncurry mkMatch <$> symbols)) |]
