@@ -27,10 +27,9 @@ foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type ::
 -- | TemplateHaskell construction of a datatype for the referenced Language.
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
 mkSymbolDatatype name language = do
-  symbols <- (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
+  namedSymbols <- renameDups . map ((,) . fst <*> uncurry symbolToName) . (++ [(Regular, "ParseError")]) <$> runIO (languageSymbols language)
   Module _ modName <- thisModule
-  let namedSymbols = renameDups $ ((,) . fst <*> uncurry symbolToName) <$> symbols
-      mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
+  let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
       datatype = dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
       symbolInstance = [d|
         instance Symbol $(conT name) where
