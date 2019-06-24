@@ -97,13 +97,8 @@ instance Building a => Building [a] where
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
 
-  -- Some method that returns a string describing the type (a)
-  -- We don't have to use symbol as a constraint everywhere to show the node
-  -- potentially integrate this with symbolMatch (perf)
+-- | Return the String describing the type received
   showFailure :: Proxy a -> Node -> String
-
-instance SymbolMatching Text.Text where
-  symbolMatch _ _ = False
 
 instance SymbolMatching a => SymbolMatching (Maybe a) where
   symbolMatch _ = symbolMatch (Proxy @a)
