@@ -32,10 +32,11 @@ mkSymbolDatatype name language = do
 
   Module _ modName <- thisModule
   let mkMatch symbolType str = match (conP (Name (OccName str) (NameQ modName)) []) (normalB [e|symbolType|]) []
-  (:) <$> dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
-      <*> [d|
-    instance Symbol $(conT name) where
-      symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
+      datatype = dataD (pure []) name [] Nothing (flip normalC [] . mkName . snd <$> namedSymbols) [ derivClause Nothing (map conT [ ''Bounded, ''Enum, ''Eq, ''Ix, ''Ord, ''Show ]) ]
+      symbolInstance = [d|
+        instance Symbol $(conT name) where
+          symbolType = $(lamCaseE (uncurry mkMatch <$> namedSymbols)) |]
+  (:) <$> datatype <*> symbolInstance
 
 renameDups :: [(a, String)] -> [(a, String)]
 renameDups = snd . mapAccumL go mempty
