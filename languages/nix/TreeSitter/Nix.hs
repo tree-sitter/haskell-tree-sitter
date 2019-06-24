@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Nix (
   tree_sitter_nix
+, Grammar(..)
 ) where
 
 import Language.Haskell.TH
