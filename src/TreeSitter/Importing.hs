@@ -116,6 +116,14 @@ instance SymbolMatching a => SymbolMatching [a] where
 instance SymbolMatching k => SymbolMatching (M1 C c (M1 S s (K1 i k))) where
   symbolMatch _ = symbolMatch (Proxy @k)
   showFailure _ = showFailure (Proxy @k)
+
+instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
+  symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
+  showFailure _ = sep <$> showFailure (Proxy @f) <*> showFailure (Proxy @g)
+
+sep :: String -> String -> String
+sep a b = a ++ ". " ++ b
+
 -- | Advance the cursor to the next sibling of the current node.
 step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Bool
 step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
