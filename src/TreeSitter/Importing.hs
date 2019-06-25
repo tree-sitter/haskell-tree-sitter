@@ -210,7 +210,7 @@ instance GBuilding U1 where
 instance {-# OVERLAPPABLE #-} GBuilding (M1 S s (K1 c Text.Text)) where
   gbuildNode = M1 . K1 <$> buildNode
 
--- For unary products
+-- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Building k) => GBuilding (M1 S s (K1 c k)) where
   gbuildNode = push $ do
     fields <- getFields
