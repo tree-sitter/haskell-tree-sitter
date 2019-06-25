@@ -87,7 +87,9 @@ instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Buildin
           else fail $ showFailure (Proxy @a) currentNode `sep` showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
 
 instance Building a => Building [a] where
-  -- FIXME: this is clearly wrong
+  -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
+  --        Currently we only represent a single node for each field name,
+  --        so we only end up keeping the last one encountered in the tree.
   buildNode = pure <$> buildNode
   buildEmpty = pure []
 
