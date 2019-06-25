@@ -35,7 +35,7 @@ library tree-sitter-python-internal
   c-sources:           vendor/tree-sitter-python/src/parser.c
                      , vendor/tree-sitter-python/src/scanner.cc
   extra-libraries:     stdc++
-  ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists -ddump-splices
+  ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists
   if (impl(ghc >= 8.6))
     ghc-options:       -Wno-star-is-type
 
