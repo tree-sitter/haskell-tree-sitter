@@ -57,7 +57,7 @@ class Building a where
   buildNode = to <$> gbuildNode
 
   buildEmpty :: MonadFail m => m a
-  buildEmpty = fail "expected a node"
+  buildEmpty = fail "expected a node but didn't get one"
 
 instance Building Text.Text where
   buildNode = do
@@ -68,7 +68,7 @@ instance Building Text.Text where
         let start = fromIntegral (nodeStartByte node')
             end = fromIntegral (nodeEndByte node')
         pure (decodeUtf8 (slice start end bytestring))
-      _ -> fail "expected a node for Text"
+      _ -> fail "expected a node containing Text but didn't get one"
 
 instance Building a => Building (Maybe a) where
   buildNode = Just <$> buildNode
@@ -79,7 +79,7 @@ instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Buildin
       currentNode <- peekNode
       (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
         Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
-        Nothing -> fail "expected a node; didn't get one"
+        Nothing -> fail "expected a node of type (Either a b) but didn't get one"
       if lhsSymbolMatch -- FIXME: report error
         then Left <$> buildNode @a
         else if rhsSymbolMatch
@@ -223,7 +223,7 @@ instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) =>
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
   gbuildNode = push $ do
-    fields <- getFields
+    getFields >>= gBuildProductNode @(f :+: g)
     gbuildProductNode @(f :*: g) fields
 
 
