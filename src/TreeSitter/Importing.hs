@@ -223,7 +223,7 @@ instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) =>
 -- For product datatypes:
 instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
   gbuildNode = push $ do
-    getFields >>= gBuildProductNode @(f :+: g)
+    fields <- getFields
     gbuildProductNode @(f :*: g) fields
 
 
