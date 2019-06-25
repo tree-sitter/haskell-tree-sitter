@@ -195,8 +195,6 @@ newtype FieldName = FieldName { getFieldName :: String }
 --   Sum types are constructed by attempting to build each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GBuilding f where
   gbuildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
--- we'd only build the map when we know we're looking at a product
-
 
 instance GBuilding f => GBuilding (M1 D c f) where
   gbuildNode = M1 <$> gbuildNode -- current node, not first child like above in original Building definition
