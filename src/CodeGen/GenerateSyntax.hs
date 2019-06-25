@@ -60,7 +60,7 @@ symbolMatchingInstance language name str = do
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
 symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
-symbolMatchingInstanceForSums language name subtypes =
+symbolMatchingInstanceForSums _ name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
