@@ -37,7 +37,6 @@ import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
-import           Type.Reflection
 
 -- Parse source code and produce AST
 parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Either String t)
