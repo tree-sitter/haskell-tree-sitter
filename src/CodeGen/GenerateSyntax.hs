@@ -29,26 +29,28 @@ import Data.Proxy
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: Ptr TS.Language -> MkDatatype -> Q [Dec]
-datatypeForConstructors language (SumType (DatatypeName datatypeName) named subtypes) = do
-  let name = toName' named datatypeName
-  cons <- traverse (toSumCon datatypeName) subtypes
-  result <- symbolMatchingInstanceForSums language name subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
-datatypeForConstructors language (ProductType (DatatypeName datatypeName) named fields) = do
-  let name = toName' named datatypeName
-  con <- toConProduct datatypeName fields
-  result <- symbolMatchingInstance language name datatypeName
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
-datatypeForConstructors language (LeafType (DatatypeName datatypeName) Anonymous) = do
-  let name = toName' Anonymous datatypeName
-  con <- toConLeaf Anonymous (DatatypeName datatypeName)
-  result <- symbolMatchingInstance language name datatypeName
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
-datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = do
-  let name = toName' named datatypeName
-  con <- toConLeaf named (DatatypeName datatypeName)
-  result <- symbolMatchingInstance language name datatypeName
-  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+datatypeForConstructors language datatype = case datatype of
+  SumType (DatatypeName datatypeName) named subtypes -> do
+    cons <- traverse (toSumCon datatypeName) subtypes
+    result <- symbolMatchingInstanceForSums language name subtypes
+    pure $ generatedDatatype name cons:result
+  ProductType (DatatypeName datatypeName) named fields -> do
+    con <- toConProduct datatypeName fields
+    result <- symbolMatchingInstance language name datatypeName
+    pure $ generatedDatatype name [con]:result
+  LeafType (DatatypeName datatypeName) Anonymous -> do
+    con <- toConLeaf Anonymous (DatatypeName datatypeName)
+    result <- symbolMatchingInstance language name datatypeName
+    pure $ generatedDatatype name [con]:result
+  LeafType (DatatypeName datatypeName) named -> do
+    con <- toConLeaf named (DatatypeName datatypeName)
+    result <- symbolMatchingInstance language name datatypeName
+    pure $ NewtypeD [] name [] Nothing con deriveClause:result
+  where
+    name = toName' (isName datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
+    deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
+    generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
+
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
