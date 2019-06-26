@@ -33,22 +33,23 @@ datatypeForConstructors language (SumType (DatatypeName datatypeName) named subt
   let name = toName' named datatypeName
   cons <- traverse (toSumCon datatypeName) subtypes
   result <- symbolMatchingInstanceForSums language name subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
+  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Generic, ConT ''Ord, ConT ''Show ] ]:result
 datatypeForConstructors language (ProductType (DatatypeName datatypeName) named fields) = do
   let name = toName' named datatypeName
   con <- toConProduct datatypeName fields
   result <- symbolMatchingInstance language name datatypeName
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
 datatypeForConstructors language (LeafType (DatatypeName datatypeName) Anonymous) = do
   let name = toName' Anonymous datatypeName
   con <- toConLeaf Anonymous (DatatypeName datatypeName)
   result <- symbolMatchingInstance language name datatypeName
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
 datatypeForConstructors language (LeafType (DatatypeName datatypeName) named) = do
   let name = toName' named datatypeName
   con <- toConLeaf named (DatatypeName datatypeName)
   result <- symbolMatchingInstance language name datatypeName
-  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''TS.Building, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]:result
+
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]

@@ -3,7 +3,7 @@
 module TreeSitter.Importing
 ( parseByteString
 , FieldName(..)
-, Building(..)
+, Unmarshal(..)
 , SymbolMatching(..)
 , step
 , push
@@ -39,7 +39,7 @@ import           Data.Proxy
 import           Prelude hiding (fail)
 
 -- Parse source code and produce AST
-parseByteString :: Building t => Ptr TS.Language -> ByteString -> IO (Either String t)
+parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
   if treePtr == nullPtr then
     pure (Left "error: didn't get a root node")
@@ -48,18 +48,18 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
       withCursor (castPtr rootPtr) $ \ cursor ->
         runM (runFail (runReader cursor (runReader bytestring buildNode)))
 
--- | Building is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
+-- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'buildNode' providing that they have a suitable 'Generic' instance.
-class Building a where
+class Unmarshal a where
   buildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  default buildNode :: (MonadFail m, Carrier sig m, GBuilding (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  default buildNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   buildNode = to <$> gbuildNode
 
   buildEmpty :: MonadFail m => m a
   buildEmpty = fail "expected a node but didn't get one"
 
-instance Building Text.Text where
+instance Unmarshal Text.Text where
   buildNode = do
     node <- peekNode
     case node of
@@ -70,11 +70,11 @@ instance Building Text.Text where
         pure (decodeUtf8 (slice start end bytestring))
       _ -> fail "expected a node containing Text but didn't get one"
 
-instance Building a => Building (Maybe a) where
+instance Unmarshal a => Unmarshal (Maybe a) where
   buildNode = Just <$> buildNode
   buildEmpty = pure Nothing
 
-instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Building (Either a b) where
+instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
   buildNode = do
       currentNode <- peekNode
       (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
@@ -86,7 +86,7 @@ instance (Building a, Building b, SymbolMatching a, SymbolMatching b) => Buildin
           then Right <$> buildNode @b
           else fail $ showFailure (Proxy @a) currentNode `sep` showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
 
-instance Building a => Building [a] where
+instance Unmarshal a => Unmarshal [a] where
   -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
   --        Currently we only represent a single node for each field name,
   --        so we only end up keeping the last one encountered in the tree.
@@ -195,38 +195,38 @@ newtype FieldName = FieldName { getFieldName :: String }
 --   Product types (specifically, record types) are constructed by looking up the node for each corresponding field name in the map, moving the cursor to it, and then invoking 'buildNode' to construct the value for that field. Leaf types are constructed as a special case of product types.
 --
 --   Sum types are constructed by attempting to build each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
-class GBuilding f where
+class GUnmarshal f where
   gbuildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
 
-instance GBuilding f => GBuilding (M1 D c f) where
+instance GUnmarshal f => GUnmarshal (M1 D c f) where
   gbuildNode = M1 <$> gbuildNode
 
-instance GBuilding f => GBuilding (M1 C c f) where
+instance GUnmarshal f => GUnmarshal (M1 C c f) where
   gbuildNode = M1 <$> gbuildNode
 
 -- For anonymous leaf nodes:
-instance GBuilding U1 where
+instance GUnmarshal U1 where
   gbuildNode = pure U1
 
 -- For regular leaf nodes
-instance {-# OVERLAPPABLE #-} GBuilding (M1 S s (K1 c Text.Text)) where
+instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
   gbuildNode = M1 . K1 <$> buildNode
 
 -- For unary products:
-instance {-# OVERLAPPABLE #-} (Selector s, Building k) => GBuilding (M1 S s (K1 c k)) where
+instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
   gbuildNode = push $ do
     fields <- getFields
     gbuildProductNode fields
 
 -- For sum datatypes:
-instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) => GBuilding (f :+: g) where
+instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
   gbuildNode = gbuildSumNode @(f :+: g)
 
 -- For product datatypes:
-instance (GBuildingProduct f, GBuildingProduct g) => GBuilding (f :*: g) where
+instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
   gbuildNode = push $ getFields >>= gbuildProductNode @(f :*: g)
 
-class GBuildingSum f where
+class GUnmarshalSum f where
   gbuildSumNode :: (MonadFail m
                    , Carrier sig m
                    , Member (Reader ByteString) sig
@@ -234,10 +234,10 @@ class GBuildingSum f where
                    , MonadIO m)
                    => m (f a)
 
-instance (Building k, SymbolMatching k) => GBuildingSum (M1 C c (M1 S s (K1 i k))) where
+instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
   gbuildSumNode = M1 . M1 . K1 <$> buildNode
 
-instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) => GBuildingSum (f :+: g) where
+instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
   gbuildSumNode = do
     currentNode <- peekNode
     (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
@@ -250,15 +250,15 @@ instance (GBuildingSum f, GBuildingSum g, SymbolMatching f, SymbolMatching g) =>
         else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode
 
 -- | Generically build products
-class GBuildingProduct f where
+class GUnmarshalProduct f where
   gbuildProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 
 -- Product structure
-instance (GBuildingProduct f, GBuildingProduct g) => GBuildingProduct (f :*: g) where
+instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
   gbuildProductNode fields = (:*:) <$> gbuildProductNode @f fields <*> gbuildProductNode @g fields
 
 -- Contents of product types (ie., the leaves of the product tree)
-instance (Building k, Selector c) => GBuildingProduct (M1 S c (K1 i k)) where
+instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
   gbuildProductNode fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
