@@ -1,4 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Deserialize
@@ -85,9 +87,9 @@ data MkType = MkType
 instance FromJSON MkType where
   parseJSON = genericParseJSON customOptions
 
-newtype MkDatatypeName = DatatypeName String
-  deriving (Eq, Ord, Show, Generic, ToJSON)
-
+newtype MkDatatypeName = DatatypeName { getDatatypeName :: String }
+  deriving (Eq, Ord, Show, Generic)
+  deriving newtype (FromJSON, ToJSON)
 
 data MkNamed = Anonymous | Named
   deriving (Eq, Ord, Show, Generic, ToJSON)
