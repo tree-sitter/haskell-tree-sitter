@@ -88,8 +88,6 @@ instance FromJSON MkType where
 newtype MkDatatypeName = DatatypeName String
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkDatatypeName where
-  parseJSON = genericParseJSON customOptions
 
 data MkNamed = Anonymous | Named
   deriving (Eq, Ord, Show, Generic, ToJSON)
