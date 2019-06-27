@@ -160,9 +160,10 @@ toName = mkName . addTickIfNecessary . toCamelCase
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName' :: MkNamed -> String -> Name
-toName' Named str = mkName $ toCamelCase str
-toName' Anonymous str = mkName ("Anonymous" <> toCamelCase str)
-
+toName' named str = mkName $ addTickIfNecessary $ case named of
+  Anonymous -> "Anonymous" <> toCamelCase str
+  Named -> toCamelCase str
+  
 -- Helper function to output camel cased data type names
 initUpper :: String -> String
 initUpper (c:cs) = toUpper c : cs
