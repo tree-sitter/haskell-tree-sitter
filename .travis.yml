@@ -35,4 +35,4 @@ install:
 
 script:
 - cabal new-build -j --ghc-options="-O0" all
-- cabal new-test -j --ghc-options="-O0"
+- cabal new-test -j --ghc-options="-O0" all
