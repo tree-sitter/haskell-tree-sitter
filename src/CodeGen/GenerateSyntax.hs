@@ -48,11 +48,11 @@ astDeclarationsForLanguage language filePath = do
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: Ptr TS.Language -> MkDatatype -> Q [Dec]
 datatypeForConstructors language datatype = case datatype of
-  SumType (DatatypeName datatypeName) named subtypes -> do
+  SumType (DatatypeName datatypeName) _ subtypes -> do
     cons <- traverse (toSumCon datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
-  ProductType (DatatypeName datatypeName) named fields -> do
+  ProductType (DatatypeName datatypeName) _ fields -> do
     con <- toConProduct datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
