@@ -46,21 +46,21 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring buildNode)))
+        runM (runFail (runReader cursor (runReader bytestring unmarshalNode)))
 
 -- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
---   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'buildNode' providing that they have a suitable 'Generic' instance.
+--   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic' instance.
 class Unmarshal a where
-  buildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  default buildNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  buildNode = to <$> gbuildNode
+  unmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  default unmarshalNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  unmarshalNode = to <$> gunmarshalNode
 
-  buildEmpty :: MonadFail m => m a
-  buildEmpty = fail "expected a node but didn't get one"
+  unmarshalEmpty :: MonadFail m => m a
+  unmarshalEmpty = fail "expected a node but didn't get one"
 
 instance Unmarshal Text.Text where
-  buildNode = do
+  unmarshalNode = do
     node <- peekNode
     case node of
       Just node' -> do
@@ -71,27 +71,27 @@ instance Unmarshal Text.Text where
       _ -> fail "expected a node containing Text but didn't get one"
 
 instance Unmarshal a => Unmarshal (Maybe a) where
-  buildNode = Just <$> buildNode
-  buildEmpty = pure Nothing
+  unmarshalNode = Just <$> unmarshalNode
+  unmarshalEmpty = pure Nothing
 
 instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
-  buildNode = do
+  unmarshalNode = do
     currentNode <- peekNode
     (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
       Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
       Nothing -> fail "expected a node of type (Either a b) but didn't get one"
     if lhsSymbolMatch
-      then Left <$> buildNode @a
+      then Left <$> unmarshalNode @a
       else if rhsSymbolMatch
-        then Right <$> buildNode @b
+        then Right <$> unmarshalNode @b
         else fail $ showFailure (Proxy @(Either a b)) currentNode
 
 instance Unmarshal a => Unmarshal [a] where
   -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
   --        Currently we only represent a single node for each field name,
   --        so we only end up keeping the last one encountered in the tree.
-  buildNode = pure <$> buildNode
-  buildEmpty = pure []
+  unmarshalNode = pure <$> unmarshalNode
+  unmarshalEmpty = pure []
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
@@ -192,42 +192,42 @@ newtype FieldName = FieldName { getFieldName :: String }
 
 -- | Generic construction of ASTs from a 'Map.Map' of named fields.
 --
---   Product types (specifically, record types) are constructed by looking up the node for each corresponding field name in the map, moving the cursor to it, and then invoking 'buildNode' to construct the value for that field. Leaf types are constructed as a special case of product types.
+--   Product types (specifically, record types) are constructed by looking up the node for each corresponding field name in the map, moving the cursor to it, and then invoking 'unmarshalNode' to construct the value for that field. Leaf types are constructed as a special case of product types.
 --
---   Sum types are constructed by attempting to build each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
+--   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
-  gbuildNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
+  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
 
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
-  gbuildNode = M1 <$> gbuildNode
+  gunmarshalNode = M1 <$> gunmarshalNode
 
 instance GUnmarshal f => GUnmarshal (M1 C c f) where
-  gbuildNode = M1 <$> gbuildNode
+  gunmarshalNode = M1 <$> gunmarshalNode
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
-  gbuildNode = pure U1
+  gunmarshalNode = pure U1
 
 -- For regular leaf nodes
 instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
-  gbuildNode = M1 . K1 <$> buildNode
+  gunmarshalNode = M1 . K1 <$> unmarshalNode
 
 -- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gbuildNode = push $ do
+  gunmarshalNode = push $ do
     fields <- getFields
-    gbuildProductNode fields
+    gunmarshalProductNode fields
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gbuildNode = gbuildSumNode @(f :+: g)
+  gunmarshalNode = gunmarshalSumNode @(f :+: g)
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gbuildNode = push $ getFields >>= gbuildProductNode @(f :*: g)
+  gunmarshalNode = push $ getFields >>= gunmarshalProductNode @(f :*: g)
 
 class GUnmarshalSum f where
-  gbuildSumNode :: (MonadFail m
+  gunmarshalSumNode :: (MonadFail m
                    , Carrier sig m
                    , Member (Reader ByteString) sig
                    , Member (Reader (Ptr Cursor)) sig
@@ -235,33 +235,33 @@ class GUnmarshalSum f where
                    => m (f a)
 
 instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
-  gbuildSumNode = M1 . M1 . K1 <$> buildNode
+  gunmarshalSumNode = M1 . M1 . K1 <$> unmarshalNode
 
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
-  gbuildSumNode = do
+  gunmarshalSumNode = do
     currentNode <- peekNode
     (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
       Just node -> pure (symbolMatch (Proxy @f) node, symbolMatch (Proxy @g) node, node)
       Nothing -> fail "expected a node; got none"
     if lhsSymbolMatch
-      then L1 <$> gbuildSumNode @f
+      then L1 <$> gunmarshalSumNode @f
       else if rhsSymbolMatch
-        then R1 <$> gbuildSumNode @g
+        then R1 <$> gunmarshalSumNode @g
         else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode
 
--- | Generically build products
+-- | Generically unmarshal products
 class GUnmarshalProduct f where
-  gbuildProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
+  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
-  gbuildProductNode fields = (:*:) <$> gbuildProductNode @f fields <*> gbuildProductNode @g fields
+  gunmarshalProductNode fields = (:*:) <$> gunmarshalProductNode @f fields <*> gunmarshalProductNode @g fields
 
 -- Contents of product types (ie., the leaves of the product tree)
 instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gbuildProductNode fields =
+  gunmarshalProductNode fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
       Just node -> do
         goto (nodeTSNode node)
-        M1 . K1 <$> buildNode
-      Nothing -> M1 . K1 <$> buildEmpty
+        M1 . K1 <$> unmarshalNode
+      Nothing -> M1 . K1 <$> unmarshalEmpty
