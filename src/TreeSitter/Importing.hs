@@ -96,7 +96,7 @@ instance Unmarshal a => Unmarshal [a] where
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
 
-  -- | Return the String describing the type received
+  -- | Provide error message describing the node symbol vs. the symbols this can match
   showFailure :: Proxy a -> Node -> String
 
 instance SymbolMatching a => SymbolMatching (Maybe a) where
