@@ -76,15 +76,15 @@ instance Unmarshal a => Unmarshal (Maybe a) where
 
 instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
   buildNode = do
-      currentNode <- peekNode
-      (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
-        Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
-        Nothing -> fail "expected a node of type (Either a b) but didn't get one"
-      if lhsSymbolMatch -- FIXME: report error
-        then Left <$> buildNode @a
-        else if rhsSymbolMatch
-          then Right <$> buildNode @b
-          else fail $ showFailure (Proxy @a) currentNode `sep` showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
+    currentNode <- peekNode
+    (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
+      Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
+      Nothing -> fail "expected a node of type (Either a b) but didn't get one"
+    if lhsSymbolMatch
+      then Left <$> buildNode @a
+      else if rhsSymbolMatch
+        then Right <$> buildNode @b
+        else fail $ showFailure (Proxy @a) currentNode `sep` showFailure (Proxy @b) currentNode
 
 instance Unmarshal a => Unmarshal [a] where
   -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
