@@ -6,7 +6,7 @@
 
 -- {-# LANGUAGE TypeOperators #-}
 module CodeGen.GenerateSyntax
-( datatypeForConstructors
+( syntaxDatatype
 , removeUnderscore
 , initUpper
 , mapOperator
@@ -42,12 +42,12 @@ astDeclarationsForLanguage language filePath = do
   pwd             <- runIO getCurrentDirectory
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
   input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
-  either fail (fmap (concat @[]) . traverse (datatypeForConstructors language)) input
+  either fail (fmap (concat @[]) . traverse (syntaxDatatype language)) input
 
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
-datatypeForConstructors :: Ptr TS.Language -> MkDatatype -> Q [Dec]
-datatypeForConstructors language datatype = case datatype of
+syntaxDatatype :: Ptr TS.Language -> MkDatatype -> Q [Dec]
+syntaxDatatype language datatype = case datatype of
   SumType (DatatypeName datatypeName) _ subtypes -> do
     cons <- traverse (toSumCon datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
