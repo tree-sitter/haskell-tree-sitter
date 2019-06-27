@@ -243,7 +243,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
     (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
       Just node -> pure (symbolMatch (Proxy @f) node, symbolMatch (Proxy @g) node, node)
       Nothing -> fail "expected a node; got none"
-    if lhsSymbolMatch -- FIXME: report error
+    if lhsSymbolMatch
       then L1 <$> gbuildSumNode @f
       else if rhsSymbolMatch
         then R1 <$> gbuildSumNode @g
