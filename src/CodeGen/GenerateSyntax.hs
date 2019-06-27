@@ -72,7 +72,7 @@ syntaxDatatype language datatype = case datatype of
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
   tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
-  tsSymbolType <- pure . toEnum $ TS.ts_language_symbol_type language tsSymbol
+  let tsSymbolType = toEnum $ TS.ts_language_symbol_type language tsSymbol
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
