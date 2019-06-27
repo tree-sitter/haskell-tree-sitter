@@ -84,7 +84,7 @@ instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmar
         then Left <$> buildNode @a
         else if rhsSymbolMatch
           then Right <$> buildNode @b
-          else fail $ showFailure (Proxy @a) currentNode `sep` showFailure (Proxy @b) currentNode -- TODO: do the toEnum nodeSymbol stuff for the current node to show the symbol name
+          else fail $ showFailure (Proxy @(Either a b)) currentNode
 
 instance Unmarshal a => Unmarshal [a] where
   -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
