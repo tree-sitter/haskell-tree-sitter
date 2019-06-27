@@ -1,5 +1,5 @@
-{-# LANGUAGE DefaultSignatures, DeriveFunctor, FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving,
-             ScopedTypeVariables, TypeApplications, TypeOperators, PolyKinds #-}
+{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances,
+             PolyKinds, ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Importing
 ( parseByteString
 , FieldName(..)
