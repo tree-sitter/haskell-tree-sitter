@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- {-# LANGUAGE TypeOperators #-}
 module CodeGen.GenerateSyntax
@@ -9,6 +10,7 @@ module CodeGen.GenerateSyntax
 , removeUnderscore
 , initUpper
 , mapOperator
+, astDeclarationsForLanguage
 ) where
 
 import Data.Char
@@ -26,6 +28,22 @@ import Foreign.Ptr
 import qualified TreeSitter.Language as TS
 import Foreign.C.String
 import Data.Proxy
+import Data.Aeson hiding (String)
+import System.Directory
+import System.FilePath.Posix
+import TreeSitter.Node
+
+
+-- Auto-generate Haskell datatypes from node-types.json
+astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> Q [Dec]
+astDeclarationsForLanguage language filePath = do
+  _ <- TS.addDependentFileRelative filePath
+  currentFilename <- loc_filename <$> location
+  pwd             <- runIO getCurrentDirectory
+  let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
+  input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
+  either fail (fmap (concat @[]) . traverse (datatypeForConstructors language)) input
+
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 datatypeForConstructors :: Ptr TS.Language -> MkDatatype -> Q [Dec]
