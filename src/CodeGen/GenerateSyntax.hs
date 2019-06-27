@@ -38,20 +38,16 @@ datatypeForConstructors language datatype = case datatype of
     con <- toConProduct datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
-  LeafType (DatatypeName datatypeName) Anonymous -> do
-    con <- toConLeaf Anonymous (DatatypeName datatypeName)
-    result <- symbolMatchingInstance language name datatypeName
-    pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
     con <- toConLeaf named (DatatypeName datatypeName)
     result <- symbolMatchingInstance language name datatypeName
-    pure $ NewtypeD [] name [] Nothing con deriveClause:result
+    pure $ case named of
+      Anonymous -> generatedDatatype name [con]:result
+      Named -> NewtypeD [] name [] Nothing con deriveClause:result
   where
     name = toName' (isName datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
-    result = symbolMatchingInstance language name (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
-
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
