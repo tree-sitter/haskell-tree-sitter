@@ -1,6 +1,6 @@
 {-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances,
              PolyKinds, ScopedTypeVariables, TypeApplications, TypeOperators #-}
-module TreeSitter.Importing
+module TreeSitter.Unmarshal
 ( parseByteString
 , FieldName(..)
 , Unmarshal(..)

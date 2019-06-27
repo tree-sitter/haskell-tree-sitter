@@ -22,7 +22,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
 import qualified Data.HashSet as HashSet
-import qualified TreeSitter.Importing as TS
+import qualified TreeSitter.Unmarshal as TS
 import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
 import qualified TreeSitter.Language as TS
