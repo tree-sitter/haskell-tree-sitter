@@ -1,33 +1,33 @@
 [submodule "vendor/tree-sitter"]
-	path = vendor/tree-sitter
+	path = tree-sitter/vendor/tree-sitter
 	url = https://github.com/tree-sitter/tree-sitter.git
 [submodule "vendor/tree-sitter-go"]
-	path = languages/go/vendor/tree-sitter-go
+	path = tree-sitter-go/vendor/tree-sitter-go
 	url = https://github.com/tree-sitter/tree-sitter-go.git
 [submodule "vendor/tree-sitter-json"]
-	path = languages/json/vendor/tree-sitter-json
+	path = tree-sitter-json/vendor/tree-sitter-json
 	url = https://github.com/tree-sitter/tree-sitter-json.git
 [submodule "vendor/tree-sitter-python"]
-	path = languages/python/vendor/tree-sitter-python
+	path = tree-sitter-python/vendor/tree-sitter-python
 	url = https://github.com/tree-sitter/tree-sitter-python.git
 [submodule "vendor/tree-sitter-ruby"]
-	path = languages/ruby/vendor/tree-sitter-ruby
+	path = tree-sitter-ruby/vendor/tree-sitter-ruby
 	url = https://github.com/tree-sitter/tree-sitter-ruby.git
 [submodule "vendor/tree-sitter-typescript"]
-	path = languages/typescript/vendor/tree-sitter-typescript
+	path = tree-sitter-typescript/vendor/tree-sitter-typescript
 	url = https://github.com/tree-sitter/tree-sitter-typescript.git
 [submodule "languages/php/vendor/tree-sitter-php"]
-	path = languages/php/vendor/tree-sitter-php
+	path = tree-sitter-php/vendor/tree-sitter-php
 	url = https://github.com/tree-sitter/tree-sitter-php
 [submodule "languages/haskell/vendor/tree-sitter-haskell"]
-	path = languages/haskell/vendor/tree-sitter-haskell
+	path = tree-sitter-haskell/vendor/tree-sitter-haskell
 	url = https://github.com/tree-sitter/tree-sitter-haskell.git
 [submodule "languages/java/vendor/tree-sitter-java"]
-	path = languages/java/vendor/tree-sitter-java
+	path = tree-sitter-java/vendor/tree-sitter-java
 	url = https://github.com/tree-sitter/tree-sitter-java.git
 [submodule "languages/nix/vendor/tree-sitter-nix"]
-	path = languages/nix/vendor/tree-sitter-nix
+	path = tree-sitter-nix/vendor/tree-sitter-nix
 	url = https://github.com/cstrahan/tree-sitter-nix
 [submodule "languages/tsx/vendor/tree-sitter-typescript"]
-	path = languages/tsx/vendor/tree-sitter-typescript
+	path = tree-sitter-tsx/vendor/tree-sitter-typescript
 	url = https://github.com/tree-sitter/tree-sitter-typescript
