@@ -2,43 +2,91 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- {-# LANGUAGE TypeOperators #-}
 module CodeGen.GenerateSyntax
-( datatypeForConstructors
+( syntaxDatatype
 , removeUnderscore
 , initUpper
 , mapOperator
+, astDeclarationsForLanguage
 ) where
 
 import Data.Char
 import Language.Haskell.TH
+import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
 import qualified Data.HashSet as HashSet
-import Data.HashSet (HashSet)
+import qualified TreeSitter.Unmarshal as TS
+import GHC.Generics hiding (Constructor, Datatype)
+import Foreign.Ptr
+import qualified TreeSitter.Language as TS
+import Foreign.C.String
+import Data.Proxy
+import Data.Aeson hiding (String)
+import System.Directory
+import System.FilePath.Posix
+import TreeSitter.Node
+
+
+-- Auto-generate Haskell datatypes from node-types.json
+astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> Q [Dec]
+astDeclarationsForLanguage language filePath = do
+  _ <- TS.addDependentFileRelative filePath
+  currentFilename <- loc_filename <$> location
+  pwd             <- runIO getCurrentDirectory
+  let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
+  input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
+  either fail (fmap (concat @[]) . traverse (syntaxDatatype language)) input
+
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
-datatypeForConstructors :: MkDatatype -> Q Dec
-datatypeForConstructors (SumType (DatatypeName datatypeName) named subtypes) = do
-  let name = toName' named datatypeName
-  cons <- traverse (toSumCon datatypeName) subtypes
-  pure $ DataD [] name [] Nothing cons [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
-datatypeForConstructors (ProductType (DatatypeName datatypeName) named fields) = do
-  let name = toName' named datatypeName
-  con <- toConProduct datatypeName fields
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
-datatypeForConstructors (LeafType (DatatypeName datatypeName) Anonymous) = do
-  let name = toName' Anonymous datatypeName
-  con <- toConLeaf Anonymous (DatatypeName datatypeName)
-  pure $ DataD [] name [] Nothing [con] [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
-datatypeForConstructors (LeafType (DatatypeName datatypeName) named) = do
-  let name = toName' named datatypeName
-  con <- toConLeaf named (DatatypeName datatypeName)
-  pure $ NewtypeD [] name [] Nothing con [ DerivClause Nothing [ ConT ''Eq, ConT ''Ord, ConT ''Show ] ]
+syntaxDatatype :: Ptr TS.Language -> MkDatatype -> Q [Dec]
+syntaxDatatype language datatype = case datatype of
+  SumType (DatatypeName datatypeName) _ subtypes -> do
+    cons <- traverse (toSumCon datatypeName) subtypes
+    result <- symbolMatchingInstanceForSums language name subtypes
+    pure $ generatedDatatype name cons:result
+  ProductType (DatatypeName datatypeName) _ fields -> do
+    con <- toConProduct datatypeName fields
+    result <- symbolMatchingInstance language name datatypeName
+    pure $ generatedDatatype name [con]:result
+  LeafType (DatatypeName datatypeName) named -> do
+    con <- toConLeaf named (DatatypeName datatypeName)
+    result <- symbolMatchingInstance language name datatypeName
+    pure $ case named of
+      Anonymous -> generatedDatatype name [con]:result
+      Named -> NewtypeD [] name [] Nothing con deriveClause:result
+  where
+    name = toName' (isName datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
+    deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
+    generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
+
+
+-- | Create TH-generated SymbolMatching instances for sums, products, leaves
+symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
+symbolMatchingInstance language name str = do
+  tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
+  let tsSymbolType = toEnum $ TS.ts_language_symbol_type language tsSymbol
+  [d|instance TS.SymbolMatching $(conT name) where
+      showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
+      symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
+
+symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
+symbolMatchingInstanceForSums _ name subtypes =
+  [d|instance TS.SymbolMatching $(conT name) where
+      showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
+      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
+  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName' named n))) |]
+        mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
+        extractn (MkType (DatatypeName n) Named) = toCamelCase n
+        extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
+
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
@@ -108,7 +156,7 @@ addTickIfNecessary s
 
 -- | Convert snake_case string to CamelCase Name
 toName :: String -> Name
-toName = mkName . toCamelCase
+toName = mkName . addTickIfNecessary . toCamelCase
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName' :: MkNamed -> String -> Name

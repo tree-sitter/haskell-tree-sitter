@@ -1,12 +1,45 @@
-module TreeSitter.Parser where
+module TreeSitter.Parser
+( Parser
+, withParser
+, withParseTree
+, ts_parser_new
+, ts_parser_halt_on_error
+, ts_parser_parse_string
+, ts_parser_delete
+, ts_parser_set_language
+, ts_parser_timeout_micros
+, ts_parser_set_timeout_micros
+, ts_parser_log_to_stderr
+) where
 
+import Control.Exception as Exc
+import Data.ByteString (ByteString)
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Foreign
 import Foreign.C
 import TreeSitter.Language
 import TreeSitter.Tree
 
-newtype Parser = Parser ()
-  deriving (Show, Eq)
+data Parser = Parser
+  deriving (Show)
+
+withParser :: Ptr Language -> (Ptr Parser -> IO a) -> IO a
+withParser language action = Exc.bracket
+  ts_parser_new
+  ts_parser_delete
+  $ \ parser -> do
+    _ <- ts_parser_set_language parser language
+    action parser
+
+withParseTree :: Ptr Parser -> ByteString -> (Ptr Tree -> IO a) -> IO a
+withParseTree parser bytestring action =
+  unsafeUseAsCStringLen bytestring $ \ (source, len) -> Exc.bracket
+    (ts_parser_parse_string parser nullPtr source len)
+    releaseTree
+    action
+  where releaseTree t
+          | t == nullPtr = pure ()
+          | otherwise    = ts_tree_delete t
 
 foreign import ccall safe "ts_parser_new" ts_parser_new :: IO (Ptr Parser)
 foreign import ccall safe "ts_parser_halt_on_error" ts_parser_halt_on_error :: Ptr Parser -> CBool -> IO ()

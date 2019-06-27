@@ -1,8 +1,24 @@
-module TreeSitter.Cursor where
+module TreeSitter.Cursor
+( Cursor
+, withCursor
+, sizeOfCursor
+, ts_tree_cursor_new_p
+, ts_tree_cursor_delete
+, ts_tree_cursor_reset_p
+, ts_tree_cursor_current_node_p
+, ts_tree_cursor_current_field_name
+, ts_tree_cursor_current_field_id
+, ts_tree_cursor_goto_parent
+, ts_tree_cursor_goto_next_sibling
+, ts_tree_cursor_goto_first_child
+, ts_tree_cursor_goto_first_child_for_byte
+) where
 
+import Control.Exception as Exc
 import Data.Int
 import Data.Word
 import Foreign.C
+import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import TreeSitter.Node
 
@@ -12,6 +28,12 @@ import TreeSitter.Node
 data Cursor = Cursor
   deriving (Show)
 
+withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
+withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
+  (cursor <$ ts_tree_cursor_new_p rootPtr cursor)
+  ts_tree_cursor_delete
+  action
+
 -- | THe size of a 'Cursor' in bytes. The tests verify that this value is the same as @sizeof(TSTreeCursor)@.
 sizeOfCursor :: Int
 sizeOfCursor = 72
@@ -20,7 +42,7 @@ foreign import ccall unsafe "src/bridge.c ts_tree_cursor_new_p" ts_tree_cursor_n
 foreign import ccall unsafe "ts_tree_cursor_delete" ts_tree_cursor_delete :: Ptr Cursor -> IO ()
 foreign import ccall unsafe "src/bridge.c ts_tree_cursor_reset_p" ts_tree_cursor_reset_p :: Ptr Cursor -> Ptr TSNode -> IO ()
 
-foreign import ccall unsafe "src/bridge.c ts_tree_cursor_current_node_p" ts_tree_cursor_current_node_p :: Ptr Cursor -> Ptr TSNode -> IO ()
+foreign import ccall unsafe "src/bridge.c ts_tree_cursor_current_node_p" ts_tree_cursor_current_node_p :: Ptr Cursor -> Ptr TSNode -> IO Bool
 foreign import ccall unsafe "ts_tree_cursor_current_field_name" ts_tree_cursor_current_field_name :: Ptr Cursor -> IO CString
 foreign import ccall unsafe "ts_tree_cursor_current_field_id" ts_tree_cursor_current_field_id :: Ptr Cursor -> IO FieldId
 

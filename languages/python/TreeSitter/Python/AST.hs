@@ -1,23 +1,8 @@
-{-# LANGUAGE DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TemplateHaskell #-}
+{-# LANGUAGE DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
 module TreeSitter.Python.AST where
 
-import TreeSitter.Python.Internal
-import TreeSitter.Language
 import CodeGen.GenerateSyntax
-import Control.Monad.IO.Class
-import Data.Aeson
-import Prelude hiding (Float, Integer, String)
-import System.Directory
-import System.FilePath.Posix
-import Language.Haskell.TH.Syntax (loc_filename, location, runIO)
+import Prelude hiding (True, False, Float, Integer, String)
+import qualified TreeSitter.Python as Grammar
 
--- Regenerate template haskell code when these files change:
-addDependentFileRelative "../../vendor/tree-sitter-python/src/node-types.json"
-
--- Auto-generate code from node-types.json
-$(do
-  currentFilename <- loc_filename <$> location
-  pwd             <- runIO getCurrentDirectory
-  let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> "../../vendor/tree-sitter-python/src/node-types.json"
-  input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
-  either fail (traverse datatypeForConstructors) input)
+astDeclarationsForLanguage Grammar.tree_sitter_python "../../vendor/tree-sitter-python/src/node-types.json"

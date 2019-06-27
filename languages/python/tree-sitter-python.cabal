@@ -23,6 +23,9 @@ library
                      , template-haskell  >= 2.12.0.0 && < 2.15.0.0
                      , tree-sitter-python-internal
   default-language:    Haskell2010
+  ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists
+  if (impl(ghc >= 8.6))
+    ghc-options:       -Wno-star-is-type
 
 library tree-sitter-python-internal
   exposed-modules:     TreeSitter.Python.Internal
@@ -35,6 +38,9 @@ library tree-sitter-python-internal
   c-sources:           vendor/tree-sitter-python/src/parser.c
                      , vendor/tree-sitter-python/src/scanner.cc
   extra-libraries:     stdc++
+  ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists
+  if (impl(ghc >= 8.6))
+    ghc-options:       -Wno-star-is-type
 
 source-repository head
   type:     git
