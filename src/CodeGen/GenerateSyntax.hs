@@ -90,11 +90,7 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: String -> MkType -> Q Con
-toSumCon str (MkType (DatatypeName n) named) = toConSum (n ++ str) [MkType (DatatypeName n) named]
-
--- | Build Q Constructor for sum types (nodes without fields, only subtypes)
-toConSum :: String -> [MkType] -> Q Con
-toConSum constructorName subtypes = NormalC (toName constructorName) <$> traverse toBangType subtypes
+toSumCon str (MkType (DatatypeName n) named) = NormalC (toName' named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
 toConProduct :: String -> NonEmpty (String, MkField) -> Q Con
@@ -163,7 +159,7 @@ toName' :: MkNamed -> String -> Name
 toName' named str = mkName $ addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str
-  
+
 -- Helper function to output camel cased data type names
 initUpper :: String -> String
 initUpper (c:cs) = toUpper c : cs
