@@ -31,8 +31,8 @@ before_install:
 install:
 - cabal new-update
 - cabal new-configure --enable-benchmarks --enable-tests --write-ghc-environment-files=always
-- cabal new-build -j --ghc-options="-O0" --only-dependencies
+- cabal new-build -j --ghc-options="-O0" --only-dependencies all
 
 script:
 - cabal new-build -j --ghc-options="-O0" all
-- cabal new-test -j --ghc-options="-O0"
+- cabal new-test -j --ghc-options="-O0" all
