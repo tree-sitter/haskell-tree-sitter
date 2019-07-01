@@ -47,7 +47,7 @@ instance FromJSON MkDatatype where
     case subtypes of
       Nothing -> do
         fields <- v .:? "fields"
-        -- Case over list and build a NonEmpty
+        -- If fields are present, map to product type; otherwise map to NonEmpty leaf type
         case fmap HM.toList fields of
           Just (field:fields) -> ProductType type' named <$> parseKVPairs (field :| fields)
           Just [] -> pure (LeafType type' named)
