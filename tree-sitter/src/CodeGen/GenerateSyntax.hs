@@ -9,8 +9,10 @@ module CodeGen.GenerateSyntax
 ( syntaxDatatype
 , removeUnderscore
 , initUpper
-, mapOperator
 , astDeclarationsForLanguage
+-- * Internal functions exposed for testing
+, escapeOperatorPunctuation
+
 ) where
 
 import Data.Char
@@ -139,7 +141,7 @@ toType xs = foldr1 combine $ map convertToQType xs
 
 -- | Convert snake_case string to CamelCase String
 toCamelCase :: String -> String
-toCamelCase = initUpper . mapOperator . removeUnderscore
+toCamelCase = initUpper . escapeOperatorPunctuation . removeUnderscore
 
 clashingNames :: HashSet String
 clashingNames = HashSet.fromList ["type", "module", "data"]
@@ -167,13 +169,10 @@ removeUnderscore = foldr appender ""
         appender '_' cs = initUpper cs
         appender c cs = c : cs
 
--- Helper function to map operators to valid Haskell identifier
-mapOperator :: String -> String
-mapOperator = concatMap toDescription
-
--- Helper function to map operator characters to strings
-toDescription :: Char -> String
-toDescription = \case
+-- Ensures that we generate valid Haskell identifiers from
+-- the literal characters used for infix operators and punctuation.
+escapeOperatorPunctuation :: String -> String
+escapeOperatorPunctuation = concatMap $ \case
   '{'  -> "LBrace"
   '}'  -> "RBrace"
   '('  -> "LParen"
@@ -209,5 +208,5 @@ toDescription = \case
   '\n' -> "LF"
   '\r' -> "CR"
   other
-    | isControl other -> mapOperator (show other)
+    | isControl other -> escapeOperatorPunctuation (show other)
     | otherwise       -> [other]
