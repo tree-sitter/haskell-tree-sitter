@@ -95,9 +95,9 @@ toSumCon :: String -> MkType -> Q Con
 toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
-toConProduct :: String -> NonEmpty (String, MkField) -> Q Con
+toConProduct :: String -> NonEmpty MkField -> Q Con
 toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
-  where fieldList = toList <$> traverse (uncurry toVarBangType) fields
+  where fieldList = toList <$> traverse toVarBangType fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 toConLeaf :: MkNamed -> MkDatatypeName -> Q Con
@@ -119,8 +119,8 @@ toBangType (MkType (DatatypeName n) named) = do
 
 -- | For product types, examine the field's contents required for generating
 --   Haskell code with records in the case of ProductTypes
-toVarBangType :: String -> MkField -> Q VarBangType
-toVarBangType name (MkField required fieldType multiplicity) = do
+toVarBangType :: MkField -> Q VarBangType
+toVarBangType (MkField required fieldType multiplicity (Just name)) = do
   ty' <- ty
   let newName = mkName . addTickIfNecessary . removeUnderscore $ name
   pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
@@ -130,6 +130,8 @@ toVarBangType name (MkField required fieldType multiplicity) = do
         mult = case multiplicity of
           Multiple -> [t|[$(toType fieldType)]|]
           Single   -> toType fieldType
+toVarBangType (MkField _ _ _ Nothing) =
+  fail "toVarBangType: invariant violated (MkField did not contain a name)"
 
 -- | Convert field types to Q types
 toType :: [MkType] -> Q Type

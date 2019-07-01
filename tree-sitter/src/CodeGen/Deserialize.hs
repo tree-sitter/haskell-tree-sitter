@@ -31,7 +31,7 @@ data MkDatatype
   | ProductType
   { datatypeName   :: MkDatatypeName
   , isName         :: MkNamed
-  , datatypeFields :: NonEmpty (String, MkField)
+  , datatypeFields :: NonEmpty MkField
   }
   | LeafType
   { datatypeName :: MkDatatypeName
@@ -55,17 +55,18 @@ instance FromJSON MkDatatype where
       Just subtypes   -> pure (SumType type' named subtypes)
 
 -- | Transforms list of key-value pairs to a Parser
-parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, MkField))
+parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty MkField)
 parseKVPairs = traverse go
-  where go :: (Text, Value) -> Parser (String, MkField)
+  where go :: (Text, Value) -> Parser MkField
         go (t,v) = do
           v' <- parseJSON v
-          pure (unpack t, v')
+          pure $ v' { fieldName = Just (unpack t) }
 
 data MkField = MkField
   { fieldRequired :: MkRequired
-  , fieldTypes     :: [MkType]
+  , fieldTypes    :: [MkType]
   , fieldMultiple :: MkMultiple
+  , fieldName     :: Maybe String
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
