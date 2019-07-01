@@ -94,7 +94,7 @@ toSumCon str (MkType (DatatypeName n) named) = NormalC (toName' named (n ++ str)
 
 -- | Build Q Constructor for product types (nodes with fields)
 toConProduct :: String -> NonEmpty (String, MkField) -> Q Con
-toConProduct constructorName fields = RecC (toName constructorName) <$> fieldList
+toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
   where fieldList = toList <$> traverse (uncurry toVarBangType) fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
