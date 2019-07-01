@@ -50,16 +50,16 @@ astDeclarationsForLanguage language filePath = do
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 syntaxDatatype :: Ptr TS.Language -> MkDatatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
-  SumType (DatatypeName datatypeName) _ subtypes -> do
+  SumType datatypeName _ subtypes -> do
     cons <- traverse (toSumCon datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
-  ProductType (DatatypeName datatypeName) _ fields -> do
+  ProductType datatypeName _ fields -> do
     con <- toConProduct datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
-  LeafType (DatatypeName datatypeName) named -> do
-    con <- toConLeaf named (DatatypeName datatypeName)
+  LeafType datatypeName named -> do
+    con <- toConLeaf named datatypeName
     result <- symbolMatchingInstance language name datatypeName
     pure $ case named of
       Anonymous -> generatedDatatype name [con]:result
@@ -71,8 +71,8 @@ syntaxDatatype language datatype = case datatype of
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
-symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
-symbolMatchingInstance language name str = do
+symbolMatchingInstance :: Ptr TS.Language -> Name -> MkDatatypeName -> Q [Dec]
+symbolMatchingInstance language name (DatatypeName str) = do
   tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
   let tsSymbolType = toEnum $ TS.ts_language_symbol_type language tsSymbol
   [d|instance TS.SymbolMatching $(conT name) where
@@ -91,12 +91,12 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-toSumCon :: String -> MkType -> Q Con
-toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
+toSumCon :: MkDatatypeName -> MkType -> Q Con
+toSumCon (DatatypeName str) (MkType (DatatypeName n) named) = NormalC (toName named (n <> str)) <$> traverse toBangType [MkType (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
-toConProduct :: String -> NonEmpty MkField -> Q Con
-toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
+toConProduct :: MkDatatypeName -> NonEmpty MkField -> Q Con
+toConProduct (DatatypeName constructorName) fields = RecC (toName Named constructorName) <$> fieldList
   where fieldList = toList <$> traverse toVarBangType fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
