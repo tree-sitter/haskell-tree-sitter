@@ -39,10 +39,10 @@ prop_initUpper = property $ do
   (y:ys) <- pure $ initUpper (x:xs)
   when (isLower x) (assert (isUpper y))
 
-prop_mapOperator :: Property
-prop_mapOperator = property $ do
+prop_escapePunct :: Property
+prop_escapePunct = property $ do
   xs <- forAll $ Gen.string (Range.constant 1 5) (Gen.filter p Gen.ascii)
-  traverse_ (assert . isAlphaNum) (mapOperator xs)
+  traverse_ (assert . isAlphaNum) (escapeOperatorPunctuation xs)
   where p = not . (\c -> isSpace c || c == '_' )
 
 main :: IO ()
