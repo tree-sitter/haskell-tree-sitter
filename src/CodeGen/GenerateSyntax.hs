@@ -150,10 +150,6 @@ addTickIfNecessary s
   | HashSet.member s clashingNames = s ++ "'"
   | otherwise                        = s
 
--- | Convert snake_case string to CamelCase Name
-toName :: String -> Name
-toName = mkName . addTickIfNecessary . toCamelCase
-
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName' :: MkNamed -> String -> Name
 toName' named str = mkName $ addTickIfNecessary $ case named of
