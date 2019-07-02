@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Deserialize
 ( Datatype (..)
-, MkField (..)
+, Field (..)
 , MkRequired (..)
 , MkType (..)
 , DatatypeName (..)
@@ -31,7 +31,7 @@ data Datatype
   | ProductType
   { datatypeName   :: DatatypeName
   , isName         :: MkNamed
-  , datatypeFields :: NonEmpty (String, MkField)
+  , datatypeFields :: NonEmpty (String, Field)
   }
   | LeafType
   { datatypeName :: DatatypeName
@@ -55,21 +55,21 @@ instance FromJSON Datatype where
       Just subtypes   -> pure (SumType type' named subtypes)
 
 -- | Transforms list of key-value pairs to a Parser
-parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, MkField))
+parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, Field))
 parseKVPairs = traverse go
-  where go :: (Text, Value) -> Parser (String, MkField)
+  where go :: (Text, Value) -> Parser (String, Field)
         go (t,v) = do
           v' <- parseJSON v
           pure (unpack t, v')
 
-data MkField = MkField
+data Field = MkField
   { fieldRequired :: MkRequired
   , fieldTypes     :: [MkType]
   , fieldMultiple :: MkMultiple
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkField where
+instance FromJSON Field where
   parseJSON = genericParseJSON customOptions
 
 data MkRequired = Optional | Required

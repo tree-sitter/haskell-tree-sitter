@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -95,7 +95,7 @@ toSumCon :: String -> MkType -> Q Con
 toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
-toConProduct :: String -> NonEmpty (String, MkField) -> Q Con
+toConProduct :: String -> NonEmpty (String, Field) -> Q Con
 toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
   where fieldList = toList <$> traverse (uncurry toVarBangType) fields
 
@@ -119,7 +119,7 @@ toBangType (MkType (DatatypeName n) named) = do
 
 -- | For product types, examine the field's contents required for generating
 --   Haskell code with records in the case of ProductTypes
-toVarBangType :: String -> MkField -> Q VarBangType
+toVarBangType :: String -> Field -> Q VarBangType
 toVarBangType name (MkField required fieldType multiplicity) = do
   ty' <- ty
   let newName = mkName . addTickIfNecessary . removeUnderscore $ name
