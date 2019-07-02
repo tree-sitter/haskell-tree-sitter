@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), MkType (..), MkNamed (..), MkMultiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -79,7 +79,7 @@ symbolMatchingInstance language name str = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
+symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [CodeGen.Deserialize.Type] -> Q [Dec]
 symbolMatchingInstanceForSums _ name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
@@ -91,7 +91,7 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-toSumCon :: String -> MkType -> Q Con
+toSumCon :: String -> CodeGen.Deserialize.Type -> Q Con
 toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
@@ -112,7 +112,7 @@ toLeafVarBangTypes = do
   pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
 
 -- | Construct toBangType for use in above toConSum
-toBangType :: MkType -> Q BangType
+toBangType :: CodeGen.Deserialize.Type -> Q BangType
 toBangType (MkType (DatatypeName n) named) = do
   bangSubtypes <- conT (toName named n)
   pure (Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, bangSubtypes)
@@ -132,7 +132,7 @@ toVarBangType name (MkField required fieldType multiplicity) = do
           Single   -> toType fieldType
 
 -- | Convert field types to Q types
-toType :: [MkType] -> Q Type
+toType :: [CodeGen.Deserialize.Type] -> Q TH.Type
 toType [] = fail "no types" -- FIXME: clarify this error message
 toType xs = foldr1 combine $ map convertToQType xs
   where
