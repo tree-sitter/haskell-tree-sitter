@@ -4,11 +4,11 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Deserialize
-( MkDatatype (..)
+( Datatype (..)
 , MkField (..)
 , MkRequired (..)
 , MkType (..)
-, MkDatatypeName (..)
+, DatatypeName (..)
 , MkNamed (..)
 , MkMultiple (..)
 ) where
@@ -22,25 +22,25 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.HashMap.Strict as HM
 
 -- Types to deserialize into:
-data MkDatatype
+data Datatype
   = SumType
-  { datatypeName :: MkDatatypeName
+  { datatypeName :: DatatypeName
   , isName :: MkNamed
   , datatypeSubtypes :: [MkType]
   }
   | ProductType
-  { datatypeName   :: MkDatatypeName
+  { datatypeName   :: DatatypeName
   , isName         :: MkNamed
   , datatypeFields :: NonEmpty (String, MkField)
   }
   | LeafType
-  { datatypeName :: MkDatatypeName
+  { datatypeName :: DatatypeName
   , isName       :: MkNamed
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkDatatype where
-  parseJSON = withObject "MkDatatype" $ \v -> do
+instance FromJSON Datatype where
+  parseJSON = withObject "Datatype" $ \v -> do
     type' <- v .: "type"
     named <- v .: "named"
     subtypes <- v .:? "subtypes"
@@ -79,7 +79,7 @@ instance FromJSON MkRequired where
   parseJSON = withBool "Required" (\p -> pure (if p then Required else Optional))
 
 data MkType = MkType
-  { fieldType :: MkDatatypeName
+  { fieldType :: DatatypeName
   , isNamed :: MkNamed
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
@@ -87,7 +87,7 @@ data MkType = MkType
 instance FromJSON MkType where
   parseJSON = genericParseJSON customOptions
 
-newtype MkDatatypeName = DatatypeName { getDatatypeName :: String }
+newtype DatatypeName = DatatypeName { getDatatypeName :: String }
   deriving (Eq, Ord, Show, Generic)
   deriving newtype (FromJSON, ToJSON)
 

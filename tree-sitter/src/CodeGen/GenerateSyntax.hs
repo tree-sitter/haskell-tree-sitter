@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -48,7 +48,7 @@ astDeclarationsForLanguage language filePath = do
 
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
-syntaxDatatype :: Ptr TS.Language -> MkDatatype -> Q [Dec]
+syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
   SumType (DatatypeName datatypeName) _ subtypes -> do
     cons <- traverse (toSumCon datatypeName) subtypes
@@ -100,7 +100,7 @@ toConProduct constructorName fields = RecC (toName Named constructorName) <$> fi
   where fieldList = toList <$> traverse (uncurry toVarBangType) fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-toConLeaf :: MkNamed -> MkDatatypeName -> Q Con
+toConLeaf :: MkNamed -> DatatypeName -> Q Con
 toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName Anonymous name) [])
 toConLeaf named (DatatypeName name) = RecC (toName named name) <$> leafRecords
   where leafRecords = pure <$> toLeafVarBangTypes
