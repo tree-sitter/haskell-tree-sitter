@@ -120,7 +120,7 @@ toBangType (MkType (DatatypeName n) named) = do
 -- | For product types, examine the field's contents required for generating
 --   Haskell code with records in the case of ProductTypes
 toVarBangType :: Field -> Q VarBangType
-toVarBangType (Field required fieldType multiplicity (Just name)) = do
+toVarBangType (MkField required fieldType multiplicity (Just name)) = do
   ty' <- ty
   let newName = mkName . addTickIfNecessary . removeUnderscore $ name
   pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
@@ -130,7 +130,7 @@ toVarBangType (Field required fieldType multiplicity (Just name)) = do
         mult = case multiplicity of
           Multiple -> [t|[$(toType fieldType)]|]
           Single   -> toType fieldType
-toVarBangType (Field _ _ _ Nothing) =
+toVarBangType (MkField _ _ _ Nothing) =
   fail "toVarBangType: invariant violated (MkField did not contain a name)"
 
 -- | Convert field types to Q types

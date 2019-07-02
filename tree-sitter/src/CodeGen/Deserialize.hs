@@ -62,7 +62,7 @@ parseKVPairs = traverse go
           v' <- parseJSON v
           pure $ v' { fieldName = Just (unpack t) }
 
-data Field = Field
+data Field = MkField
   { fieldRequired :: Required
   , fieldTypes    :: [Type]
   , fieldMultiple :: Multiple
