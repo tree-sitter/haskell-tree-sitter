@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (MkDatatype (..), MkDatatypeName (..), MkField (..), MkRequired (..), MkType (..), MkNamed (..), MkMultiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -48,7 +48,7 @@ astDeclarationsForLanguage language filePath = do
 
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
-syntaxDatatype :: Ptr TS.Language -> MkDatatype -> Q [Dec]
+syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
   SumType (DatatypeName datatypeName) _ subtypes -> do
     cons <- traverse (toSumCon datatypeName) subtypes
@@ -79,7 +79,7 @@ symbolMatchingInstance language name str = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [MkType] -> Q [Dec]
+symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [CodeGen.Deserialize.Type] -> Q [Dec]
 symbolMatchingInstanceForSums _ name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
@@ -91,16 +91,16 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-toSumCon :: String -> MkType -> Q Con
+toSumCon :: String -> CodeGen.Deserialize.Type -> Q Con
 toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
-toConProduct :: String -> NonEmpty (String, MkField) -> Q Con
+toConProduct :: String -> NonEmpty (String, Field) -> Q Con
 toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
   where fieldList = toList <$> traverse (uncurry toVarBangType) fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-toConLeaf :: MkNamed -> MkDatatypeName -> Q Con
+toConLeaf :: Named -> DatatypeName -> Q Con
 toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName Anonymous name) [])
 toConLeaf named (DatatypeName name) = RecC (toName named name) <$> leafRecords
   where leafRecords = pure <$> toLeafVarBangTypes
@@ -112,14 +112,14 @@ toLeafVarBangTypes = do
   pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
 
 -- | Construct toBangType for use in above toConSum
-toBangType :: MkType -> Q BangType
+toBangType :: CodeGen.Deserialize.Type -> Q BangType
 toBangType (MkType (DatatypeName n) named) = do
   bangSubtypes <- conT (toName named n)
   pure (Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, bangSubtypes)
 
 -- | For product types, examine the field's contents required for generating
 --   Haskell code with records in the case of ProductTypes
-toVarBangType :: String -> MkField -> Q VarBangType
+toVarBangType :: String -> Field -> Q VarBangType
 toVarBangType name (MkField required fieldType multiplicity) = do
   ty' <- ty
   let newName = mkName . addTickIfNecessary . removeUnderscore $ name
@@ -132,7 +132,7 @@ toVarBangType name (MkField required fieldType multiplicity) = do
           Single   -> toType fieldType
 
 -- | Convert field types to Q types
-toType :: [MkType] -> Q Type
+toType :: [CodeGen.Deserialize.Type] -> Q TH.Type
 toType [] = fail "no types" -- FIXME: clarify this error message
 toType xs = foldr1 combine $ map convertToQType xs
   where
@@ -152,7 +152,7 @@ addTickIfNecessary s
   | otherwise                        = s
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
-toName :: MkNamed -> String -> Name
+toName :: Named -> String -> Name
 toName named str = mkName $ addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str

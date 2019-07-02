@@ -4,13 +4,13 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
 module CodeGen.Deserialize
-( MkDatatype (..)
-, MkField (..)
-, MkRequired (..)
-, MkType (..)
-, MkDatatypeName (..)
-, MkNamed (..)
-, MkMultiple (..)
+( Datatype (..)
+, Field (..)
+, Required (..)
+, Type (..)
+, DatatypeName (..)
+, Named (..)
+, Multiple (..)
 ) where
 
 import Data.Aeson as Aeson
@@ -22,25 +22,25 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.HashMap.Strict as HM
 
 -- Types to deserialize into:
-data MkDatatype
+data Datatype
   = SumType
-  { datatypeName :: MkDatatypeName
-  , isName :: MkNamed
-  , datatypeSubtypes :: [MkType]
+  { datatypeName :: DatatypeName
+  , isName :: Named
+  , datatypeSubtypes :: [Type]
   }
   | ProductType
-  { datatypeName   :: MkDatatypeName
-  , isName         :: MkNamed
-  , datatypeFields :: NonEmpty (String, MkField)
+  { datatypeName   :: DatatypeName
+  , isName         :: Named
+  , datatypeFields :: NonEmpty (String, Field)
   }
   | LeafType
-  { datatypeName :: MkDatatypeName
-  , isName       :: MkNamed
+  { datatypeName :: DatatypeName
+  , isName       :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkDatatype where
-  parseJSON = withObject "MkDatatype" $ \v -> do
+instance FromJSON Datatype where
+  parseJSON = withObject "Datatype" $ \v -> do
     type' <- v .: "type"
     named <- v .: "named"
     subtypes <- v .:? "subtypes"
@@ -55,52 +55,52 @@ instance FromJSON MkDatatype where
       Just subtypes   -> pure (SumType type' named subtypes)
 
 -- | Transforms list of key-value pairs to a Parser
-parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, MkField))
+parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, Field))
 parseKVPairs = traverse go
-  where go :: (Text, Value) -> Parser (String, MkField)
+  where go :: (Text, Value) -> Parser (String, Field)
         go (t,v) = do
           v' <- parseJSON v
           pure (unpack t, v')
 
-data MkField = MkField
-  { fieldRequired :: MkRequired
-  , fieldTypes     :: [MkType]
-  , fieldMultiple :: MkMultiple
+data Field = MkField
+  { fieldRequired :: Required
+  , fieldTypes     :: [Type]
+  , fieldMultiple :: Multiple
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkField where
+instance FromJSON Field where
   parseJSON = genericParseJSON customOptions
 
-data MkRequired = Optional | Required
+data Required = Optional | Required
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkRequired where
+instance FromJSON Required where
   parseJSON = withBool "Required" (\p -> pure (if p then Required else Optional))
 
-data MkType = MkType
-  { fieldType :: MkDatatypeName
-  , isNamed :: MkNamed
+data Type = MkType
+  { fieldType :: DatatypeName
+  , isNamed :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkType where
+instance FromJSON Type where
   parseJSON = genericParseJSON customOptions
 
-newtype MkDatatypeName = DatatypeName { getDatatypeName :: String }
+newtype DatatypeName = DatatypeName { getDatatypeName :: String }
   deriving (Eq, Ord, Show, Generic)
   deriving newtype (FromJSON, ToJSON)
 
-data MkNamed = Anonymous | Named
+data Named = Anonymous | Named
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkNamed where
+instance FromJSON Named where
   parseJSON = withBool "Named" (\p -> pure (if p then Named else Anonymous))
 
-data MkMultiple = Single | Multiple
+data Multiple = Single | Multiple
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkMultiple where
+instance FromJSON Multiple where
   parseJSON = withBool "Multiple" (\p -> pure (if p then Multiple else Single))
 
 customOptions :: Aeson.Options
