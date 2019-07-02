@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), MkNamed (..), MkMultiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -100,7 +100,7 @@ toConProduct constructorName fields = RecC (toName Named constructorName) <$> fi
   where fieldList = toList <$> traverse (uncurry toVarBangType) fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-toConLeaf :: MkNamed -> DatatypeName -> Q Con
+toConLeaf :: Named -> DatatypeName -> Q Con
 toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName Anonymous name) [])
 toConLeaf named (DatatypeName name) = RecC (toName named name) <$> leafRecords
   where leafRecords = pure <$> toLeafVarBangTypes
@@ -152,7 +152,7 @@ addTickIfNecessary s
   | otherwise                        = s
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
-toName :: MkNamed -> String -> Name
+toName :: Named -> String -> Name
 toName named str = mkName $ addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str

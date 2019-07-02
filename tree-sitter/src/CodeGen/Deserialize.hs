@@ -9,8 +9,8 @@ module CodeGen.Deserialize
 , Required (..)
 , Type (..)
 , DatatypeName (..)
-, MkNamed (..)
-, MkMultiple (..)
+, Named (..)
+, Multiple (..)
 ) where
 
 import Data.Aeson as Aeson
@@ -25,17 +25,17 @@ import qualified Data.HashMap.Strict as HM
 data Datatype
   = SumType
   { datatypeName :: DatatypeName
-  , isName :: MkNamed
+  , isName :: Named
   , datatypeSubtypes :: [Type]
   }
   | ProductType
   { datatypeName   :: DatatypeName
-  , isName         :: MkNamed
+  , isName         :: Named
   , datatypeFields :: NonEmpty (String, Field)
   }
   | LeafType
   { datatypeName :: DatatypeName
-  , isName       :: MkNamed
+  , isName       :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
@@ -65,7 +65,7 @@ parseKVPairs = traverse go
 data Field = MkField
   { fieldRequired :: Required
   , fieldTypes     :: [Type]
-  , fieldMultiple :: MkMultiple
+  , fieldMultiple :: Multiple
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
@@ -80,7 +80,7 @@ instance FromJSON Required where
 
 data Type = MkType
   { fieldType :: DatatypeName
-  , isNamed :: MkNamed
+  , isNamed :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
@@ -91,16 +91,16 @@ newtype DatatypeName = DatatypeName { getDatatypeName :: String }
   deriving (Eq, Ord, Show, Generic)
   deriving newtype (FromJSON, ToJSON)
 
-data MkNamed = Anonymous | Named
+data Named = Anonymous | Named
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkNamed where
+instance FromJSON Named where
   parseJSON = withBool "Named" (\p -> pure (if p then Named else Anonymous))
 
-data MkMultiple = Single | Multiple
+data Multiple = Single | Multiple
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkMultiple where
+instance FromJSON Multiple where
   parseJSON = withBool "Multiple" (\p -> pure (if p then Multiple else Single))
 
 customOptions :: Aeson.Options
