@@ -83,16 +83,16 @@ symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [CodeGen.Deserializ
 symbolMatchingInstanceForSums _ name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
-      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
-  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName named n))) |]
+      symbolMatch _ = $(foldr1 mkOr (perType `map` subtypes)) |]
+  where perType (Type (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName named n))) |]
         mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
-        extractn (MkType (DatatypeName n) Named) = toCamelCase n
-        extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
+        extractn (Type (DatatypeName n) Named) = toCamelCase n
+        extractn (Type (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 toSumCon :: DatatypeName -> CodeGen.Deserialize.Type -> Q Con
-toSumCon (DatatypeName str) (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
+toSumCon (DatatypeName str) (Type (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [Type (DatatypeName n) named]
 
 -- | Build Q Constructor for product types (nodes with fields)
 toConProduct :: DatatypeName -> NonEmpty Field -> Q Con
@@ -113,7 +113,7 @@ toLeafVarBangTypes = do
 
 -- | Construct toBangType for use in above toConSum
 toBangType :: CodeGen.Deserialize.Type -> Q BangType
-toBangType (MkType (DatatypeName n) named) = do
+toBangType (Type (DatatypeName n) named) = do
   bangSubtypes <- conT (toName named n)
   pure (Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, bangSubtypes)
 
@@ -139,7 +139,7 @@ toType [] = fail "no types" -- FIXME: clarify this error message
 toType xs = foldr1 combine $ map convertToQType xs
   where
     combine convertedQType = appT (appT (conT ''Either) convertedQType)
-    convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
+    convertToQType (Type (DatatypeName n) named) = conT (toName named n)
 
 -- | Convert snake_case string to CamelCase String
 toCamelCase :: String -> String

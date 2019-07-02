@@ -79,7 +79,7 @@ data Required = Optional | Required
 instance FromJSON Required where
   parseJSON = withBool "Required" (\p -> pure (if p then Required else Optional))
 
-data Type = MkType
+data Type = Type
   { fieldType :: DatatypeName
   , isNamed :: Named
   }
