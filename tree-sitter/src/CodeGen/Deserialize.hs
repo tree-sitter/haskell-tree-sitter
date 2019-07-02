@@ -6,7 +6,7 @@
 module CodeGen.Deserialize
 ( Datatype (..)
 , Field (..)
-, MkRequired (..)
+, Required (..)
 , MkType (..)
 , DatatypeName (..)
 , MkNamed (..)
@@ -63,7 +63,7 @@ parseKVPairs = traverse go
           pure (unpack t, v')
 
 data Field = MkField
-  { fieldRequired :: MkRequired
+  { fieldRequired :: Required
   , fieldTypes     :: [MkType]
   , fieldMultiple :: MkMultiple
   }
@@ -72,10 +72,10 @@ data Field = MkField
 instance FromJSON Field where
   parseJSON = genericParseJSON customOptions
 
-data MkRequired = Optional | Required
+data Required = Optional | Required
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON MkRequired where
+instance FromJSON Required where
   parseJSON = withBool "Required" (\p -> pure (if p then Required else Optional))
 
 data MkType = MkType
