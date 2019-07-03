@@ -51,7 +51,7 @@ astDeclarationsForLanguage language filePath = do
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
   SumType (DatatypeName datatypeName) _ subtypes -> do
-    cons <- traverse (toSumCon datatypeName) subtypes
+    cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
   ProductType (DatatypeName datatypeName) _ fields -> do
@@ -91,8 +91,9 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-toSumCon :: String -> CodeGen.Deserialize.Type -> Q Con
-toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
+constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
+constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
+  where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
@@ -113,11 +114,7 @@ ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes]
   leafBytes = TH.varBangType (mkName "bytes") textValue
   textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
 
--- | Construct toBangType for use in above toConSum
-toBangType :: CodeGen.Deserialize.Type -> Q BangType
-toBangType (MkType (DatatypeName n) named) = do
-  bangSubtypes <- conT (toName named n)
-  pure (Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, bangSubtypes)
+
 
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty CodeGen.Deserialize.Type -> Q TH.Type
