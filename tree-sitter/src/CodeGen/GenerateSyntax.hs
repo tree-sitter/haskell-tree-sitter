@@ -93,7 +93,7 @@ symbolMatchingInstanceForSums _ name subtypes =
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
 constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
-  where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
+  where child = TH.bangType strictPacked (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
@@ -101,10 +101,9 @@ ctorForProductType constructorName fields = recC (toName Named constructorName) 
   fieldList = toList $ fmap (uncurry toVarBangType) fields
   toVarBangType name (MkField required fieldTypes _) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
-        strictness = TH.bang noSourceUnpackedness noSourceStrictness
         contents = if required == Optional then conT ''Maybe `appT` choices else choices
         choices = fieldTypesToNestedEither fieldTypes
-    in TH.varBangType fieldName (TH.bangType strictness contents)
+    in TH.varBangType fieldName (TH.bangType strictPacked contents)
 
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
@@ -140,6 +139,10 @@ toName :: Named -> String -> Name
 toName named str = mkName $ addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str
+
+-- | Helper alias to build strict, packed record fields.
+strictPacked :: Q Bang
+strictPacked = TH.bang noSourceUnpackedness sourceStrict
 
 -- Helper function to output camel cased data type names
 initUpper :: String -> String
