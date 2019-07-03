@@ -50,16 +50,16 @@ astDeclarationsForLanguage language filePath = do
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
-  SumType (DatatypeName datatypeName) _ subtypes -> do
+  SumType datatypeName _ subtypes -> do
     cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
-  ProductType (DatatypeName datatypeName) _ fields -> do
+  ProductType datatypeName _ fields -> do
     con <- ctorForProductType datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
-  LeafType (DatatypeName datatypeName) named -> do
-    con <- ctorForLeafType named (DatatypeName datatypeName)
+  LeafType datatypeName named -> do
+    con <- ctorForLeafType named datatypeName
     result <- symbolMatchingInstance language name datatypeName
     pure $ case named of
       Anonymous -> generatedDatatype name [con]:result
@@ -71,8 +71,8 @@ syntaxDatatype language datatype = case datatype of
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
-symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
-symbolMatchingInstance language name str = do
+symbolMatchingInstance :: Ptr TS.Language -> Name -> DatatypeName -> Q [Dec]
+symbolMatchingInstance language name (DatatypeName str) = do
   tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
   let tsSymbolType = toEnum $ TS.ts_language_symbol_type language tsSymbol
   [d|instance TS.SymbolMatching $(conT name) where
@@ -91,13 +91,13 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
-constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
+constructorForSumChoice :: DatatypeName -> CodeGen.Deserialize.Type -> Q Con
+constructorForSumChoice (DatatypeName str) (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
   where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
-ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
-ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
+ctorForProductType :: DatatypeName -> NonEmpty (String, Field) -> Q Con
+ctorForProductType (DatatypeName constructorName) fields = recC (toName Named constructorName) fieldList where
   fieldList = toList $ fmap (uncurry toVarBangType) fields
   toVarBangType name (MkField required fieldTypes _) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
