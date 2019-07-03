@@ -64,7 +64,7 @@ parseKVPairs = traverse go
 
 data Field = MkField
   { fieldRequired :: Required
-  , fieldTypes     :: [Type]
+  , fieldTypes    :: NonEmpty Type
   , fieldMultiple :: Multiple
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
