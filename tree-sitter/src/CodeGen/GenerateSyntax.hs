@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -55,6 +55,7 @@ syntaxDatatype language datatype = case datatype of
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
   ProductType (DatatypeName datatypeName) _ fields -> do
+    runIO $ print datatypeName
     con <- ctorForProductType datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
@@ -99,11 +100,12 @@ constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName na
 ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
 ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
   fieldList = toList $ fmap (uncurry toVarBangType) fields
-  toVarBangType name (MkField required fieldTypes _) =
+  toVarBangType name (MkField required fieldTypes mult) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
         contents = if required == Optional then conT ''Maybe `appT` choices else choices
-        choices = fieldTypesToNestedEither fieldTypes
+        ftypes = fieldTypesToNestedEither fieldTypes
+        choices = if mult == Multiple then appT (conT ''[]) ftypes else ftypes
     in TH.varBangType fieldName (TH.bangType strictness contents)
 
 
