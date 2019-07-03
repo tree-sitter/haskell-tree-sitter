@@ -24,18 +24,18 @@ import qualified Data.HashMap.Strict as HM
 -- Types to deserialize into:
 data Datatype
   = SumType
-  { datatypeName :: DatatypeName
+  { datatypeName       :: DatatypeName
   , datatypeNameStatus :: Named
-  , datatypeSubtypes :: [Type]
+  , datatypeSubtypes   :: [Type]
   }
   | ProductType
-  { datatypeName   :: DatatypeName
-  , datatypeNameStatus         :: Named
-  , datatypeFields :: NonEmpty (String, Field)
+  { datatypeName       :: DatatypeName
+  , datatypeNameStatus :: Named
+  , datatypeFields     :: NonEmpty (String, Field)
   }
   | LeafType
-  { datatypeName :: DatatypeName
-  , datatypeNameStatus       :: Named
+  { datatypeName       :: DatatypeName
+  , datatypeNameStatus :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
