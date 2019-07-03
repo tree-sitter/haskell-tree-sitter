@@ -25,17 +25,17 @@ import qualified Data.HashMap.Strict as HM
 data Datatype
   = SumType
   { datatypeName :: DatatypeName
-  , isName :: Named
+  , datatypeNameStatus :: Named
   , datatypeSubtypes :: [Type]
   }
   | ProductType
   { datatypeName   :: DatatypeName
-  , isName         :: Named
+  , datatypeNameStatus         :: Named
   , datatypeFields :: NonEmpty (String, Field)
   }
   | LeafType
   { datatypeName :: DatatypeName
-  , isName       :: Named
+  , datatypeNameStatus       :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 

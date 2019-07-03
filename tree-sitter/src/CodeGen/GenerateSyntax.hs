@@ -65,7 +65,7 @@ syntaxDatatype language datatype = case datatype of
       Anonymous -> generatedDatatype name [con]:result
       Named -> NewtypeD [] name [] Nothing con deriveClause:result
   where
-    name = toName (isName datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
+    name = toName (datatypeNameStatus datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
 
