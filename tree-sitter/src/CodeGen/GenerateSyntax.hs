@@ -16,10 +16,9 @@ module CodeGen.GenerateSyntax
 ) where
 
 import Data.Char
-import Language.Haskell.TH
+import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -51,21 +50,21 @@ astDeclarationsForLanguage language filePath = do
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
   SumType (DatatypeName datatypeName) _ subtypes -> do
-    cons <- traverse (toSumCon datatypeName) subtypes
+    cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
   ProductType (DatatypeName datatypeName) _ fields -> do
-    con <- toConProduct datatypeName fields
+    con <- ctorForProductType datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
-    con <- toConLeaf named (DatatypeName datatypeName)
+    con <- ctorForLeafType named (DatatypeName datatypeName)
     result <- symbolMatchingInstance language name datatypeName
     pure $ case named of
       Anonymous -> generatedDatatype name [con]:result
       Named -> NewtypeD [] name [] Nothing con deriveClause:result
   where
-    name = toName (isName datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
+    name = toName (datatypeNameStatus datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
 
@@ -91,52 +90,35 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-toSumCon :: String -> CodeGen.Deserialize.Type -> Q Con
-toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
+constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
+constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
+  where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
-toConProduct :: String -> NonEmpty Field -> Q Con
-toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
-  where fieldList = toList <$> traverse toVarBangType fields
+ctorForProductType :: String -> NonEmpty Field -> Q Con
+ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
+  fieldList = toList $ fmap toVarBangType fields
+  toVarBangType (MkField required fieldTypes _ (Just name)) =
+    let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
+        strictness = TH.bang noSourceUnpackedness noSourceStrictness
+        contents = if required == Optional then conT ''Maybe `appT` choices else choices
+        choices = fieldTypesToNestedEither fieldTypes
+    in TH.varBangType fieldName (TH.bangType strictness contents)
+  toVarBangType f@(MkField _ _ _ Nothing) = fail ("Invariant violated: no name for field " <> show f)
+
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-toConLeaf :: Named -> DatatypeName -> Q Con
-toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName Anonymous name) [])
-toConLeaf named (DatatypeName name) = RecC (toName named name) <$> leafRecords
-  where leafRecords = pure <$> toLeafVarBangTypes
+ctorForLeafType :: Named -> DatatypeName -> Q Con
+ctorForLeafType Anonymous (DatatypeName name) = normalC (toName Anonymous name) []
+ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes] where
+  leafBytes = TH.varBangType (mkName "bytes") textValue
+  textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
 
--- | Produce VarBangTypes required to construct records of leaf types
-toLeafVarBangTypes :: Q VarBangType
-toLeafVarBangTypes = do
-  leafVarBangTypes <- conT ''Text
-  pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
 
--- | Construct toBangType for use in above toConSum
-toBangType :: CodeGen.Deserialize.Type -> Q BangType
-toBangType (MkType (DatatypeName n) named) = do
-  bangSubtypes <- conT (toName named n)
-  pure (Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, bangSubtypes)
-
--- | For product types, examine the field's contents required for generating
---   Haskell code with records in the case of ProductTypes
-toVarBangType :: Field -> Q VarBangType
-toVarBangType (MkField required fieldType multiplicity (Just name)) = do
-  ty' <- ty
-  let newName = mkName . addTickIfNecessary . removeUnderscore $ name
-  pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
-  where ty = case required of
-          Optional -> [t|Maybe $(mult)|]
-          Required -> mult
-        mult = case multiplicity of
-          Multiple -> [t|[$(toType fieldType)]|]
-          Single   -> toType fieldType
-toVarBangType (MkField _ _ _ Nothing) =
-  fail "toVarBangType: invariant violated (MkField did not contain a name)"
 
 -- | Convert field types to Q types
-toType :: [CodeGen.Deserialize.Type] -> Q TH.Type
-toType [] = fail "no types" -- FIXME: clarify this error message
-toType xs = foldr1 combine $ map convertToQType xs
+fieldTypesToNestedEither :: NonEmpty CodeGen.Deserialize.Type -> Q TH.Type
+fieldTypesToNestedEither xs = foldr1 combine $ fmap convertToQType xs
   where
     combine convertedQType = appT (appT (conT ''Either) convertedQType)
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)

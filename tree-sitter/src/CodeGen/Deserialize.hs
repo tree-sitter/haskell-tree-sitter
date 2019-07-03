@@ -24,18 +24,18 @@ import qualified Data.HashMap.Strict as HM
 -- Types to deserialize into:
 data Datatype
   = SumType
-  { datatypeName     :: DatatypeName
-  , isName           :: Named
-  , datatypeSubtypes :: [Type]
+  { datatypeName       :: DatatypeName
+  , datatypeNameStatus :: Named
+  , datatypeSubtypes   :: [Type]
   }
   | ProductType
-  { datatypeName   :: DatatypeName
-  , isName         :: Named
-  , datatypeFields :: NonEmpty Field
+  { datatypeName       :: DatatypeName
+  , datatypeNameStatus :: Named
+  , datatypeFields     :: NonEmpty Field
   }
   | LeafType
-  { datatypeName :: DatatypeName
-  , isName       :: Named
+  { datatypeName       :: DatatypeName
+  , datatypeNameStatus :: Named
   }
   deriving (Eq, Ord, Show, Generic, ToJSON)
 
@@ -64,7 +64,7 @@ parseKVPairs = traverse go
 
 data Field = MkField
   { fieldRequired :: Required
-  , fieldTypes    :: [Type]
+  , fieldTypes    :: NonEmpty Type
   , fieldMultiple :: Multiple
   , fieldName     :: Maybe String
   }
