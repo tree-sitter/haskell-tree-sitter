@@ -18,7 +18,6 @@ module CodeGen.GenerateSyntax
 import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable

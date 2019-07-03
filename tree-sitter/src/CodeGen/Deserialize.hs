@@ -79,13 +79,18 @@ instance FromJSON Required where
   parseJSON = withBool "Required" (\p -> pure (if p then Required else Optional))
 
 data Type = MkType
-  { fieldType :: DatatypeName
-  , isNamed :: Named
-  }
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  { typeName       :: DatatypeName
+  , typeNameStatus :: Named
+  } deriving (Eq, Ord, Show, Generic)
 
 instance FromJSON Type where
-  parseJSON = genericParseJSON customOptions
+  parseJSON = withObject "Type" $ \v ->
+    MkType <$> v .: "type" <*> v .: "named"
+
+instance ToJSON Type where
+  toJSON t = object [ "type"  .= typeName t
+                    , "named" .= typeNameStatus t
+                    ]
 
 newtype DatatypeName = DatatypeName { getDatatypeName :: String }
   deriving (Eq, Ord, Show, Generic)
