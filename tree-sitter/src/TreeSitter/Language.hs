@@ -17,8 +17,10 @@ import           System.Directory
 import           System.FilePath.Posix
 import           TreeSitter.Symbol
 
-newtype Language = Language ()
-  deriving (Show, Eq)
+-- | A tree-sitter language.
+--
+--   This type is uninhabited and used only for type safety within 'Ptr' values.
+data Language
 
 foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> Word32
 foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> CString

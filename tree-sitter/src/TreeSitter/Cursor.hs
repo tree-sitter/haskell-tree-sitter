@@ -24,9 +24,8 @@ import TreeSitter.Node
 
 -- | A cursor for traversing a tree.
 --
---   Note that we do not define 'Eq', 'Ord', or 'Storable' instances, as the underlying @TSTreeCursor@ type is not usefully copyable.
-data Cursor = Cursor
-  deriving (Show)
+--   This type is uninhabited and used only for type safety within 'Ptr' values.
+data Cursor
 
 withCursor :: Ptr TSNode -> (Ptr Cursor -> IO a) -> IO a
 withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
