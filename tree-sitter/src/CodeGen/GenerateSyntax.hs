@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -120,21 +120,18 @@ toBangType (MkType (DatatypeName n) named) = do
 -- | For product types, examine the field's contents required for generating
 --   Haskell code with records in the case of ProductTypes
 toVarBangType :: String -> Field -> Q VarBangType
-toVarBangType name (MkField required fieldType multiplicity) = do
+toVarBangType name (MkField required fieldTypes _) = do
   ty' <- ty
   let newName = mkName . addTickIfNecessary . removeUnderscore $ name
   pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
   where ty = case required of
           Optional -> [t|Maybe $(mult)|]
           Required -> mult
-        mult = case multiplicity of
-          Multiple -> [t|[$(toType fieldType)]|]
-          Single   -> toType fieldType
+        mult = fieldTypesToNestedEither fieldTypes
 
 -- | Convert field types to Q types
-toType :: [CodeGen.Deserialize.Type] -> Q TH.Type
-toType [] = fail "no types" -- FIXME: clarify this error message
-toType xs = foldr1 combine $ map convertToQType xs
+fieldTypesToNestedEither :: NonEmpty CodeGen.Deserialize.Type -> Q TH.Type
+fieldTypesToNestedEither xs = foldr1 combine $ fmap convertToQType xs
   where
     combine convertedQType = appT (appT (conT ''Either) convertedQType)
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
