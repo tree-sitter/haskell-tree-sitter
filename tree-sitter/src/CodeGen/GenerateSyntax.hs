@@ -16,7 +16,7 @@ module CodeGen.GenerateSyntax
 ) where
 
 import Data.Char
-import Language.Haskell.TH
+import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
@@ -59,7 +59,7 @@ syntaxDatatype language datatype = case datatype of
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
-    con <- toConLeaf named (DatatypeName datatypeName)
+    con <- ctorForLeafType named (DatatypeName datatypeName)
     result <- symbolMatchingInstance language name datatypeName
     pure $ case named of
       Anonymous -> generatedDatatype name [con]:result
@@ -100,16 +100,11 @@ toConProduct constructorName fields = RecC (toName Named constructorName) <$> fi
   where fieldList = toList <$> traverse (uncurry toVarBangType) fields
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-toConLeaf :: Named -> DatatypeName -> Q Con
-toConLeaf Anonymous (DatatypeName name) = pure (NormalC (toName Anonymous name) [])
-toConLeaf named (DatatypeName name) = RecC (toName named name) <$> leafRecords
-  where leafRecords = pure <$> toLeafVarBangTypes
-
--- | Produce VarBangTypes required to construct records of leaf types
-toLeafVarBangTypes :: Q VarBangType
-toLeafVarBangTypes = do
-  leafVarBangTypes <- conT ''Text
-  pure (mkName "bytes", Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, leafVarBangTypes)
+ctorForLeafType :: Named -> DatatypeName -> Q Con
+ctorForLeafType Anonymous (DatatypeName name) = normalC (toName Anonymous name) []
+ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes] where
+  leafBytes = TH.varBangType (mkName "bytes") textValue
+  textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
 
 -- | Construct toBangType for use in above toConSum
 toBangType :: CodeGen.Deserialize.Type -> Q BangType
