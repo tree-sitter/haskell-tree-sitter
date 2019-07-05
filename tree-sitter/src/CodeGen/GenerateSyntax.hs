@@ -19,7 +19,7 @@ import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
 import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
+import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -99,12 +99,11 @@ constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName na
 ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
 ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
   fieldList = toList $ fmap (uncurry toVarBangType) fields
-  toVarBangType name (MkField required fieldTypes mult) =
+  toVarBangType name (MkField required fieldTypes _) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
         contents = if required == Optional then conT ''Maybe `appT` choices else choices
-        ftypes = fieldTypesToNestedEither fieldTypes
-        choices = if mult == Multiple then appT (conT ''[]) ftypes else ftypes
+        choices = fieldTypesToNestedEither fieldTypes
     in TH.varBangType fieldName (TH.bangType strictness contents)
 
 
