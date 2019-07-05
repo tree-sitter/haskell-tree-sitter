@@ -1,7 +1,7 @@
-{-# LANGUAGE DeriveLift, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveLift, ScopedTypeVariables, LambdaCase #-}
 module TreeSitter.Symbol where
 
-import Data.Char (isAlpha, toUpper)
+import Data.Char (isAlpha, toUpper, isControl)
 import Data.Function ((&))
 import Data.Ix (Ix)
 import Data.List.Split (condense, split, whenElt)
@@ -80,3 +80,45 @@ symbolToName ty name
           Regular   -> ""
           Anonymous -> "Anon"
           Auxiliary -> "Aux"
+
+-- Ensures that we generate valid Haskell identifiers from
+-- the literal characters used for infix operators and punctuation.
+escapeOperatorPunctuation :: String -> String
+escapeOperatorPunctuation = concatMap $ \case
+  '{'  -> "LBrace"
+  '}'  -> "RBrace"
+  '('  -> "LParen"
+  ')'  -> "RParen"
+  '.'  -> "Dot"
+  ':'  -> "Colon"
+  ','  -> "Comma"
+  '|'  -> "Pipe"
+  ';'  -> "Semicolon"
+  '*'  -> "Star"
+  '&'  -> "Ampersand"
+  '='  -> "Equal"
+  '<'  -> "LAngle"
+  '>'  -> "RAngle"
+  '['  -> "LBracket"
+  ']'  -> "RBracket"
+  '+'  -> "Plus"
+  '-'  -> "Minus"
+  '/'  -> "Slash"
+  '\\' -> "Backslash"
+  '^'  -> "Caret"
+  '!'  -> "Bang"
+  '%'  -> "Percent"
+  '@'  -> "At"
+  '~'  -> "Tilde"
+  '?'  -> "Question"
+  '`'  -> "Backtick"
+  '#'  -> "Hash"
+  '$'  -> "Dollar"
+  '"'  -> "DQuote"
+  '\'' -> "SQuote"
+  '\t' -> "Tab"
+  '\n' -> "LF"
+  '\r' -> "CR"
+  other
+    | isControl other -> escapeOperatorPunctuation (show other)
+    | otherwise       -> [other]
