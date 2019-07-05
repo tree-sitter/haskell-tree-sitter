@@ -8,8 +8,8 @@ module TreeSitter.Tree
 import Foreign
 import TreeSitter.Node
 
-data Tree = Tree
-  deriving (Show)
+-- | This type is uninhabited and used only for type safety within 'Ptr' values.
+data Tree
 
 withRootNode :: Ptr Tree -> (Ptr Node -> IO a) -> IO a
 withRootNode tree action = alloca $ \ ptr -> do
