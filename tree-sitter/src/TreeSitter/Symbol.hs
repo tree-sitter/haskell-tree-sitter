@@ -29,7 +29,7 @@ symbolToName ty name
   = prefixHidden name
   & toWords
   & filter (not . all (== '_'))
-  & map (>>= toDescription)
+  & map (>>= escapeOperatorPunctuation)
   & (>>= initUpper)
   & (prefix ++)
   where toWords = split (condense (whenElt (not . isAlpha)))
@@ -39,42 +39,42 @@ symbolToName ty name
 
         initUpper (c:cs) = toUpper c : cs
         initUpper ""     = ""
-
-        toDescription '{'  = "LBrace"
-        toDescription '}'  = "RBrace"
-        toDescription '('  = "LParen"
-        toDescription ')'  = "RParen"
-        toDescription '.'  = "Dot"
-        toDescription ':'  = "Colon"
-        toDescription ','  = "Comma"
-        toDescription '|'  = "Pipe"
-        toDescription ';'  = "Semicolon"
-        toDescription '*'  = "Star"
-        toDescription '&'  = "Ampersand"
-        toDescription '='  = "Equal"
-        toDescription '<'  = "LAngle"
-        toDescription '>'  = "RAngle"
-        toDescription '['  = "LBracket"
-        toDescription ']'  = "RBracket"
-        toDescription '+'  = "Plus"
-        toDescription '-'  = "Minus"
-        toDescription '/'  = "Slash"
-        toDescription '\\' = "Backslash"
-        toDescription '^'  = "Caret"
-        toDescription '!'  = "Bang"
-        toDescription '%'  = "Percent"
-        toDescription '@'  = "At"
-        toDescription '~'  = "Tilde"
-        toDescription '?'  = "Question"
-        toDescription '`'  = "Backtick"
-        toDescription '#'  = "Hash"
-        toDescription '$'  = "Dollar"
-        toDescription '"'  = "DQuote"
-        toDescription '\'' = "SQuote"
-        toDescription '\t' = "Tab"
-        toDescription '\n' = "LF"
-        toDescription '\r' = "CR"
-        toDescription c    = [c]
+        --
+        -- toDescription '{'  = "LBrace"
+        -- toDescription '}'  = "RBrace"
+        -- toDescription '('  = "LParen"
+        -- toDescription ')'  = "RParen"
+        -- toDescription '.'  = "Dot"
+        -- toDescription ':'  = "Colon"
+        -- toDescription ','  = "Comma"
+        -- toDescription '|'  = "Pipe"
+        -- toDescription ';'  = "Semicolon"
+        -- toDescription '*'  = "Star"
+        -- toDescription '&'  = "Ampersand"
+        -- toDescription '='  = "Equal"
+        -- toDescription '<'  = "LAngle"
+        -- toDescription '>'  = "RAngle"
+        -- toDescription '['  = "LBracket"
+        -- toDescription ']'  = "RBracket"
+        -- toDescription '+'  = "Plus"
+        -- toDescription '-'  = "Minus"
+        -- toDescription '/'  = "Slash"
+        -- toDescription '\\' = "Backslash"
+        -- toDescription '^'  = "Caret"
+        -- toDescription '!'  = "Bang"
+        -- toDescription '%'  = "Percent"
+        -- toDescription '@'  = "At"
+        -- toDescription '~'  = "Tilde"
+        -- toDescription '?'  = "Question"
+        -- toDescription '`'  = "Backtick"
+        -- toDescription '#'  = "Hash"
+        -- toDescription '$'  = "Dollar"
+        -- toDescription '"'  = "DQuote"
+        -- toDescription '\'' = "SQuote"
+        -- toDescription '\t' = "Tab"
+        -- toDescription '\n' = "LF"
+        -- toDescription '\r' = "CR"
+        -- toDescription c    = [c]
 
         prefix = case ty of
           Regular   -> ""
