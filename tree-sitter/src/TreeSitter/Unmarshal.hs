@@ -165,7 +165,7 @@ peekFieldName = do
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
-getFields = go Map.empty >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
+getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
   where go fs = do
           node <- peekNode
           case node of
