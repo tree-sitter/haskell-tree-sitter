@@ -9,6 +9,7 @@ import Data.Char
 import CodeGen.GenerateSyntax
 import Data.Foldable
 import Control.Monad
+import TreeSitter.Symbol
 
 -- | Generate permutations of alphabet and underscore combinations
 snakeChar :: MonadGen m => m Char

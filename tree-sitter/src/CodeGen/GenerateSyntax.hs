@@ -11,14 +11,12 @@ module CodeGen.GenerateSyntax
 , initUpper
 , astDeclarationsForLanguage
 -- * Internal functions exposed for testing
-, escapeOperatorPunctuation
 
 ) where
 
 import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import Language.Haskell.TH.Syntax as TH
 import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
@@ -34,6 +32,7 @@ import Data.Aeson hiding (String)
 import System.Directory
 import System.FilePath.Posix
 import TreeSitter.Node
+import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
 -- Auto-generate Haskell datatypes from node-types.json
@@ -153,45 +152,3 @@ removeUnderscore = foldr appender ""
   where appender :: Char -> String -> String
         appender '_' cs = initUpper cs
         appender c cs = c : cs
-
--- Ensures that we generate valid Haskell identifiers from
--- the literal characters used for infix operators and punctuation.
-escapeOperatorPunctuation :: String -> String
-escapeOperatorPunctuation = concatMap $ \case
-  '{'  -> "LBrace"
-  '}'  -> "RBrace"
-  '('  -> "LParen"
-  ')'  -> "RParen"
-  '.'  -> "Dot"
-  ':'  -> "Colon"
-  ','  -> "Comma"
-  '|'  -> "Pipe"
-  ';'  -> "Semicolon"
-  '*'  -> "Star"
-  '&'  -> "Ampersand"
-  '='  -> "Equal"
-  '<'  -> "LAngle"
-  '>'  -> "RAngle"
-  '['  -> "LBracket"
-  ']'  -> "RBracket"
-  '+'  -> "Plus"
-  '-'  -> "Minus"
-  '/'  -> "Slash"
-  '\\' -> "Backslash"
-  '^'  -> "Caret"
-  '!'  -> "Bang"
-  '%'  -> "Percent"
-  '@'  -> "At"
-  '~'  -> "Tilde"
-  '?'  -> "Question"
-  '`'  -> "Backtick"
-  '#'  -> "Hash"
-  '$'  -> "Dollar"
-  '"'  -> "DQuote"
-  '\'' -> "SQuote"
-  '\t' -> "Tab"
-  '\n' -> "LF"
-  '\r' -> "CR"
-  other
-    | isControl other -> escapeOperatorPunctuation (show other)
-    | otherwise       -> [other]

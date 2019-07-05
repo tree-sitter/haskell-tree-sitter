@@ -1,7 +1,7 @@
-{-# LANGUAGE DeriveLift, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveLift, ScopedTypeVariables, LambdaCase #-}
 module TreeSitter.Symbol where
 
-import Data.Char (isAlpha, toUpper)
+import Data.Char (isAlpha, toUpper, isControl)
 import Data.Function ((&))
 import Data.Ix (Ix)
 import Data.List.Split (condense, split, whenElt)
@@ -29,7 +29,7 @@ symbolToName ty name
   = prefixHidden name
   & toWords
   & filter (not . all (== '_'))
-  & map (>>= toDescription)
+  & map escapeOperatorPunctuation
   & (>>= initUpper)
   & (prefix ++)
   where toWords = split (condense (whenElt (not . isAlpha)))
@@ -40,43 +40,49 @@ symbolToName ty name
         initUpper (c:cs) = toUpper c : cs
         initUpper ""     = ""
 
-        toDescription '{'  = "LBrace"
-        toDescription '}'  = "RBrace"
-        toDescription '('  = "LParen"
-        toDescription ')'  = "RParen"
-        toDescription '.'  = "Dot"
-        toDescription ':'  = "Colon"
-        toDescription ','  = "Comma"
-        toDescription '|'  = "Pipe"
-        toDescription ';'  = "Semicolon"
-        toDescription '*'  = "Star"
-        toDescription '&'  = "Ampersand"
-        toDescription '='  = "Equal"
-        toDescription '<'  = "LAngle"
-        toDescription '>'  = "RAngle"
-        toDescription '['  = "LBracket"
-        toDescription ']'  = "RBracket"
-        toDescription '+'  = "Plus"
-        toDescription '-'  = "Minus"
-        toDescription '/'  = "Slash"
-        toDescription '\\' = "Backslash"
-        toDescription '^'  = "Caret"
-        toDescription '!'  = "Bang"
-        toDescription '%'  = "Percent"
-        toDescription '@'  = "At"
-        toDescription '~'  = "Tilde"
-        toDescription '?'  = "Question"
-        toDescription '`'  = "Backtick"
-        toDescription '#'  = "Hash"
-        toDescription '$'  = "Dollar"
-        toDescription '"'  = "DQuote"
-        toDescription '\'' = "SQuote"
-        toDescription '\t' = "Tab"
-        toDescription '\n' = "LF"
-        toDescription '\r' = "CR"
-        toDescription c    = [c]
-
         prefix = case ty of
           Regular   -> ""
           Anonymous -> "Anon"
           Auxiliary -> "Aux"
+
+-- Ensures that we generate valid Haskell identifiers from
+-- the literal characters used for infix operators and punctuation.
+escapeOperatorPunctuation :: String -> String
+escapeOperatorPunctuation = concatMap $ \case
+  '{'  -> "LBrace"
+  '}'  -> "RBrace"
+  '('  -> "LParen"
+  ')'  -> "RParen"
+  '.'  -> "Dot"
+  ':'  -> "Colon"
+  ','  -> "Comma"
+  '|'  -> "Pipe"
+  ';'  -> "Semicolon"
+  '*'  -> "Star"
+  '&'  -> "Ampersand"
+  '='  -> "Equal"
+  '<'  -> "LAngle"
+  '>'  -> "RAngle"
+  '['  -> "LBracket"
+  ']'  -> "RBracket"
+  '+'  -> "Plus"
+  '-'  -> "Minus"
+  '/'  -> "Slash"
+  '\\' -> "Backslash"
+  '^'  -> "Caret"
+  '!'  -> "Bang"
+  '%'  -> "Percent"
+  '@'  -> "At"
+  '~'  -> "Tilde"
+  '?'  -> "Question"
+  '`'  -> "Backtick"
+  '#'  -> "Hash"
+  '$'  -> "Dollar"
+  '"'  -> "DQuote"
+  '\'' -> "SQuote"
+  '\t' -> "Tab"
+  '\n' -> "LF"
+  '\r' -> "CR"
+  other
+    | isControl other -> escapeOperatorPunctuation (show other)
+    | otherwise       -> [other]
