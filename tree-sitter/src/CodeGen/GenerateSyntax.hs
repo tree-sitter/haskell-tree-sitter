@@ -51,11 +51,11 @@ astDeclarationsForLanguage language filePath = do
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = case datatype of
   SumType (DatatypeName datatypeName) _ subtypes -> do
-    cons <- traverse (toSumCon datatypeName) subtypes
+    cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
   ProductType (DatatypeName datatypeName) _ fields -> do
-    con <- toConProduct datatypeName fields
+    con <- ctorForProductType datatypeName fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
@@ -91,13 +91,21 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-toSumCon :: String -> CodeGen.Deserialize.Type -> Q Con
-toSumCon str (MkType (DatatypeName n) named) = NormalC (toName named (n ++ str)) <$> traverse toBangType [MkType (DatatypeName n) named]
+constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
+constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
+  where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
-toConProduct :: String -> NonEmpty (String, Field) -> Q Con
-toConProduct constructorName fields = RecC (toName Named constructorName) <$> fieldList
-  where fieldList = toList <$> traverse (uncurry toVarBangType) fields
+ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
+ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
+  fieldList = toList $ fmap (uncurry toVarBangType) fields
+  toVarBangType name (MkField required fieldTypes _) =
+    let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
+        strictness = TH.bang noSourceUnpackedness noSourceStrictness
+        contents = if required == Optional then conT ''Maybe `appT` choices else choices
+        choices = fieldTypesToNestedEither fieldTypes
+    in TH.varBangType fieldName (TH.bangType strictness contents)
+
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: Named -> DatatypeName -> Q Con
@@ -106,23 +114,7 @@ ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes]
   leafBytes = TH.varBangType (mkName "bytes") textValue
   textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
 
--- | Construct toBangType for use in above toConSum
-toBangType :: CodeGen.Deserialize.Type -> Q BangType
-toBangType (MkType (DatatypeName n) named) = do
-  bangSubtypes <- conT (toName named n)
-  pure (Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, bangSubtypes)
 
--- | For product types, examine the field's contents required for generating
---   Haskell code with records in the case of ProductTypes
-toVarBangType :: String -> Field -> Q VarBangType
-toVarBangType name (MkField required fieldTypes _) = do
-  ty' <- ty
-  let newName = mkName . addTickIfNecessary . removeUnderscore $ name
-  pure (newName, Bang TH.NoSourceUnpackedness TH.NoSourceStrictness, ty')
-  where ty = case required of
-          Optional -> [t|Maybe $(mult)|]
-          Required -> mult
-        mult = fieldTypesToNestedEither fieldTypes
 
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty CodeGen.Deserialize.Type -> Q TH.Type
