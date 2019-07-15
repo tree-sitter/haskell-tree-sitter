@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
-module CodeGen.Deserialize
+module TreeSitter.Deserialize
 ( Datatype (..)
 , Field (..)
 , Required (..)

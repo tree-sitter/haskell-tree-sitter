@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
 module TreeSitter.Python.AST where
 
-import CodeGen.GenerateSyntax
+import TreeSitter.GenerateSyntax
 import Prelude hiding (True, False, Float, Integer, String)
 import qualified TreeSitter.Python as Grammar
 

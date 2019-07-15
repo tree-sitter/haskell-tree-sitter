@@ -2,7 +2,7 @@
 
 module Main where
 
-import           CodeGen.GenerateSyntax
+import           TreeSitter.GenerateSyntax
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
