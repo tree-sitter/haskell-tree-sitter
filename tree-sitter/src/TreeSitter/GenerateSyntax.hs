@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 -- {-# LANGUAGE TypeOperators #-}
-module CodeGen.GenerateSyntax
+module TreeSitter.GenerateSyntax
 ( syntaxDatatype
 , removeUnderscore
 , initUpper
@@ -17,7 +17,7 @@ module CodeGen.GenerateSyntax
 import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
+import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -64,7 +64,7 @@ syntaxDatatype language datatype = case datatype of
       Anonymous -> generatedDatatype name [con]:result
       Named -> NewtypeD [] name [] Nothing con deriveClause:result
   where
-    name = toName (datatypeNameStatus datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
+    name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
 
@@ -78,7 +78,7 @@ symbolMatchingInstance language name str = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [CodeGen.Deserialize.Type] -> Q [Dec]
+symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
 symbolMatchingInstanceForSums _ name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
@@ -90,7 +90,7 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
+constructorForSumChoice :: String -> TreeSitter.Deserialize.Type -> Q Con
 constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
   where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
@@ -117,7 +117,7 @@ ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes]
 
 
 -- | Convert field types to Q types
-fieldTypesToNestedEither :: NonEmpty CodeGen.Deserialize.Type -> Q TH.Type
+fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
 fieldTypesToNestedEither xs = foldr1 combine $ fmap convertToQType xs
   where
     combine convertedQType = appT (appT (conT ''Either) convertedQType)
