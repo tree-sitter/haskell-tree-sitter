@@ -96,9 +96,6 @@ instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmar
         else fail $ showFailure (Proxy @(Either a b)) currentNode
 
 instance Unmarshal a => Unmarshal [a] where
-  -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
-  --        Currently we only represent a single node for each field name,
-  --        so we only end up keeping the last one encountered in the tree.
   unmarshalNode = pure <$> unmarshalNode
   unmarshalNodes (x:xs) = do
     goto (nodeTSNode x)
