@@ -37,7 +37,7 @@ import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
-import           Data.Maybe (fromMaybe)
+import           Data.Maybe (fromMaybe, maybeToList)
 
 -- Parse source code and produce AST
 parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
@@ -47,59 +47,55 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring unmarshalNode)))
+        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNodes . maybeToList))))
 
 -- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic' instance.
 class Unmarshal a where
-  unmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  default unmarshalNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  unmarshalNode = to <$> gunmarshalNode
+  -- unmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  -- default unmarshalNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
+  -- unmarshalNode = to <$> gunmarshalNode
 
   unmarshalNodes :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
+  default unmarshalNodes :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
   unmarshalNodes [x] = do
     goto (nodeTSNode x)
-    unmarshalNode
+    to <$> gunmarshalNode
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
 
 instance Unmarshal Text.Text where
-  unmarshalNode = do
-    node <- peekNode
-    case node of
-      Just node' -> do
-        bytestring <- ask
-        let start = fromIntegral (nodeStartByte node')
-            end = fromIntegral (nodeEndByte node')
-        pure (decodeUtf8 (slice start end bytestring))
-      _ -> fail "expected a node containing Text but didn't get one"
+  unmarshalNodes [node] = do
+    bytestring <- ask
+    let start = fromIntegral (nodeStartByte node)
+        end = fromIntegral (nodeEndByte node)
+    pure (decodeUtf8 (slice start end bytestring))
+  unmarshalNodes [] = fail "expected a node but didn't get one"
+  unmarshalNodes _ = fail "expected a node but got multiple"
 
 instance Unmarshal a => Unmarshal (Maybe a) where
-  unmarshalNode = Just <$> unmarshalNode
-  unmarshalNodes [x] = do
-    goto (nodeTSNode x)
-    Just <$> unmarshalNode
+  unmarshalNodes [x] = Just <$> unmarshalNodes [x]
   unmarshalNodes [] = pure Nothing
   unmarshalNodes _ = fail "expected 0 or 1 nodes but got multiple"
 
 instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
-  unmarshalNode = do
-    currentNode <- peekNode
-    (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
-      Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
-      Nothing -> fail "expected a node of type (Either a b) but didn't get one"
+  unmarshalNodes [node] = do
+    let lhsSymbolMatch = symbolMatch (Proxy @a) node
+        rhsSymbolMatch = symbolMatch (Proxy @b) node
     if lhsSymbolMatch
-      then Left <$> unmarshalNode @a
+      then Left <$> unmarshalNodes @a [node]
       else if rhsSymbolMatch
-        then Right <$> unmarshalNode @b
-        else fail $ showFailure (Proxy @(Either a b)) currentNode
+        then Right <$> unmarshalNodes @b [node]
+        else fail $ showFailure (Proxy @(Either a b)) node
+  unmarshalNodes [] = fail "expected a node of type (Either a b) but didn't get one"
+  unmarshalNodes _ = fail "expected a node of type (Either a b) but got multiple"
+
 
 instance Unmarshal a => Unmarshal [a] where
-  unmarshalNode = pure <$> unmarshalNode
   unmarshalNodes (x:xs) = do
     goto (nodeTSNode x)
-    head' <- unmarshalNode
+    head' <- unmarshalNodes [x]
     tail' <- unmarshalNodes xs
     pure $ head' : tail'
   unmarshalNodes [] = pure []
@@ -222,7 +218,7 @@ instance GUnmarshal U1 where
 
 -- For regular leaf nodes
 instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
-  gunmarshalNode = M1 . K1 <$> unmarshalNode
+  gunmarshalNode = M1 . K1 <$> (peekNode >>= unmarshalNodes . maybeToList)
 
 -- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
@@ -247,7 +243,7 @@ class GUnmarshalSum f where
                    => m (f a)
 
 instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
-  gunmarshalSumNode = M1 . M1 . K1 <$> unmarshalNode
+  gunmarshalSumNode = M1 . M1 . K1 <$> (peekNode >>= unmarshalNodes . maybeToList)
 
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
   gunmarshalSumNode = do
