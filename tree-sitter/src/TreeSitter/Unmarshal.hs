@@ -105,7 +105,6 @@ instance Unmarshal a => Unmarshal [a] where
     tail' <- unmarshalNodes xs
     pure $ head' : tail'
   unmarshalNodes [] = pure []
-  unmarshalEmpty = pure []
 
 
 class SymbolMatching a where
