@@ -76,7 +76,11 @@ instance Unmarshal Text.Text where
 
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNode = Just <$> unmarshalNode
-  unmarshalEmpty = pure Nothing
+  unmarshalNodes [x] = do
+    goto (nodeTSNode x)
+    Just <$> unmarshalNode
+  unmarshalNodes [] = pure Nothing
+  unmarshalNodes _ = fail "expected 0 or 1 nodes but got multiple"
 
 instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
   unmarshalNode = do
