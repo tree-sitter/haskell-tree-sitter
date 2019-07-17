@@ -37,6 +37,7 @@ import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
+import           Data.Maybe (fromMaybe)
 
 -- Parse source code and produce AST
 parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
@@ -274,6 +275,4 @@ instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: 
 -- Contents of product types (ie., the leaves of the product tree)
 instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
   gunmarshalProductNode fields =
-    case Map.lookup (FieldName (selName @c undefined)) fields of
-      Just nodes -> M1 . K1 <$> unmarshalNodes nodes
-      Nothing -> M1 . K1 <$> unmarshalEmpty
+   M1 . K1 <$> unmarshalNodes (fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields))
