@@ -164,7 +164,7 @@ peekFieldName = do
     Just . FieldName <$> liftIO (peekCString fieldName)
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
+getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName [Node])
 getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
   where go fs = do
           node <- peekNode
@@ -173,7 +173,7 @@ getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> p
               fieldName <- peekFieldName
               keepGoing <- step
               let fs' = case fieldName of
-                    Just fieldName' -> Map.insert fieldName' node' fs
+                    Just fieldName' -> Map.insertWith (++) fieldName' [node'] fs
                     _ -> fs
               if keepGoing then go fs'
               else pure fs'
