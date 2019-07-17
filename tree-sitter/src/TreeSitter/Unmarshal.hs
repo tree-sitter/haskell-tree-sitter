@@ -251,7 +251,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
-  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
+  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName [Node] -> m (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
