@@ -98,7 +98,14 @@ instance Unmarshal a => Unmarshal [a] where
   --        Currently we only represent a single node for each field name,
   --        so we only end up keeping the last one encountered in the tree.
   unmarshalNode = pure <$> unmarshalNode
+  unmarshalNodes (x:xs) = do
+    goto (nodeTSNode x)
+    head' <- unmarshalNode
+    tail' <- unmarshalNodes xs
+    pure $ head' : tail'
+  unmarshalNodes [] = pure []
   unmarshalEmpty = pure []
+
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
