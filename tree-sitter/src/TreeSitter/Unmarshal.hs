@@ -275,7 +275,5 @@ instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: 
 instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
   gunmarshalProductNode fields =
     case Map.lookup (FieldName (selName @c undefined)) fields of
-      Just node -> do
-        goto (nodeTSNode node)
-        M1 . K1 <$> unmarshalNode
+      Just nodes -> M1 . K1 <$> unmarshalNodes nodes
       Nothing -> M1 . K1 <$> unmarshalEmpty
