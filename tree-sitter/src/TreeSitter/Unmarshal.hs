@@ -56,6 +56,13 @@ class Unmarshal a where
   default unmarshalNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
   unmarshalNode = to <$> gunmarshalNode
 
+  unmarshalNodes :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
+  unmarshalNodes [x] = do
+    goto (nodeTSNode x)
+    unmarshalNode
+  unmarshalNodes [] = fail "expected a node but didn't get one"
+  unmarshalNodes _ = fail "expected a node but got multiple"
+
   unmarshalEmpty :: MonadFail m => m a
   unmarshalEmpty = fail "expected a node but didn't get one"
 
