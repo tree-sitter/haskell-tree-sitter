@@ -63,9 +63,6 @@ class Unmarshal a where
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
 
-  unmarshalEmpty :: MonadFail m => m a
-  unmarshalEmpty = fail "expected a node but didn't get one"
-
 instance Unmarshal Text.Text where
   unmarshalNode = do
     node <- peekNode
