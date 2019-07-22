@@ -223,7 +223,7 @@ instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gunmarshalNode _ = gunmarshalSumNode @(f :+: g)
+  gunmarshalNode = gunmarshalSumNode @(f :+: g)
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
@@ -235,22 +235,21 @@ class GUnmarshalSum f where
                    , Member (Reader ByteString) sig
                    , Member (Reader (Ptr Cursor)) sig
                    , MonadIO m)
-                   => m (f a)
+                   => Node -> m (f a)
 
 instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
-  gunmarshalSumNode = M1 . M1 . K1 <$> (peekNode >>= unmarshalNodes . maybeToList)
+  gunmarshalSumNode node = M1 . M1 . K1 <$> unmarshalNodes [node]
 
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
-  gunmarshalSumNode = do
-    currentNode <- peekNode
-    (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
-      Just node -> pure (symbolMatch (Proxy @f) node, symbolMatch (Proxy @g) node, node)
-      Nothing -> fail "expected a node; got none"
+  gunmarshalSumNode node = do
+    let lhsSymbolMatch = symbolMatch (Proxy @f) node
+        rhsSymbolMatch = symbolMatch (Proxy @g) node
     if lhsSymbolMatch
-      then L1 <$> gunmarshalSumNode @f
+      then L1 <$> gunmarshalSumNode @f node
       else if rhsSymbolMatch
-        then R1 <$> gunmarshalSumNode @g
-        else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode
+        then R1 <$> gunmarshalSumNode @g node
+        else fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
+
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
