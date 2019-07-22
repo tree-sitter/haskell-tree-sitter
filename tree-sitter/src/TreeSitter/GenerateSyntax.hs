@@ -115,7 +115,6 @@ ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes]
   textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
 
 
-
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
 fieldTypesToNestedEither xs = foldr1 combine $ fmap convertToQType xs
