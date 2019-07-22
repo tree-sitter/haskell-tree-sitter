@@ -90,7 +90,6 @@ instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmar
 
 instance Unmarshal a => Unmarshal [a] where
   unmarshalNodes (x:xs) = do
-    goto (nodeTSNode x)
     head' <- unmarshalNodes [x]
     tail' <- unmarshalNodes xs
     pure $ head' : tail'
