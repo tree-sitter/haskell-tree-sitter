@@ -58,7 +58,7 @@ class Unmarshal a where
   default unmarshalNodes :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
   unmarshalNodes [x] = do
     goto (nodeTSNode x)
-    to <$> gunmarshalNode
+    to <$> gunmarshalNode x
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
 
@@ -202,32 +202,32 @@ class GUnmarshal f where
   gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
 
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
-  gunmarshalNode = M1 <$> gunmarshalNode
+  gunmarshalNode node = M1 <$> gunmarshalNode node
 
 instance GUnmarshal f => GUnmarshal (M1 C c f) where
-  gunmarshalNode = M1 <$> gunmarshalNode
+  gunmarshalNode node = M1 <$> gunmarshalNode node
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
-  gunmarshalNode = pure U1
+  gunmarshalNode node = pure U1
 
 -- For regular leaf nodes
 instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
-  gunmarshalNode = M1 . K1 <$> (peekNode >>= unmarshalNodes . maybeToList)
+  gunmarshalNode node = M1 . K1 <$> unmarshalNodes [node]
 
 -- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode = push $ do
+  gunmarshalNode node = push $ do
     fields <- getFields
     gunmarshalProductNode fields
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gunmarshalNode = gunmarshalSumNode @(f :+: g)
+  gunmarshalNode node = gunmarshalSumNode @(f :+: g)
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode = push $ getFields >>= gunmarshalProductNode @(f :*: g)
+  gunmarshalNode node = push $ getFields >>= gunmarshalProductNode @(f :*: g)
 
 class GUnmarshalSum f where
   gunmarshalSumNode :: (MonadFail m
