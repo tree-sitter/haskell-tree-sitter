@@ -209,7 +209,7 @@ instance GUnmarshal f => GUnmarshal (M1 C c f) where
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
-  gunmarshalNode node = pure U1
+  gunmarshalNode _ = pure U1
 
 -- For regular leaf nodes
 instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
@@ -217,17 +217,17 @@ instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
 
 -- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode node = push $ do
+  gunmarshalNode _ = push $ do
     fields <- getFields
     gunmarshalProductNode fields
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gunmarshalNode node = gunmarshalSumNode @(f :+: g)
+  gunmarshalNode _ = gunmarshalSumNode @(f :+: g)
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = push $ getFields >>= gunmarshalProductNode @(f :*: g)
+  gunmarshalNode _ = push $ getFields >>= gunmarshalProductNode @(f :*: g)
 
 class GUnmarshalSum f where
   gunmarshalSumNode :: (MonadFail m
