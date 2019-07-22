@@ -199,7 +199,7 @@ newtype FieldName = FieldName { getFieldName :: String }
 --
 --   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
-  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
+  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
 
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
   gunmarshalNode = M1 <$> gunmarshalNode
