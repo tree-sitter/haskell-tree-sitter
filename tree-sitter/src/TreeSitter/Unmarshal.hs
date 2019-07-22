@@ -37,6 +37,7 @@ import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
+import           Data.Maybe (fromMaybe, maybeToList)
 
 -- Parse source code and produce AST
 parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
@@ -46,52 +47,54 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring unmarshalNode)))
+        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNodes . maybeToList))))
 
 -- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic' instance.
 class Unmarshal a where
-  unmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  default unmarshalNode :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a
-  unmarshalNode = to <$> gunmarshalNode
 
-  unmarshalEmpty :: MonadFail m => m a
-  unmarshalEmpty = fail "expected a node but didn't get one"
+  unmarshalNodes :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
+  default unmarshalNodes :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
+  unmarshalNodes [x] = do
+    goto (nodeTSNode x)
+    to <$> gunmarshalNode x
+  unmarshalNodes [] = fail "expected a node but didn't get one"
+  unmarshalNodes _ = fail "expected a node but got multiple"
 
 instance Unmarshal Text.Text where
-  unmarshalNode = do
-    node <- peekNode
-    case node of
-      Just node' -> do
-        bytestring <- ask
-        let start = fromIntegral (nodeStartByte node')
-            end = fromIntegral (nodeEndByte node')
-        pure (decodeUtf8 (slice start end bytestring))
-      _ -> fail "expected a node containing Text but didn't get one"
+  unmarshalNodes [node] = do
+    bytestring <- ask
+    let start = fromIntegral (nodeStartByte node)
+        end = fromIntegral (nodeEndByte node)
+    pure (decodeUtf8 (slice start end bytestring))
+  unmarshalNodes [] = fail "expected a node but didn't get one"
+  unmarshalNodes _ = fail "expected a node but got multiple"
 
 instance Unmarshal a => Unmarshal (Maybe a) where
-  unmarshalNode = Just <$> unmarshalNode
-  unmarshalEmpty = pure Nothing
+  unmarshalNodes [] = pure Nothing
+  unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
 
 instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
-  unmarshalNode = do
-    currentNode <- peekNode
-    (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
-      Just node -> pure (symbolMatch (Proxy @a) node, symbolMatch (Proxy @b) node, node)
-      Nothing -> fail "expected a node of type (Either a b) but didn't get one"
+  unmarshalNodes [node] = do
+    let lhsSymbolMatch = symbolMatch (Proxy @a) node
+        rhsSymbolMatch = symbolMatch (Proxy @b) node
     if lhsSymbolMatch
-      then Left <$> unmarshalNode @a
+      then Left <$> unmarshalNodes @a [node]
       else if rhsSymbolMatch
-        then Right <$> unmarshalNode @b
-        else fail $ showFailure (Proxy @(Either a b)) currentNode
+        then Right <$> unmarshalNodes @b [node]
+        else fail $ showFailure (Proxy @(Either a b)) node
+  unmarshalNodes [] = fail "expected a node of type (Either a b) but didn't get one"
+  unmarshalNodes _ = fail "expected a node of type (Either a b) but got multiple"
+
 
 instance Unmarshal a => Unmarshal [a] where
-  -- FIXME: This is wrong. Repeated fields are represented in the tree as multiple nodes with the same field name.
-  --        Currently we only represent a single node for each field name,
-  --        so we only end up keeping the last one encountered in the tree.
-  unmarshalNode = pure <$> unmarshalNode
-  unmarshalEmpty = pure []
+  unmarshalNodes (x:xs) = do
+    head' <- unmarshalNodes [x]
+    tail' <- unmarshalNodes xs
+    pure $ head' : tail'
+  unmarshalNodes [] = pure []
+
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
@@ -164,7 +167,7 @@ peekFieldName = do
     Just . FieldName <$> liftIO (peekCString fieldName)
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName Node)
+getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName [Node])
 getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
   where go fs = do
           node <- peekNode
@@ -173,7 +176,7 @@ getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> p
               fieldName <- peekFieldName
               keepGoing <- step
               let fs' = case fieldName of
-                    Just fieldName' -> Map.insert fieldName' node' fs
+                    Just fieldName' -> Map.insertWith (++) fieldName' [node'] fs
                     _ -> fs
               if keepGoing then go fs'
               else pure fs'
@@ -196,25 +199,25 @@ newtype FieldName = FieldName { getFieldName :: String }
 --
 --   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
-  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (f a)
+  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
 
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
-  gunmarshalNode = M1 <$> gunmarshalNode
+  gunmarshalNode node = M1 <$> gunmarshalNode node
 
 instance GUnmarshal f => GUnmarshal (M1 C c f) where
-  gunmarshalNode = M1 <$> gunmarshalNode
+  gunmarshalNode node = M1 <$> gunmarshalNode node
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
-  gunmarshalNode = pure U1
+  gunmarshalNode _ = pure U1
 
 -- For regular leaf nodes
 instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
-  gunmarshalNode = M1 . K1 <$> unmarshalNode
+  gunmarshalNode node = M1 . K1 <$> unmarshalNodes [node]
 
 -- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode = push $ do
+  gunmarshalNode _ = push $ do
     fields <- getFields
     gunmarshalProductNode fields
 
@@ -224,7 +227,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode = push $ getFields >>= gunmarshalProductNode @(f :*: g)
+  gunmarshalNode _ = push $ getFields >>= gunmarshalProductNode @(f :*: g)
 
 class GUnmarshalSum f where
   gunmarshalSumNode :: (MonadFail m
@@ -232,26 +235,25 @@ class GUnmarshalSum f where
                    , Member (Reader ByteString) sig
                    , Member (Reader (Ptr Cursor)) sig
                    , MonadIO m)
-                   => m (f a)
+                   => Node -> m (f a)
 
 instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
-  gunmarshalSumNode = M1 . M1 . K1 <$> unmarshalNode
+  gunmarshalSumNode node = M1 . M1 . K1 <$> unmarshalNodes [node]
 
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
-  gunmarshalSumNode = do
-    currentNode <- peekNode
-    (lhsSymbolMatch, rhsSymbolMatch, currentNode) <- case currentNode of
-      Just node -> pure (symbolMatch (Proxy @f) node, symbolMatch (Proxy @g) node, node)
-      Nothing -> fail "expected a node; got none"
+  gunmarshalSumNode node = do
+    let lhsSymbolMatch = symbolMatch (Proxy @f) node
+        rhsSymbolMatch = symbolMatch (Proxy @g) node
     if lhsSymbolMatch
-      then L1 <$> gunmarshalSumNode @f
+      then L1 <$> gunmarshalSumNode @f node
       else if rhsSymbolMatch
-        then R1 <$> gunmarshalSumNode @g
-        else fail $ showFailure (Proxy @f) currentNode `sep` showFailure (Proxy @g) currentNode
+        then R1 <$> gunmarshalSumNode @g node
+        else fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
+
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
-  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName Node -> m (f a)
+  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName [Node] -> m (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
@@ -260,8 +262,4 @@ instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: 
 -- Contents of product types (ie., the leaves of the product tree)
 instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
   gunmarshalProductNode fields =
-    case Map.lookup (FieldName (selName @c undefined)) fields of
-      Just node -> do
-        goto (nodeTSNode node)
-        M1 . K1 <$> unmarshalNode
-      Nothing -> M1 . K1 <$> unmarshalEmpty
+   M1 . K1 <$> unmarshalNodes (fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields))
