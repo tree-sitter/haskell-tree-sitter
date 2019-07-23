@@ -103,7 +103,7 @@ ctorForProductType constructorName fields = recC (toName Named constructorName) 
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
         contents = if required == Optional then appT (conT ''[]) choices else choices
         ftypes = fieldTypesToNestedEither fieldTypes
-        choices = if mult == Multiple then appT (conT ''NonEmpty) ftypes else ftypes
+        choices = if mult == Multiple then appT (conT ''NonEmpty) ftypes else appT (conT ''Maybe) ftypes
     in TH.varBangType fieldName (TH.bangType strictness contents)
 
 
