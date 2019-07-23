@@ -98,8 +98,11 @@ instance Unmarshal a => Unmarshal [a] where
 
 
 instance Unmarshal a => Unmarshal (NonEmpty a) where
+  unmarshalNodes (x:xs) = do
+    head' <- unmarshalNodes [x]
+    tail' <- unmarshalNodes xs
+    pure $ head' :| tail'
   unmarshalNodes [] = fail "expected a node but didn't get one"
-  unmarshalNodes (_:xs) = unmarshalNodes xs
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
