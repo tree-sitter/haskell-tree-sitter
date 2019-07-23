@@ -101,9 +101,12 @@ ctorForProductType constructorName fields = recC (toName Named constructorName) 
   toVarBangType name (MkField required fieldTypes mult) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
-        contents = if required == Optional then appT (conT ''[]) choices else choices
         ftypes = fieldTypesToNestedEither fieldTypes
-        choices = if mult == Multiple then appT (conT ''NonEmpty) ftypes else appT (conT ''Maybe) ftypes
+        contents = case (required, mult) of
+          (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
+          (Required, Single) -> ftypes
+          (Optional, Multiple) -> appT (conT ''[]) ftypes
+          (Optional, Single) -> appT (conT ''Maybe) ftypes
     in TH.varBangType fieldName (TH.bangType strictness contents)
 
 
