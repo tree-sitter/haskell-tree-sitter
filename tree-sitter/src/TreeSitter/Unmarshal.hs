@@ -38,6 +38,7 @@ import           TreeSitter.Tree as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
 import           Data.Maybe (fromMaybe, maybeToList)
+import           Data.List.NonEmpty (NonEmpty (..))
 
 -- Parse source code and produce AST
 parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
@@ -95,6 +96,13 @@ instance Unmarshal a => Unmarshal [a] where
     pure $ head' : tail'
   unmarshalNodes [] = pure []
 
+
+instance Unmarshal a => Unmarshal (NonEmpty a) where
+  unmarshalNodes (x:xs) = do
+    head' <- unmarshalNodes [x]
+    tail' <- unmarshalNodes xs
+    pure $ head' :| tail'
+  unmarshalNodes [] = fail "expected a node but didn't get one"
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
