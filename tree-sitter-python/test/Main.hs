@@ -25,7 +25,7 @@ one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement { Py.bytes =
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
-  "pass" `shouldParseInto` Py.Module { Py.statement = Just [Right pass] }
-  "1" `shouldParseInto` Py.Module { Py.statement = Just [Right one] }
+  "pass" `shouldParseInto` Py.Module { Py.statement = [Right pass] }
+  "1" `shouldParseInto` Py.Module { Py.statement = [Right one] }
 
 main = void $ checkParallel $$(discover)
