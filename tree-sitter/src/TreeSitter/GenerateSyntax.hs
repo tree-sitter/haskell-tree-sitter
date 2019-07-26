@@ -54,7 +54,7 @@ syntaxDatatype language datatype = case datatype of
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
   ProductType (DatatypeName datatypeName) _ children fields -> do
-    con <- ctorForProductType datatypeName fields
+    con <- ctorForProductType datatypeName children fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
