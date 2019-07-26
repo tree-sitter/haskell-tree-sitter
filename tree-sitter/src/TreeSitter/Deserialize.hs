@@ -6,6 +6,7 @@
 module TreeSitter.Deserialize
 ( Datatype (..)
 , Field (..)
+, Children(..)
 , Required (..)
 , Type (..)
 , DatatypeName (..)
