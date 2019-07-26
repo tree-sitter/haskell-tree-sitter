@@ -95,8 +95,8 @@ constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName na
   where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
-ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
-ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
+ctorForProductType :: String -> Maybe Children -> NonEmpty (String, Field) -> Q Con
+ctorForProductType constructorName children fields = recC (toName Named constructorName) fieldList where
   fieldList = toList $ fmap (uncurry toVarBangType) fields
   toVarBangType name (MkField required fieldTypes mult) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
