@@ -17,7 +17,7 @@ module TreeSitter.GenerateSyntax
 import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
+import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
