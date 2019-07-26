@@ -56,6 +56,7 @@ instance FromJSON Datatype where
           _ -> pure (LeafType type' named)
       Just subtypes   -> pure (SumType type' named subtypes)
 
+
 -- | Transforms list of key-value pairs to a Parser
 parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, Field))
 parseKVPairs = traverse go
