@@ -31,6 +31,7 @@ data Datatype
   | ProductType
   { datatypeName       :: DatatypeName
   , datatypeNameStatus :: Named
+  , datatypeChildren   :: Maybe Children
   , datatypeFields     :: NonEmpty (String, Field)
   }
   | LeafType
