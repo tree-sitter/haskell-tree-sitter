@@ -21,6 +21,7 @@ import GHC.Generics hiding (Constructor, Datatype)
 import Data.Text (Text, unpack)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.HashMap.Strict as HM
+import Data.Maybe (fromMaybe)
 
 -- Types to deserialize into:
 data Datatype
@@ -33,7 +34,7 @@ data Datatype
   { datatypeName       :: DatatypeName
   , datatypeNameStatus :: Named
   , datatypeChildren   :: Maybe Children
-  , datatypeFields     :: NonEmpty (String, Field)
+  , datatypeFields     :: [(String, Field)]
   }
   | LeafType
   { datatypeName       :: DatatypeName
@@ -48,18 +49,17 @@ instance FromJSON Datatype where
     subtypes <- v .:? "subtypes"
     case subtypes of
       Nothing -> do
-        fields <- v .:? "fields"
+        fields <- fmap (fromMaybe HM.empty) (v .:? "fields")
         children <- v .:? "children"
-        -- If fields are present, map to product type; otherwise map to NonEmpty leaf type
-        case fmap HM.toList fields of
-          Just (field:fields) -> ProductType type' named children <$> parseKVPairs (field :| fields)
-          Just [] -> pure (LeafType type' named)
-          _ -> pure (LeafType type' named)
+        if null fields && null children then
+          pure (LeafType type' named)
+        else
+          ProductType type' named children <$> parseKVPairs (HM.toList fields)
       Just subtypes   -> pure (SumType type' named subtypes)
 
 
 -- | Transforms list of key-value pairs to a Parser
-parseKVPairs :: NonEmpty (Text, Value) -> Parser (NonEmpty (String, Field))
+parseKVPairs :: [(Text, Value)] -> Parser [(String, Field)]
 parseKVPairs = traverse go
   where go :: (Text, Value) -> Parser (String, Field)
         go (t,v) = do
