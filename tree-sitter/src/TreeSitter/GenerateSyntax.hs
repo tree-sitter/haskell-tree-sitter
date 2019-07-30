@@ -98,9 +98,9 @@ constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName na
 ctorForProductType :: String -> Maybe Children -> [(String, Field)] -> Q Con
 ctorForProductType constructorName children fields = recC (toName Named constructorName) lists where
   lists = fieldList ++ childList
-  fieldList = fmap (uncurry toVarBangTypeField) fields
+  fieldList = fmap (uncurry toVarBangType) fields
   childList = toList $ fmap toVarBangTypeChild children
-  toVarBangType name required fieldTypes mult =
+  toVarBangType name (MkField required fieldTypes mult) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
         ftypes = fieldTypesToNestedEither fieldTypes
@@ -110,8 +110,7 @@ ctorForProductType constructorName children fields = recC (toName Named construc
           (Optional, Multiple) -> appT (conT ''[]) ftypes
           (Optional, Single) -> appT (conT ''Maybe) ftypes
     in TH.varBangType fieldName (TH.bangType strictness fieldContents)
-  toVarBangTypeChild (MkChildren (MkField required fieldTypes mult)) = toVarBangType "extra_children" required fieldTypes mult
-  toVarBangTypeField name (MkField required fieldTypes mult) = toVarBangType name required fieldTypes mult
+  toVarBangTypeChild (MkChildren field) = toVarBangType "extra_children" field
 
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
