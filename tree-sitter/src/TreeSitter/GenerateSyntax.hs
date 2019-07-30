@@ -110,7 +110,7 @@ ctorForProductType constructorName children fields = recC (toName Named construc
           (Optional, Multiple) -> appT (conT ''[]) ftypes
           (Optional, Single) -> appT (conT ''Maybe) ftypes
     in TH.varBangType fieldName (TH.bangType strictness fieldContents)
-  toVarBangTypeChild (MkChildren required fieldTypes mult) = toVarBangType "extra_children" required fieldTypes mult
+  toVarBangTypeChild (MkChildren (MkField required fieldTypes mult)) = toVarBangType "extra_children" required fieldTypes mult
   toVarBangTypeField name (MkField required fieldTypes mult) = toVarBangType name required fieldTypes mult
 
 

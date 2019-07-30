@@ -76,15 +76,11 @@ data Field = MkField
 instance FromJSON Field where
   parseJSON = genericParseJSON customOptions
 
-data Children = MkChildren
-  { childrenRequired :: Required
-  , childrenTypes    :: NonEmpty Type
-  , childrenMultiple :: Multiple
-  }
-  deriving (Eq, Ord, Show, Generic, ToJSON)
 
-instance FromJSON Children where
-  parseJSON = genericParseJSON customOptions
+newtype Children = MkChildren Field
+  deriving (Eq, Ord, Show, Generic)
+  deriving newtype (ToJSON, FromJSON)
+
 
 data Required = Optional | Required
   deriving (Eq, Ord, Show, Generic, ToJSON)
