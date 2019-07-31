@@ -15,6 +15,8 @@ import           TreeSitter.Python
 import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Unmarshal
 
+-- TODO: add tests that verify correctness for product, sum and leaf types
+
 shouldParseInto :: (MonadIO m, MonadTest m, Unmarshal t, Eq t, Show t) => ByteString -> t -> m ()
 s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
