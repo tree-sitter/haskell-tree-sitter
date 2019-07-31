@@ -23,7 +23,7 @@ s `shouldParseInto` t = do
   parsed === Right t
 
 pass = Py.PassStatementSimpleStatement (Py.PassStatement "pass")
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (Py.Identifier "1")])
+one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer "1")))])
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
