@@ -17,7 +17,7 @@ module TreeSitter.GenerateSyntax
 import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..), Multiple (..))
+import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -53,8 +53,8 @@ syntaxDatatype language datatype = case datatype of
     cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
-  ProductType (DatatypeName datatypeName) _ fields -> do
-    con <- ctorForProductType datatypeName fields
+  ProductType (DatatypeName datatypeName) _ children fields -> do
+    con <- ctorForProductType datatypeName children fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
@@ -95,19 +95,22 @@ constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName na
   where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
-ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
-ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
-  fieldList = toList $ fmap (uncurry toVarBangType) fields
+ctorForProductType :: String -> Maybe Children -> [(String, Field)] -> Q Con
+ctorForProductType constructorName children fields = recC (toName Named constructorName) lists where
+  lists = fieldList ++ childList
+  fieldList = fmap (uncurry toVarBangType) fields
+  childList = toList $ fmap toVarBangTypeChild children
   toVarBangType name (MkField required fieldTypes mult) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
         ftypes = fieldTypesToNestedEither fieldTypes
-        contents = case (required, mult) of
+        fieldContents = case (required, mult) of
           (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
           (Required, Single) -> ftypes
           (Optional, Multiple) -> appT (conT ''[]) ftypes
           (Optional, Single) -> appT (conT ''Maybe) ftypes
-    in TH.varBangType fieldName (TH.bangType strictness contents)
+    in TH.varBangType fieldName (TH.bangType strictness fieldContents)
+  toVarBangTypeChild (MkChildren field) = toVarBangType "extra_children" field
 
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
@@ -116,7 +119,6 @@ ctorForLeafType Anonymous (DatatypeName name) = normalC (toName Anonymous name) 
 ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes] where
   leafBytes = TH.varBangType (mkName "bytes") textValue
   textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
-
 
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type

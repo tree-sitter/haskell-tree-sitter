@@ -15,13 +15,15 @@ import           TreeSitter.Python
 import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Unmarshal
 
+-- TODO: add tests that verify correctness for product, sum and leaf types
+
 shouldParseInto :: (MonadIO m, MonadTest m, Unmarshal t, Eq t, Show t) => ByteString -> t -> m ()
 s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
   parsed === Right t
 
-pass = Py.PassStatementSimpleStatement (Py.PassStatement {Py.bytes = "pass"})
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement { Py.bytes = "1" })
+pass = Py.PassStatementSimpleStatement (Py.PassStatement "pass")
+one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer "1")))])
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
