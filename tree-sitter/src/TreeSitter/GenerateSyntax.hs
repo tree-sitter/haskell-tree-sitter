@@ -53,11 +53,14 @@ syntaxDatatype language datatype = case datatype of
     cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
+    pure $ generatedDatatype name cons typeParameterName:result
   ProductType (DatatypeName datatypeName) _ children fields -> do
     con <- ctorForProductType datatypeName children fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
+    typeParameterName <- newName "a"
   LeafType (DatatypeName datatypeName) named -> do
+    typeParameterName <- newName "a"
     con <- ctorForLeafType named (DatatypeName datatypeName)
     result <- symbolMatchingInstance language name datatypeName
     pure $ case named of
