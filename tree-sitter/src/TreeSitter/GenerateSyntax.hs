@@ -69,7 +69,7 @@ syntaxDatatype language datatype = case datatype of
   where
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
-    generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
+    generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons deriveClause
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
