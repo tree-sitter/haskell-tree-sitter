@@ -6,9 +6,10 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Data.Char
-import CodeGen.GenerateSyntax
+import TreeSitter.GenerateSyntax
 import Data.Foldable
 import Control.Monad
+import TreeSitter.Symbol
 
 -- | Generate permutations of alphabet and underscore combinations
 snakeChar :: MonadGen m => m Char

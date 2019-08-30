@@ -43,8 +43,8 @@ library
                      , TreeSitter.Node
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
-                     , CodeGen.GenerateSyntax
-                     , CodeGen.Deserialize
+                     , TreeSitter.GenerateSyntax
+                     , TreeSitter.Deserialize
                      , TreeSitter.Cursor
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src

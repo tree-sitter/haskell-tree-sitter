@@ -27,11 +27,11 @@ main = hspec $ do
       sizeOf (undefined :: Node) `shouldBe` fromIntegral sizeof_node
 
     it "roundtrips correctly" $
-      with (Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8) peek `shouldReturn` Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8
+      with (Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8 9) peek `shouldReturn` Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8 9
 
   describe "TSTreeCursor" $ do
     it "has the same size as its C counterpart" $
-      sizeOfCursor `shouldBe` fromIntegral sizeof_node
+      sizeOfCursor `shouldBe` fromIntegral sizeof_tstreecursor
 
   describe "Parser" $ do
     it "stores a timeout value" $ do

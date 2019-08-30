@@ -5,21 +5,19 @@
 {-# LANGUAGE TypeApplications #-}
 
 -- {-# LANGUAGE TypeOperators #-}
-module CodeGen.GenerateSyntax
+module TreeSitter.GenerateSyntax
 ( syntaxDatatype
 , removeUnderscore
 , initUpper
 , astDeclarationsForLanguage
 -- * Internal functions exposed for testing
-, escapeOperatorPunctuation
 
 ) where
 
 import Data.Char
 import Language.Haskell.TH as TH
 import Data.HashSet (HashSet)
-import Language.Haskell.TH.Syntax as TH
-import CodeGen.Deserialize (Datatype (..), DatatypeName (..), Field (..), Required (..), Type (..), Named (..))
+import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Foldable
 import Data.Text (Text)
@@ -34,6 +32,7 @@ import Data.Aeson hiding (String)
 import System.Directory
 import System.FilePath.Posix
 import TreeSitter.Node
+import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
 -- Auto-generate Haskell datatypes from node-types.json
@@ -54,8 +53,8 @@ syntaxDatatype language datatype = case datatype of
     cons <- traverse (constructorForSumChoice datatypeName) subtypes
     result <- symbolMatchingInstanceForSums language name subtypes
     pure $ generatedDatatype name cons:result
-  ProductType (DatatypeName datatypeName) _ fields -> do
-    con <- ctorForProductType datatypeName fields
+  ProductType (DatatypeName datatypeName) _ children fields -> do
+    con <- ctorForProductType datatypeName children fields
     result <- symbolMatchingInstance language name datatypeName
     pure $ generatedDatatype name [con]:result
   LeafType (DatatypeName datatypeName) named -> do
@@ -65,7 +64,7 @@ syntaxDatatype language datatype = case datatype of
       Anonymous -> generatedDatatype name [con]:result
       Named -> NewtypeD [] name [] Nothing con deriveClause:result
   where
-    name = toName (datatypeNameStatus datatype) (getDatatypeName (CodeGen.Deserialize.datatypeName datatype))
+    name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons = DataD [] name [] Nothing cons deriveClause
 
@@ -73,13 +72,13 @@ syntaxDatatype language datatype = case datatype of
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
-  tsSymbol <- runIO $ withCString str (pure . TS.ts_language_symbol_for_name language)
-  let tsSymbolType = toEnum $ TS.ts_language_symbol_type language tsSymbol
+  tsSymbol <- runIO $ withCString str (TS.ts_language_symbol_for_name language)
+  tsSymbolType <- toEnum <$> runIO (TS.ts_language_symbol_type language tsSymbol)
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [CodeGen.Deserialize.Type] -> Q [Dec]
+symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
 symbolMatchingInstanceForSums _ name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
@@ -91,20 +90,27 @@ symbolMatchingInstanceForSums _ name subtypes =
 
 
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-constructorForSumChoice :: String -> CodeGen.Deserialize.Type -> Q Con
+constructorForSumChoice :: String -> TreeSitter.Deserialize.Type -> Q Con
 constructorForSumChoice str (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
   where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT (toName named n))
 
 -- | Build Q Constructor for product types (nodes with fields)
-ctorForProductType :: String -> NonEmpty (String, Field) -> Q Con
-ctorForProductType constructorName fields = recC (toName Named constructorName) fieldList where
-  fieldList = toList $ fmap (uncurry toVarBangType) fields
-  toVarBangType name (MkField required fieldTypes _) =
+ctorForProductType :: String -> Maybe Children -> [(String, Field)] -> Q Con
+ctorForProductType constructorName children fields = recC (toName Named constructorName) lists where
+  lists = fieldList ++ childList
+  fieldList = fmap (uncurry toVarBangType) fields
+  childList = toList $ fmap toVarBangTypeChild children
+  toVarBangType name (MkField required fieldTypes mult) =
     let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
         strictness = TH.bang noSourceUnpackedness noSourceStrictness
-        contents = if required == Optional then conT ''Maybe `appT` choices else choices
-        choices = fieldTypesToNestedEither fieldTypes
-    in TH.varBangType fieldName (TH.bangType strictness contents)
+        ftypes = fieldTypesToNestedEither fieldTypes
+        fieldContents = case (required, mult) of
+          (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
+          (Required, Single) -> ftypes
+          (Optional, Multiple) -> appT (conT ''[]) ftypes
+          (Optional, Single) -> appT (conT ''Maybe) ftypes
+    in TH.varBangType fieldName (TH.bangType strictness fieldContents)
+  toVarBangTypeChild (MkChildren field) = toVarBangType "extra_children" field
 
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
@@ -114,10 +120,8 @@ ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes]
   leafBytes = TH.varBangType (mkName "bytes") textValue
   textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
 
-
-
 -- | Convert field types to Q types
-fieldTypesToNestedEither :: NonEmpty CodeGen.Deserialize.Type -> Q TH.Type
+fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
 fieldTypesToNestedEither xs = foldr1 combine $ fmap convertToQType xs
   where
     combine convertedQType = appT (appT (conT ''Either) convertedQType)
@@ -152,45 +156,3 @@ removeUnderscore = foldr appender ""
   where appender :: Char -> String -> String
         appender '_' cs = initUpper cs
         appender c cs = c : cs
-
--- Ensures that we generate valid Haskell identifiers from
--- the literal characters used for infix operators and punctuation.
-escapeOperatorPunctuation :: String -> String
-escapeOperatorPunctuation = concatMap $ \case
-  '{'  -> "LBrace"
-  '}'  -> "RBrace"
-  '('  -> "LParen"
-  ')'  -> "RParen"
-  '.'  -> "Dot"
-  ':'  -> "Colon"
-  ','  -> "Comma"
-  '|'  -> "Pipe"
-  ';'  -> "Semicolon"
-  '*'  -> "Star"
-  '&'  -> "Ampersand"
-  '='  -> "Equal"
-  '<'  -> "LAngle"
-  '>'  -> "RAngle"
-  '['  -> "LBracket"
-  ']'  -> "RBracket"
-  '+'  -> "Plus"
-  '-'  -> "Minus"
-  '/'  -> "Slash"
-  '\\' -> "Backslash"
-  '^'  -> "Caret"
-  '!'  -> "Bang"
-  '%'  -> "Percent"
-  '@'  -> "At"
-  '~'  -> "Tilde"
-  '?'  -> "Question"
-  '`'  -> "Backtick"
-  '#'  -> "Hash"
-  '$'  -> "Dollar"
-  '"'  -> "DQuote"
-  '\'' -> "SQuote"
-  '\t' -> "Tab"
-  '\n' -> "LF"
-  '\r' -> "CR"
-  other
-    | isControl other -> escapeOperatorPunctuation (show other)
-    | otherwise       -> [other]

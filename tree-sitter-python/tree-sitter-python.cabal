@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-python
-version:             0.1.0.1
+version:             0.2.0.0
 synopsis:            Tree-sitter grammar/parser for Python
 description:         This package provides a parser for Python suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -41,6 +41,17 @@ library tree-sitter-python-internal
   ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists
   if (impl(ghc >= 8.6))
     ghc-options:       -Wno-star-is-type
+
+test-suite test
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  default-language: Haskell2010
+  build-depends:    base
+                  , tree-sitter
+                  , tree-sitter-python
+                  , bytestring           ^>= 0.10.8.2
+                  , hedgehog >= 0.6 && <2
 
 source-repository head
   type:     git
