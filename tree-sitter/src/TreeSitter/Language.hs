@@ -21,7 +21,7 @@ newtype Language = Language ()
   deriving (Show, Eq)
 
 foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> Word32
-foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> CString
+foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> IO CString
 foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type :: Ptr Language -> TSSymbol -> IO Int
 foreign import ccall unsafe "ts_language_symbol_for_name" ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
 
@@ -59,7 +59,8 @@ addDependentFileRelative relativeFile = do
 
 languageSymbols :: Ptr Language -> IO [(SymbolType, String)]
 languageSymbols language = for [0..fromIntegral (pred count)] $ \ symbol -> do
-  name <- peekCString (ts_language_symbol_name language symbol)
+  cname <- ts_language_symbol_name language symbol
+  name <- peekCString cname
   ty <- toEnum <$> ts_language_symbol_type language symbol
   pure (ty, name)
   where count = ts_language_symbol_count language
