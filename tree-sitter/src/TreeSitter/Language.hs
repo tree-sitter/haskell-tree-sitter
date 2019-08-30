@@ -17,8 +17,7 @@ import           System.Directory
 import           System.FilePath.Posix
 import           TreeSitter.Symbol
 
-newtype Language = Language ()
-  deriving (Show, Eq)
+data Language
 
 foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> IO Word32
 foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> IO CString
