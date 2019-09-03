@@ -119,9 +119,9 @@ ctorForProductType constructorName typeParameterName children fields = recC (toN
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: Named -> DatatypeName -> Q Con
 ctorForLeafType Anonymous (DatatypeName name) = normalC (toName Anonymous name) []
-ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes] where
-  leafBytes = TH.varBangType (mkName "bytes") textValue
-  textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
+ctorForLeafType Named (DatatypeName name) = ctorForTypes name [("bytes", conT ''Text)]
+
+
 -- | Build Q Constructor for records
 ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
 ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
