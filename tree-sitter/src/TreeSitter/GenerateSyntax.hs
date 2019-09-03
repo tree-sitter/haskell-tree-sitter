@@ -100,7 +100,8 @@ constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
 ctorForProductType constructorName typeParameterName children fields = ctorForTypes constructorName lists where
-  lists = fieldList ++ childList
+  lists = annotation : fieldList ++ childList
+  annotation = ("ann", varT typeParameterName)
   fieldList = map (fmap toType) fields
   childList = toList $ fmap toTypeChild children
   toType (MkField required fieldTypes mult) =
