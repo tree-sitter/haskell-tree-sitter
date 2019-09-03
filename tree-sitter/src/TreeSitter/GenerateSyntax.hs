@@ -99,21 +99,18 @@ constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = 
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
-ctorForProductType constructorName typeParameterName children fields = recC (toName Named constructorName) lists where
+ctorForProductType constructorName typeParameterName children fields = ctorForTypes constructorName lists where
   lists = fieldList ++ childList
-  fieldList = fmap (uncurry toVarBangType) fields
-  childList = toList $ fmap toVarBangTypeChild children
-  toVarBangType name (MkField required fieldTypes mult) =
-    let fieldName = mkName . addTickIfNecessary . removeUnderscore $ name
-        strictness = TH.bang noSourceUnpackedness noSourceStrictness
-        ftypes = fieldTypesToNestedEither fieldTypes typeParameterName
-        fieldContents = case (required, mult) of
-          (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
-          (Required, Single) -> ftypes
-          (Optional, Multiple) -> appT (conT ''[]) ftypes
-          (Optional, Single) -> appT (conT ''Maybe) ftypes
-    in TH.varBangType fieldName (TH.bangType strictness fieldContents)
-  toVarBangTypeChild (MkChildren field) = toVarBangType "extra_children" field
+  fieldList = map (fmap toType) fields
+  childList = toList $ fmap toTypeChild children
+  toType (MkField required fieldTypes mult) =
+    let ftypes = fieldTypesToNestedEither fieldTypes typeParameterName
+    in case (required, mult) of
+      (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
+      (Required, Single) -> ftypes
+      (Optional, Multiple) -> appT (conT ''[]) ftypes
+      (Optional, Single) -> appT (conT ''Maybe) ftypes
+  toTypeChild (MkChildren field) = ("extra_children", toType field)
 
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
