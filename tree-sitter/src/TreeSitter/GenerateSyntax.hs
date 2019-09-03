@@ -122,6 +122,13 @@ ctorForLeafType Anonymous (DatatypeName name) = normalC (toName Anonymous name) 
 ctorForLeafType Named (DatatypeName name) = recC (toName Named name) [leafBytes] where
   leafBytes = TH.varBangType (mkName "bytes") textValue
   textValue = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (conT ''Text)
+-- | Build Q Constructor for records
+ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
+ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
+  recordFields = map (uncurry toVarBangType) types
+  strictness = TH.bang noSourceUnpackedness noSourceStrictness
+  toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
+
 
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
