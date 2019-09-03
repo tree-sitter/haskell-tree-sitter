@@ -61,7 +61,7 @@ syntaxDatatype language datatype = case datatype of
     pure $ generatedDatatype name [con] typeParameterName:result
   LeafType (DatatypeName datatypeName) named -> do
     typeParameterName <- newName "a"
-    con <- ctorForLeafType named (DatatypeName datatypeName)
+    con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
     result <- symbolMatchingInstance language name datatypeName typeParameterName
     pure $ case named of
       Anonymous -> generatedDatatype name [con] typeParameterName:result
