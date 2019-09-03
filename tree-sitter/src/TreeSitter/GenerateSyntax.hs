@@ -141,7 +141,7 @@ clashingNames = HashSet.fromList ["type", "module", "data"]
 addTickIfNecessary :: String -> String
 addTickIfNecessary s
   | HashSet.member s clashingNames = s ++ "'"
-  | otherwise                        = s
+  | otherwise                      = s
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName :: Named -> String -> Name
