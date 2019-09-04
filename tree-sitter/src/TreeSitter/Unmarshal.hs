@@ -67,13 +67,15 @@ instance Unmarshal () where
   unmarshalNodes _ = pure ()
 
 instance Unmarshal Text.Text where
-  unmarshalNodes [node] = do
+  unmarshalNodes _ = do
+    node <- peekNode
     bytestring <- ask
-    let start = fromIntegral (nodeStartByte node)
-        end = fromIntegral (nodeEndByte node)
-    pure (decodeUtf8 (slice start end bytestring))
-  unmarshalNodes [] = fail "expected a node but didn't get one"
-  unmarshalNodes _ = fail "expected a node but got multiple"
+    case node of
+      Just node -> do
+        let start = fromIntegral (nodeStartByte node)
+            end = fromIntegral (nodeEndByte node)
+        pure (decodeUtf8 (slice start end bytestring))
+      Nothing -> fail "expected a node but didn't get one"
 
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
