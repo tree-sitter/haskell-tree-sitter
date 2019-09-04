@@ -97,6 +97,13 @@ data Pos = Pos
   { posLine   :: {-# UNPACK #-} !Int
   , posColumn :: {-# UNPACK #-} !Int
   } deriving (Eq, Ord, Show)
+
+-- | A Span of position information
+data Span = Span
+  { spanStart :: {-# UNPACK #-} !Pos
+  , spanEnd   :: {-# UNPACK #-} !Pos
+  } deriving (Eq, Ord, Show)
+
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
   unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
