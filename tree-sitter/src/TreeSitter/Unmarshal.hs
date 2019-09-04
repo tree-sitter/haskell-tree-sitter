@@ -223,7 +223,7 @@ instance GUnmarshal U1 where
 
 
 -- For unary products:
-instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
+instance (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
   gunmarshalNode _ = push $ do
     fields <- getFields
     gunmarshalProductNode fields
