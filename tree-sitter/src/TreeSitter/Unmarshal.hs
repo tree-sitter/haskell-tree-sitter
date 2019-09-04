@@ -6,6 +6,8 @@ module TreeSitter.Unmarshal
 , Unmarshal(..)
 , SymbolMatching(..)
 , Range(..)
+, Span(..)
+, Pos(..)
 , step
 , push
 , goto
