@@ -80,6 +80,17 @@ instance Unmarshal Text.Text where
 -- | A half-open interval of integers, defined by start & end indices.
 data Range = Range { start :: {-# UNPACK #-} !Int, end :: {-# UNPACK #-} !Int }
   deriving (Eq, Show)
+
+instance Unmarshal Range where
+  unmarshalNodes _ = do
+    node <- peekNode
+    case node of
+      Just node -> do
+        let start = fromIntegral (nodeStartByte node)
+            end = fromIntegral (nodeEndByte node)
+        pure (Range start end)
+      Nothing -> fail "expected a node but didn't get one"
+
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
   unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
