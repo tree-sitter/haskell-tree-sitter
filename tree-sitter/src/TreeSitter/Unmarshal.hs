@@ -92,6 +92,11 @@ instance Unmarshal Range where
         pure (Range start end)
       Nothing -> fail "expected a node but didn't get one"
 
+-- | Source position information (1 indexed)
+data Pos = Pos
+  { posLine   :: {-# UNPACK #-} !Int
+  , posColumn :: {-# UNPACK #-} !Int
+  } deriving (Eq, Ord, Show)
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
   unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
