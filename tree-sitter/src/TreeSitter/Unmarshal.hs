@@ -111,14 +111,13 @@ instance Unmarshal Span where
     node <- peekNode
     case node of
       Just node -> do
-        let startLine = fromIntegral (pointRow (nodeStartPoint node))
-            endLine = fromIntegral (pointRow (nodeEndPoint node))
-            startColumn = fromIntegral (pointColumn (nodeStartPoint node))
-            endColumn = fromIntegral (pointColumn (nodeEndPoint node))
-            spanStart = Pos startLine startColumn
-            spanEnd = Pos endLine endColumn
+        let spanStart = pointToPos (nodeStartPoint node)
+            spanEnd = pointToPos (nodeEndPoint node)
         pure (Span spanStart spanEnd)
       Nothing -> fail "expected a node but didn't get one"
+
+pointToPos :: TSPoint -> Pos
+pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
 
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
