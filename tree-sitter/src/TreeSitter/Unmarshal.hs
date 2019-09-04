@@ -221,9 +221,6 @@ instance GUnmarshal f => GUnmarshal (M1 C c f) where
 instance GUnmarshal U1 where
   gunmarshalNode _ = pure U1
 
--- For regular leaf nodes
-instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
-  gunmarshalNode node = M1 . K1 <$> unmarshalNodes [node]
 
 -- For unary products:
 instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
