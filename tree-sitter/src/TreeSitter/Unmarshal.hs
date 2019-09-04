@@ -234,7 +234,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode _ = push $ getFields >>= gunmarshalProductNode @(f :*: g)
+  gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g)
 
 class GUnmarshalSum f where
   gunmarshalSumNode :: (MonadFail m
