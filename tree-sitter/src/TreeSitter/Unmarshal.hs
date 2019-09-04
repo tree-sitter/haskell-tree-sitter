@@ -80,6 +80,14 @@ instance Unmarshal Text.Text where
         pure (decodeUtf8 (slice start end bytestring))
       Nothing -> fail "expected a node but didn't get one"
 
+-- | Instance for pairs of annotations
+instance (Unmarshal a, Unmarshal b) => Unmarshal (a,b) where
+  unmarshalNodes listofNodes = do
+    a <- unmarshalNodes @a listofNodes
+    b <- unmarshalNodes @b listofNodes
+    pure (a,b)
+
+
 -- | A half-open interval of integers, defined by start & end indices.
 data Range = Range { start :: {-# UNPACK #-} !Int, end :: {-# UNPACK #-} !Int }
   deriving (Eq, Show)
