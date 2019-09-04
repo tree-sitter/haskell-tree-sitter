@@ -99,7 +99,7 @@ instance Unmarshal Range where
         pure (Range start end)
       Nothing -> fail "expected a node but didn't get one"
 
--- | Source position information (1 indexed)
+-- | Source position information
 data Pos = Pos
   { posLine   :: {-# UNPACK #-} !Int
   , posColumn :: {-# UNPACK #-} !Int
