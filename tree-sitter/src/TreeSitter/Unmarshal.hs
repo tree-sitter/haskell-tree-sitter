@@ -104,6 +104,20 @@ data Span = Span
   , spanEnd   :: {-# UNPACK #-} !Pos
   } deriving (Eq, Ord, Show)
 
+instance Unmarshal Span where
+  unmarshalNodes _ = do
+    node <- peekNode
+    case node of
+      Just node -> do
+        let startLine = fromIntegral (pointRow (nodeStartPoint node))
+            endLine = fromIntegral (pointRow (nodeEndPoint node))
+            startColumn = fromIntegral (pointColumn (nodeStartPoint node))
+            endColumn = fromIntegral (pointColumn (nodeEndPoint node))
+            spanStart = Pos startLine startColumn
+            spanEnd = Pos endLine endColumn
+        pure (Span spanStart spanEnd)
+      Nothing -> fail "expected a node but didn't get one"
+
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
   unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
