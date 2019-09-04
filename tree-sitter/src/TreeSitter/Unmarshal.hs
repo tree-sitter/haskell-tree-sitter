@@ -63,6 +63,9 @@ class Unmarshal a where
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
 
+instance Unmarshal () where
+  unmarshalNodes _ = pure ()
+
 instance Unmarshal Text.Text where
   unmarshalNodes [node] = do
     bytestring <- ask
