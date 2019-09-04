@@ -5,6 +5,7 @@ module TreeSitter.Unmarshal
 , FieldName(..)
 , Unmarshal(..)
 , SymbolMatching(..)
+, Range(..)
 , step
 , push
 , goto
