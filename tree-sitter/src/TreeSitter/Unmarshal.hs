@@ -5,7 +5,6 @@ module TreeSitter.Unmarshal
 , FieldName(..)
 , Unmarshal(..)
 , SymbolMatching(..)
-, Range(..)
 , step
 , push
 , goto
@@ -81,11 +80,6 @@ instance Unmarshal Text.Text where
 -- | Instance for pairs of annotations
 instance (Unmarshal a, Unmarshal b) => Unmarshal (a,b) where
   unmarshalNodes listofNodes = (,) <$> unmarshalNodes @a listofNodes <*> unmarshalNodes @b listofNodes
-
-
--- | A half-open interval of integers, defined by start & end indices.
-data Range = Range { start :: {-# UNPACK #-} !Int, end :: {-# UNPACK #-} !Int }
-  deriving (Eq, Show)
 
 instance Unmarshal Range where
   unmarshalNodes _ = do
