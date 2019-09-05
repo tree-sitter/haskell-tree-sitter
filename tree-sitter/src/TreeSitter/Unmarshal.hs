@@ -6,8 +6,6 @@ module TreeSitter.Unmarshal
 , Unmarshal(..)
 , SymbolMatching(..)
 , Range(..)
-, Span(..)
-, Pos(..)
 , step
 , push
 , goto
@@ -98,18 +96,6 @@ instance Unmarshal Range where
             end = fromIntegral (nodeEndByte node)
         pure (Range start end)
       Nothing -> fail "expected a node but didn't get one"
-
--- | Source position information
-data Pos = Pos
-  { posLine   :: {-# UNPACK #-} !Int
-  , posColumn :: {-# UNPACK #-} !Int
-  } deriving (Eq, Ord, Show)
-
--- | A Span of position information
-data Span = Span
-  { spanStart :: {-# UNPACK #-} !Pos
-  , spanEnd   :: {-# UNPACK #-} !Pos
-  } deriving (Eq, Ord, Show)
 
 instance Unmarshal Span where
   unmarshalNodes _ = do
