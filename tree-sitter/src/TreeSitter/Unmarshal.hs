@@ -35,6 +35,7 @@ import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
+import           TreeSitter.Span as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
 import           Data.Maybe (fromMaybe, maybeToList)
