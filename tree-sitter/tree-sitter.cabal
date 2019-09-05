@@ -46,6 +46,8 @@ library
                      , TreeSitter.GenerateSyntax
                      , TreeSitter.Deserialize
                      , TreeSitter.Cursor
+                     , TreeSitter.Span
+                     , TreeSitter.Range
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
