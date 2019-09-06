@@ -69,7 +69,6 @@ syntaxDatatype language datatype = do
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons deriveClause
-    -- typeParameterName = mkName "a"
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
