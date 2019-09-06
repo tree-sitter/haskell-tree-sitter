@@ -3,7 +3,6 @@ module TreeSitter.Span
 , Pos(..)
 ) where
 
-import Prelude hiding (span)
 
 -- | Source position information
 data Pos = Pos
