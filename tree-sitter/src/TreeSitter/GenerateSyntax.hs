@@ -48,26 +48,28 @@ astDeclarationsForLanguage language filePath = do
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
-syntaxDatatype language datatype = case datatype of
-  SumType (DatatypeName datatypeName) _ subtypes -> do
-    cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
-    result <- symbolMatchingInstanceForSums language name subtypes typeParameterName
-    pure $ generatedDatatype name cons typeParameterName:result
-  ProductType (DatatypeName datatypeName) _ children fields -> do
-    con <- ctorForProductType datatypeName typeParameterName children fields
-    result <- symbolMatchingInstance language name datatypeName typeParameterName
-    pure $ generatedDatatype name [con] typeParameterName:result
-  LeafType (DatatypeName datatypeName) named -> do
-    con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
-    result <- symbolMatchingInstance language name datatypeName typeParameterName
-    pure $ case named of
-      Anonymous -> NewtypeD [] name [PlainTV typeParameterName] Nothing con deriveClause:result
-      Named -> DataD [] name [PlainTV typeParameterName] Nothing [con] deriveClause:result
+syntaxDatatype language datatype = do
+  typeParameterName <- newName "a"
+  case datatype of
+    SumType (DatatypeName datatypeName) _ subtypes -> do
+      cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
+      result <- symbolMatchingInstanceForSums language name subtypes typeParameterName
+      pure $ generatedDatatype name cons typeParameterName:result
+    ProductType (DatatypeName datatypeName) _ children fields -> do
+      con <- ctorForProductType datatypeName typeParameterName children fields
+      result <- symbolMatchingInstance language name datatypeName typeParameterName
+      pure $ generatedDatatype name [con] typeParameterName:result
+    LeafType (DatatypeName datatypeName) named -> do
+      con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
+      result <- symbolMatchingInstance language name datatypeName typeParameterName
+      pure $ case named of
+        Anonymous -> NewtypeD [] name [PlainTV typeParameterName] Nothing con deriveClause:result
+        Named -> DataD [] name [PlainTV typeParameterName] Nothing [con] deriveClause:result
   where
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
     generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons deriveClause
-    typeParameterName = mkName "a"
+    -- typeParameterName = mkName "a"
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
