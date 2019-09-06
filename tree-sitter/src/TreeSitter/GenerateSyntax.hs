@@ -94,7 +94,7 @@ symbolMatchingInstanceForSums _ name subtypes typeParameterName =
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 constructorForSumChoice :: String -> Name -> TreeSitter.Deserialize.Type -> Q Con
 constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
-  where child = TH.bangType (TH.bang noSourceUnpackedness noSourceStrictness) (appT (conT (toName named n)) (varT typeParameterName))
+  where child = TH.bangType strictness (appT (conT (toName named n)) (varT typeParameterName))
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
@@ -116,7 +116,6 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
 ctorForLeafType Anonymous (DatatypeName name) typeParameterName = normalC (toName Anonymous name) [TH.bangType strictness (varT typeParameterName)]
-  where strictness = TH.bang noSourceUnpackedness noSourceStrictness
 ctorForLeafType Named (DatatypeName name) typeParameterName = ctorForTypes name [annotation, ("bytes", conT ''Text)]
   where annotation = ("ann", varT typeParameterName) -- ann :: a
 
@@ -125,9 +124,7 @@ ctorForLeafType Named (DatatypeName name) typeParameterName = ctorForTypes name 
 ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
 ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
   recordFields = map (uncurry toVarBangType) types
-  strictness = TH.bang noSourceUnpackedness noSourceStrictness
   toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
-
 
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
@@ -136,6 +133,10 @@ fieldTypesToNestedEither xs typeParameterName = foldr1 combine $ fmap convertToQ
     combine convertedQType = appT (appT (conT ''Either) convertedQType)
     convertToQType (MkType (DatatypeName n) named) = appT (conT (toName named n)) (varT typeParameterName)
     -- TODO: pull convertToQType out to top-level fn
+
+-- | Create bang required to build records
+strictness :: BangQ
+strictness = TH.bang noSourceUnpackedness noSourceStrictness
 
 -- | Convert snake_case string to CamelCase String
 toCamelCase :: String -> String
