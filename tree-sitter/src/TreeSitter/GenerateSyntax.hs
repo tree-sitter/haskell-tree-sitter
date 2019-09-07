@@ -115,8 +115,10 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
-ctorForLeafType Anonymous (DatatypeName name) typeParameterName = normalC (toName Anonymous name) [TH.bangType strictness (varT typeParameterName)]
-ctorForLeafType Named (DatatypeName name) typeParameterName = ctorForTypes name [annotation, ("bytes", conT ''Text)]
+ctorForLeafType named datatypeName typeParameterName =
+  case (named, datatypeName) of
+    (Anonymous, DatatypeName name) -> normalC (toName Anonymous name) [TH.bangType strictness (varT typeParameterName)]
+    (Named, DatatypeName name) -> ctorForTypes name [annotation, ("bytes", conT ''Text)]
   where annotation = ("ann", varT typeParameterName) -- ann :: a
 
 
