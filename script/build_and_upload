@@ -49,9 +49,9 @@ set +x
 
 if wget -q --spider "https://hackage.haskell.org/package/$PACKAGE_VERSION"
 then
-    echo "The package $PACKAGE_VERSION already exists."
+    echo "The package $PACKAGE_VERSION already exists on Hackage."
     echo "If you need to upload code changes, then bump the version number in $PROJECT/$PROJECT.cabal, make a PR, and run this script again."
-    echo "Otherwise, if you need only to edit bounds of other constraints, then you can create a new revision of this package on Hackage."
+    echo "Otherwise, if you need _only_ to loosen existing constraints in $PROJECT.cabal file, then you can create a new revision of this package on Hackage."
     echo "You'll need to make your changes by hand. Be sure to click the 'Review changes' button to check your work."
     read -rp "Do you want to open a browser so as to do this? [y/N]" choice
     if [ "$choice" == "y" ]
