@@ -112,7 +112,6 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
       (Optional, Single) -> appT (conT ''Maybe) ftypes
   toTypeChild (MkChildren field) = ("extra_children", toType field)
 
-
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
 ctorForLeafType named datatypeName typeParameterName =
