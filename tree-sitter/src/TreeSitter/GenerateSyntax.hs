@@ -63,7 +63,7 @@ syntaxDatatype language datatype = do
       con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
       result <- symbolMatchingInstance language name datatypeName typeParameterName
       pure $ case named of
-        Anonymous -> NewtypeD [] name [PlainTV typeParameterName] Nothing con deriveClause:result
+        Anonymous -> generatedDatatype name [con] typeParameterName:result
         Named -> generatedDatatype name [con] typeParameterName:result
   where
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
