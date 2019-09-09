@@ -98,7 +98,7 @@ constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = 
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
-ctorForProductType constructorName typeParameterName children fields = ctorForTypes constructorName lists where
+ctorForProductType constructorName typeParameterName children fields = ctorForTypes Named constructorName lists where
   lists = annotation : fieldList ++ childList
   annotation = ("ann", varT typeParameterName)
   fieldList = map (fmap toType) fields
@@ -117,20 +117,13 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
 ctorForLeafType named datatypeName typeParameterName =
   case (named, datatypeName) of
-    (Anonymous, DatatypeName name) -> ctorForTypesA name [annotation, ("bytes", conT ''Text)]
-    (Named, DatatypeName name) -> ctorForTypes name [annotation, ("bytes", conT ''Text)]
+    (Anonymous, DatatypeName name) -> ctorForTypes Anonymous name [annotation, ("bytes", conT ''Text)]
+    (Named, DatatypeName name) -> ctorForTypes Named name [annotation, ("bytes", conT ''Text)]
   where annotation = ("ann", varT typeParameterName) -- ann :: a
 
-
 -- | Build Q Constructor for records
-ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
-ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
-  recordFields = map (uncurry toVarBangType) types
-  toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
-
--- | Build Q Constructor for records
-ctorForTypesA :: String -> [(String, Q TH.Type)] -> Q Con
-ctorForTypesA constructorName types = recC (toName Anonymous constructorName) recordFields where
+ctorForTypes :: Named -> String -> [(String, Q TH.Type)] -> Q Con
+ctorForTypes named constructorName types = recC (toName named constructorName) recordFields where
   recordFields = map (uncurry toVarBangType) types
   toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
 
