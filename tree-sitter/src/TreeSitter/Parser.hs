@@ -20,8 +20,10 @@ import Foreign.C
 import TreeSitter.Language
 import TreeSitter.Tree
 
-data Parser = Parser
-  deriving (Show)
+-- | A tree-sitter parser.
+--
+--   This type is uninhabited and used only for type safety within 'Ptr' values.
+data Parser
 
 withParser :: Ptr Language -> (Ptr Parser -> IO a) -> IO a
 withParser language action = Exc.bracket

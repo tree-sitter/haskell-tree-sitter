@@ -17,13 +17,15 @@ import           System.Directory
 import           System.FilePath.Posix
 import           TreeSitter.Symbol
 
-newtype Language = Language ()
-  deriving (Show, Eq)
+-- | A tree-sitter language.
+--
+--   This type is uninhabited and used only for type safety within 'Ptr' values.
+data Language
 
-foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> Word32
-foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> CString
-foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type :: Ptr Language -> TSSymbol -> Int
-foreign import ccall unsafe "ts_language_symbol_for_name" ts_language_symbol_for_name :: Ptr Language -> CString -> TSSymbol
+foreign import ccall unsafe "ts_language_symbol_count" ts_language_symbol_count :: Ptr Language -> IO Word32
+foreign import ccall unsafe "ts_language_symbol_name" ts_language_symbol_name :: Ptr Language -> TSSymbol -> IO CString
+foreign import ccall unsafe "ts_language_symbol_type" ts_language_symbol_type :: Ptr Language -> TSSymbol -> IO Int
+foreign import ccall unsafe "ts_language_symbol_for_name" ts_language_symbol_for_name :: Ptr Language -> CString -> IO TSSymbol
 
 -- | TemplateHaskell construction of a datatype for the referenced Language.
 mkSymbolDatatype :: Name -> Ptr Language -> Q [Dec]
@@ -58,7 +60,8 @@ addDependentFileRelative relativeFile = do
 
 
 languageSymbols :: Ptr Language -> IO [(SymbolType, String)]
-languageSymbols language = for [0..fromIntegral (pred count)] $ \ symbol -> do
-  name <- peekCString (ts_language_symbol_name language symbol)
-  pure (toEnum (ts_language_symbol_type language symbol), name)
-  where count = ts_language_symbol_count language
+languageSymbols language = ts_language_symbol_count language >>= \ count -> for [0..fromIntegral (pred count)] $ \ symbol -> do
+  cname <- ts_language_symbol_name language symbol
+  name <- peekCString cname
+  ty <- toEnum <$> ts_language_symbol_type language symbol
+  pure (ty, name)
