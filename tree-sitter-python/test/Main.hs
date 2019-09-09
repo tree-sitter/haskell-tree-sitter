@@ -1,4 +1,4 @@
-{-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, OverloadedLists, TemplateHaskell #-}
 
 module Main where
 
@@ -28,8 +28,8 @@ function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
-  "pass" `shouldParseInto` Py.Module { Py.statement = [Right pass] }
-  "1" `shouldParseInto` Py.Module { Py.statement = [Right one] }
-  "expensive" `shouldParseInto` Py.Module { Py.statement = [Right function] }
+  "pass" `shouldParseInto` Py.Module { Py.extraChildren = [Right pass] }
+  "1" `shouldParseInto` Py.Module { Py.extraChildren = [Right one] }
+  "expensive" `shouldParseInto` Py.Module { Py.extraChildren = [Right function] }
 
 main = void $ checkParallel $$(discover)
