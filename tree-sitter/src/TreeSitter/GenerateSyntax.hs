@@ -128,6 +128,13 @@ ctorForTypes constructorName types = recC (toName Named constructorName) recordF
   recordFields = map (uncurry toVarBangType) types
   toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
 
+-- | Build Q Constructor for records
+ctorForTypesA :: String -> [(String, Q TH.Type)] -> Q Con
+ctorForTypesA constructorName types = recC (toName Anonymous constructorName) recordFields where
+  recordFields = map (uncurry toVarBangType) types
+  toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
+
+
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
 fieldTypesToNestedEither xs typeParameterName = foldr1 combine $ fmap convertToQType xs
