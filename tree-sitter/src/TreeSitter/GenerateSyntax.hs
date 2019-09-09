@@ -117,7 +117,7 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
 ctorForLeafType named datatypeName typeParameterName =
   case (named, datatypeName) of
-    (Anonymous, DatatypeName name) -> normalC (toName Anonymous name) [TH.bangType strictness (varT typeParameterName)]
+    (Anonymous, DatatypeName name) -> ctorForTypesA name [annotation, ("bytes", conT ''Text)]
     (Named, DatatypeName name) -> ctorForTypes name [annotation, ("bytes", conT ''Text)]
   where annotation = ("ann", varT typeParameterName) -- ann :: a
 
