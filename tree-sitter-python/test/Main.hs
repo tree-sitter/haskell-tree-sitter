@@ -1,4 +1,4 @@
-{-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, OverloadedLists, TemplateHaskell #-}
 
 module Main where
 
@@ -24,11 +24,12 @@ s `shouldParseInto` t = do
 
 pass = Py.PassStatementSimpleStatement (Py.PassStatement () "pass" )
 one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
-
+function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
-  "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.statement = [Right pass] }
-  "1" `shouldParseInto` Py.Module { Py.ann = (), Py.statement = [Right one] }
+  "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right pass] }
+  "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right one] }
+  "expensive" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right function] }
 
 main = void $ checkParallel $$(discover)
