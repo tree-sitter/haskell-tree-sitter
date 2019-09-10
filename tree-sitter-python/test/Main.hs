@@ -22,12 +22,13 @@ s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
   parsed === Right t
 
-pass = Py.PassStatementSimpleStatement (Py.PassStatement "pass")
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer "1")))])
+pass = Py.PassStatementSimpleStatement (Py.PassStatement () "pass" )
+one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
+
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
-  "pass" `shouldParseInto` Py.Module { Py.statement = [Right pass] }
-  "1" `shouldParseInto` Py.Module { Py.statement = [Right one] }
+  "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.statement = [Right pass] }
+  "1" `shouldParseInto` Py.Module { Py.ann = (), Py.statement = [Right one] }
 
 main = void $ checkParallel $$(discover)
