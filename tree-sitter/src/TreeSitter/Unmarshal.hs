@@ -35,6 +35,8 @@ import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
+import           TreeSitter.Span as TS
+import           TreeSitter.Range as TS
 import           Data.Proxy
 import           Prelude hiding (fail)
 import           Data.Maybe (fromMaybe, maybeToList)
@@ -63,14 +65,46 @@ class Unmarshal a where
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
 
+instance Unmarshal () where
+  unmarshalNodes _ = pure ()
+
 instance Unmarshal Text.Text where
-  unmarshalNodes [node] = do
+  unmarshalNodes _ = do
+    node <- peekNode
     bytestring <- ask
-    let start = fromIntegral (nodeStartByte node)
-        end = fromIntegral (nodeEndByte node)
-    pure (decodeUtf8 (slice start end bytestring))
-  unmarshalNodes [] = fail "expected a node but didn't get one"
-  unmarshalNodes _ = fail "expected a node but got multiple"
+    case node of
+      Just node -> do
+        let start = fromIntegral (nodeStartByte node)
+            end = fromIntegral (nodeEndByte node)
+        pure (decodeUtf8 (slice start end bytestring))
+      Nothing -> fail "expected a node but didn't get one"
+
+-- | Instance for pairs of annotations
+instance (Unmarshal a, Unmarshal b) => Unmarshal (a,b) where
+  unmarshalNodes listofNodes = (,) <$> unmarshalNodes @a listofNodes <*> unmarshalNodes @b listofNodes
+
+instance Unmarshal Range where
+  unmarshalNodes _ = do
+    node <- peekNode
+    case node of
+      Just node -> do
+        let start = fromIntegral (nodeStartByte node)
+            end = fromIntegral (nodeEndByte node)
+        pure (Range start end)
+      Nothing -> fail "expected a node but didn't get one"
+
+instance Unmarshal Span where
+  unmarshalNodes _ = do
+    node <- peekNode
+    case node of
+      Just node -> do
+        let spanStart = pointToPos (nodeStartPoint node)
+            spanEnd = pointToPos (nodeEndPoint node)
+        pure (Span spanStart spanEnd)
+      Nothing -> fail "expected a node but didn't get one"
+
+pointToPos :: TSPoint -> Pos
+pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
 
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
@@ -221,12 +255,9 @@ instance GUnmarshal f => GUnmarshal (M1 C c f) where
 instance GUnmarshal U1 where
   gunmarshalNode _ = pure U1
 
--- For regular leaf nodes
-instance {-# OVERLAPPABLE #-} GUnmarshal (M1 S s (K1 c Text.Text)) where
-  gunmarshalNode node = M1 . K1 <$> unmarshalNodes [node]
 
 -- For unary products:
-instance {-# OVERLAPPABLE #-} (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
+instance (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
   gunmarshalNode _ = push $ do
     fields <- getFields
     gunmarshalProductNode fields
@@ -237,7 +268,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode _ = push $ getFields >>= gunmarshalProductNode @(f :*: g)
+  gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g)
 
 class GUnmarshalSum f where
   gunmarshalSumNode :: (MonadFail m

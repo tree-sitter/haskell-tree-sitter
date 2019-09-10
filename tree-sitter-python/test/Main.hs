@@ -22,14 +22,14 @@ s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
   parsed === Right t
 
-pass = Py.PassStatementSimpleStatement (Py.PassStatement "pass")
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer "1")))])
-function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement [Left (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier "expensive")))])
+pass = Py.PassStatementSimpleStatement (Py.PassStatement () "pass" )
+one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
+function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
-  "pass" `shouldParseInto` Py.Module { Py.extraChildren = [Right pass] }
-  "1" `shouldParseInto` Py.Module { Py.extraChildren = [Right one] }
-  "expensive" `shouldParseInto` Py.Module { Py.extraChildren = [Right function] }
+  "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right pass] }
+  "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right one] }
+  "expensive" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right function] }
 
 main = void $ checkParallel $$(discover)
