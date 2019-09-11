@@ -33,5 +33,6 @@ prop_simpleExamples = property $ do
   "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right pass] }
   "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right one] }
   "expensive" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right function] }
+  "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right one, Right pass] }
 
 main = checkParallel $$(discover) >>= bool exitFailure exitSuccess
