@@ -218,9 +218,9 @@ getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> p
               fieldName <- peekFieldName
               keepGoing <- step
               let fs' = case fieldName of
-                    Just fieldName' -> Map.insertWith (++) fieldName' [node'] fs
+                    Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node'] fs
                     _ -> if nodeIsNamed node' /= 0
-                      then Map.insertWith (++) (FieldName "extraChildren") [node'] fs
+                      then Map.insertWith (flip (++)) (FieldName "extraChildren") [node'] fs
                       else fs
               if keepGoing then go fs'
               else pure fs'
