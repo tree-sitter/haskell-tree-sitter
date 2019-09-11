@@ -5,7 +5,7 @@
 # v0.2.0.0
 
 * Add unmarshalling support with `TreeSitter.Unmarshal`.
-* Removes pointer-only constructor.
+* Removes pointer-only constructors for bridged C types.
 
 # v0.1.0.0
 
