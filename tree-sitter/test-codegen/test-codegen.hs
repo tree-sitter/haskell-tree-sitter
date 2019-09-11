@@ -5,10 +5,12 @@ module Main where
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
+import Data.Bool (bool)
 import Data.Char
 import TreeSitter.GenerateSyntax
 import Data.Foldable
 import Control.Monad
+import System.Exit (exitFailure, exitSuccess)
 import TreeSitter.Symbol
 
 -- | Generate permutations of alphabet and underscore combinations
@@ -47,4 +49,4 @@ prop_escapePunct = property $ do
   where p = not . (\c -> isSpace c || c == '_' )
 
 main :: IO ()
-main = void $ checkParallel $$(discover)
+main = checkParallel $$(discover) >>= bool exitFailure exitSuccess
