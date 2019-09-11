@@ -258,9 +258,7 @@ instance GUnmarshal U1 where
 
 -- For unary products:
 instance (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode _ = push $ do
-    fields <- getFields
-    gunmarshalProductNode fields
+  gunmarshalNode _ = push $ getFields >>= gunmarshalProductNode
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
