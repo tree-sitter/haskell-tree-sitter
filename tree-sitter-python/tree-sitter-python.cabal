@@ -11,6 +11,7 @@ copyright:           2017 GitHub
 category:            Tree-sitter, Python
 build-type:          Simple
 data-files:          vendor/tree-sitter-python/src/node-types.json
+extra-source-files:  ChangeLog.md
 
 library
   exposed-modules:     TreeSitter.Python
