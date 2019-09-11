@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter
-version:             0.2.0.0
+version:             0.2.1.0
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
                      .
@@ -20,6 +20,7 @@ extra-source-files:  vendor/tree-sitter/lib/src/*.c
                    , vendor/tree-sitter/lib/src/*.h
                    , vendor/tree-sitter/lib/utf8proc/utf8proc.c
                    , vendor/tree-sitter/lib/utf8proc/utf8proc_data.c
+                   , ChangeLog.md
 
 library
   hs-source-dirs:      src
