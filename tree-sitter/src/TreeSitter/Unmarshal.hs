@@ -17,7 +17,6 @@ import           Control.Applicative
 import           Control.Effect hiding ((:+:))
 import           Control.Effect.Reader
 import           Control.Effect.Fail
-import           Control.Monad (void)
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -172,11 +171,14 @@ step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Bool
 step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
-push :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m a
+push :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m (Maybe a)
 push m = do
-  void $ ask >>= liftIO . ts_tree_cursor_goto_first_child
-  a <- m
-  a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
+  hasChildren <- ask >>= liftIO . ts_tree_cursor_goto_first_child
+  if hasChildren then do
+    a <- m
+    Just a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
+  else
+    pure Nothing
 
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => TSNode -> m ()
@@ -258,7 +260,7 @@ instance GUnmarshal U1 where
 
 -- For unary products:
 instance (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode _ = push getFields >>= gunmarshalProductNode
+  gunmarshalNode _ = push getFields >>= gunmarshalProductNode . fromMaybe Map.empty
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
@@ -266,7 +268,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g)
+  gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g) . fromMaybe Map.empty
 
 class GUnmarshalSum f where
   gunmarshalSumNode :: (MonadFail m
