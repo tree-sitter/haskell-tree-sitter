@@ -1,15 +1,26 @@
 #!/bin/bash
+#/ Usage: script/update-languages [--build]
 
 CURRENT=$(pwd);
 
 script/bootstrap
 
-for language in $(ls languages); do
-  cd languages/$language/vendor/tree-sitter-$language;
+for language in $(ls . | grep tree-sitter); do
+  if [ $language = "tree-sitter-tsx" ]; then
+    cd $language/vendor/tree-sitter-typescript;
+  else
+    cd $language/vendor/$language;
+  fi
   echo $(pwd);
   git checkout master; git pull origin master;
   cd $CURRENT;
 done
 
-cd vendor/tree-sitter;
-git checkout master; git pull origin master;
+if [ "$1" = "--build" ]; then
+  for language in $(ls . | grep tree-sitter); do
+    echo "Building $langauge..."
+    cabal new-build $language
+  done
+fi
+
+echo "Done"
