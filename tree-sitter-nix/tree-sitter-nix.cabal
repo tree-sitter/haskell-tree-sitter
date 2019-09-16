@@ -1,5 +1,5 @@
 name:                tree-sitter-nix
-version:             0.1.0
+version:             0.2.0
 synopsis:            tree-sitter Nix language bindings
 description:         Please see README.md
 homepage:            https://github.com/tree-sitter/haskell-tree-sitter#readme

@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-typescript
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Tree-sitter grammar/parser for TypeScript
 description:         This package provides a parser for TypeScript suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
