@@ -18,7 +18,7 @@ done
 
 if [ "$1" = "--build" ]; then
   for language in $(ls . | grep tree-sitter); do
-    echo "Building $langauge..."
+    echo "Building $language..."
     cabal new-build $language
   done
 fi
