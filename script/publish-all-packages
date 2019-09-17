@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Usage: script/publish-all-packages
+
+set -ex
+
+for language in $(ls . | grep tree-sitter); do
+    echo "Building $language"
+    script/build-and-upload "$language" --no-verify-or-prompt
+done

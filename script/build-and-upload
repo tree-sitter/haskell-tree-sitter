@@ -31,10 +31,13 @@ fi
 
 set +x
 
-echo "You are planning to upload '$PACKAGE_VERSION'."
-read -rp "Is this correct? [y/n] " choice
-if [ "$choice" != "y" ]
-   then echo "Aborting."; exit 1
+if [ "$2" != "--no-verify-or-prompt" ]
+then
+   echo "You are planning to upload '$PACKAGE_VERSION'."
+   read -rp "Is this correct? [y/n] " choice
+   if [ "$choice" != "y" ]
+     then echo "Aborting."; exit 1
+   fi
 fi
 
 echo "Attempting to build $PACKAGE_VERSION from source"
@@ -54,6 +57,12 @@ set +x
 if wget -q --spider "https://hackage.haskell.org/package/$PACKAGE_VERSION"
 then
     echo "The package $PACKAGE_VERSION already exists on Hackage."
+    if [ "$2" = "--no-verify-or-prompt" ]
+    then
+       echo "--no-verify-or-prompt was passed. I'm assuming you don't want to upload a new version, so I'm exiting."
+       exit 0
+    fi
+
     echo "If you need to upload code changes, then bump the version number in $PROJECT/$PROJECT.cabal, make a PR, and run this script again."
     echo "Otherwise, if you need _only_ to loosen existing constraints in $PROJECT.cabal file, then you can create a new revision of this package on Hackage."
     echo "You'll need to make your changes by hand. Be sure to click the 'Review changes' button to check your work."
@@ -83,11 +92,14 @@ echo "Opening candidate URL in browser…"
 sleep 1
 open "$URL"
 
-echo "About to upload final version. Do you want to proceed?"
-echo "Full-fledged package uploads cannot be undone!"
-read -rp "Type 'yes' to continue. " choice
-if [ "$choice" != "yes" ]
-   then echo "Aborting."; exit 1
+if [ "$2" != "--no-verify-or-prompt" ]
+then
+    echo "About to upload final version. Do you want to proceed?"
+    echo "Full-fledged package uploads cannot be undone!"
+    read -rp "Type 'yes' to continue. " choice
+    if [ "$choice" != "yes" ]
+    then echo "Aborting."; exit 1
+    fi
 fi
 
 set -x
