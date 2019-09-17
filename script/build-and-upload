@@ -47,7 +47,7 @@ set -x
     pwd
 
     cabal v2-update
-    cabal v2-build
+    cabal v2-build --disable-optimization
 )
 set +x
 
