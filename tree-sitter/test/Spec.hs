@@ -30,8 +30,8 @@ prop_Node_sizeOf = property $
   sizeOf (undefined :: Node) === fromIntegral sizeof_node
 
 prop_Node_roundtrips = property $ do
-  peeked <- liftIO (with (Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8 9) peek)
-  peeked ===              Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8 9
+  peeked <- liftIO (with (Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8 9 10) peek)
+  peeked ===              Node (TSNode 1 2 3 4 nullPtr nullPtr) nullPtr 1 (TSPoint 2 3) (TSPoint 4 5) 6 7 8 9 10
 
 prop_TSTreeCursor_sizeOf = property $
   sizeOfCursor === fromIntegral sizeof_tstreecursor

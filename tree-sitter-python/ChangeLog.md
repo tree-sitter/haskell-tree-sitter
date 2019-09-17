@@ -1,3 +1,8 @@
+# v0.4.0.0
+
+* Fixes a bug where comments were mistakenly being added to `extraChildren` fields. ([#204](https://github.com/tree-sitter/haskell-tree-sitter/pull/203))
+* Bumps to `tree-sitter-0.3.0.0`.
+
 # v0.3.0.0
 
 * Adds annotation fields to all generated data types. ([#181](https://github.com/tree-sitter/haskell-tree-sitter/pull/181))

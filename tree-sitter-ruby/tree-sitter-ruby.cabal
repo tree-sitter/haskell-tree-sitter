@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-ruby
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Tree-sitter grammar/parser for Ruby
 description:         This package provides a parser for Ruby suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -14,7 +14,7 @@ build-type:          Simple
 library
   exposed-modules:     TreeSitter.Ruby
   build-depends:       base              >= 4.12 && < 5
-                     , tree-sitter       >= 0.1 && < 0.3
+                     , tree-sitter       == 0.3.0.0
                      , template-haskell  >= 2.12.0.0 && < 2.15.0.0
                      , tree-sitter-ruby-internal
   default-language:    Haskell2010
@@ -22,8 +22,8 @@ library
 library tree-sitter-ruby-internal
   exposed-modules:     TreeSitter.Ruby.Internal
   hs-source-dirs:      internal
-  build-depends:       base         >= 4.12 && < 5
-                     , tree-sitter >= 0.1 && < 0.3
+  build-depends:       base
+                     , tree-sitter
   default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-ruby/src
   install-includes:    tree_sitter/parser.h
