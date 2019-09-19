@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: script/build_and_upload PROJECT_NAME
+# Usage: script/build-and-upload PROJECT_NAME
 # where PROJECT_NAME is one of the packages present in this repo:
 # tree-sitter-python, tree-sitter-ruby, etc.
 
@@ -94,4 +94,3 @@ set -x
 
 cabal upload --publish "$TGZ_LOC"
 cabal upload --publish --documentation "$DOCS_LOC"
-
