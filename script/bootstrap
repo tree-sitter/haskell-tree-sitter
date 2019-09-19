@@ -2,4 +2,4 @@
 
 git submodule sync && git submodule update --init --recursive
 
-cabal update
+cabal new-update
