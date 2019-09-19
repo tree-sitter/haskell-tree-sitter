@@ -5,21 +5,21 @@ CURRENT=$(pwd);
 
 script/bootstrap
 
-for language in $(ls . | grep tree-sitter); do
-  if [ $language = "tree-sitter-tsx" ]; then
-    cd $language/vendor/tree-sitter-typescript;
-  else
-    cd $language/vendor/$language;
-  fi
-  echo $(pwd);
-  git checkout master; git pull origin master;
-  cd $CURRENT;
-done
-
 if [ "$1" = "--build" ]; then
   for language in $(ls . | grep tree-sitter); do
     echo "Building $language..."
     cabal new-build $language
+  done
+else
+  for language in $(ls . | grep tree-sitter); do
+    if [ $language = "tree-sitter-tsx" ]; then
+      cd $language/vendor/tree-sitter-typescript;
+    else
+      cd $language/vendor/$language;
+    fi
+    echo $(pwd);
+    git checkout master; git pull origin master;
+    cd $CURRENT;
   done
 fi
 
