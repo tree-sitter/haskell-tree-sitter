@@ -109,17 +109,17 @@ instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
   unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
 
-instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
+instance (Unmarshal (f a), Unmarshal (g a), SymbolMatching (f a), SymbolMatching (g a)) => Unmarshal ((f :+: g) a) where
   unmarshalNodes [node] = do
-    let lhsSymbolMatch = symbolMatch (Proxy @a) node
-        rhsSymbolMatch = symbolMatch (Proxy @b) node
+    let lhsSymbolMatch = symbolMatch (Proxy @(f a)) node
+        rhsSymbolMatch = symbolMatch (Proxy @(g a)) node
     if lhsSymbolMatch
-      then Left <$> unmarshalNodes @a [node]
+      then L1 <$> unmarshalNodes @(f a) [node]
       else if rhsSymbolMatch
-        then Right <$> unmarshalNodes @b [node]
-        else fail $ showFailure (Proxy @(Either a b)) node
-  unmarshalNodes [] = fail "expected a node of type (Either a b) but didn't get one"
-  unmarshalNodes _ = fail "expected a node of type (Either a b) but got multiple"
+        then R1 <$> unmarshalNodes @(g a) [node]
+        else fail $ showFailure (Proxy @((f :+: g) a)) node
+  unmarshalNodes [] = fail "expected a node of type ((f :+: g) a) but didn't get one"
+  unmarshalNodes _ = fail "expected a node of type ((f :+: g) a) but got multiple"
 
 
 instance Unmarshal a => Unmarshal [a] where
