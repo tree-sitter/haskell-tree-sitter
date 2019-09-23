@@ -147,10 +147,6 @@ instance SymbolMatching a => SymbolMatching (Maybe a) where
   symbolMatch _ = symbolMatch (Proxy @a)
   showFailure _ = showFailure (Proxy @a)
 
-instance (SymbolMatching a, SymbolMatching b) => SymbolMatching (Either a b) where
-  symbolMatch _ = (||) <$> symbolMatch (Proxy @a) <*> symbolMatch (Proxy @b)
-  showFailure _ = sep <$> showFailure (Proxy @a) <*> showFailure (Proxy @b)
-
 instance SymbolMatching a => SymbolMatching [a] where
   symbolMatch _ = symbolMatch (Proxy @a)
   showFailure _ = showFailure (Proxy @a)
