@@ -99,6 +99,13 @@ instance UnmarshalField [] where
     pure $ head' : tail'
   unmarshalField [] = pure []
 
+instance UnmarshalField NonEmpty where
+  unmarshalField (x:xs) = do
+    head' <- unmarshalNode x
+    tail' <- unmarshalField xs
+    pure $ head' :| tail'
+  unmarshalField [] = fail "expected a node but didn't get one"
+
 
 instance Unmarshal () where
   unmarshalNodes _ = pure ()
