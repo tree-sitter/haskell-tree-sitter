@@ -333,13 +333,38 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
-  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName [Node] -> m (f a)
+  gunmarshalProductNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> Map.Map FieldName [Node]
+    -> m (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
-  gunmarshalProductNode fields = (:*:) <$> gunmarshalProductNode @f fields <*> gunmarshalProductNode @g fields
+  gunmarshalProductNode node fields = (:*:)
+    <$> gunmarshalProductNode @f node fields
+    <*> gunmarshalProductNode @g node fields
 
 -- Contents of product types (ie., the leaves of the product tree)
-instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gunmarshalProductNode fields =
-   M1 . K1 <$> unmarshalNodes (fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields))
+instance UnmarshalAnn k => GUnmarshalProduct (M1 S c (K1 i k)) where
+  gunmarshalProductNode node _ = M1 . K1 <$> unmarshalAnn node
+
+instance GUnmarshalProduct (M1 S c Par1) where
+  gunmarshalProductNode node _ = M1 . Par1 <$> unmarshalAnn node
+
+instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
+  gunmarshalProductNode _ fields =
+    M1 . Comp1 <$> unmarshalField (fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields))
+
+instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
+  gunmarshalProductNode _ fields =
+    case fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields) of
+      []  -> fail "expected a node but didn't get one"
+      [x] -> M1 . Rec1 <$> unmarshalNode x
+      _   -> fail "expected a node but got multiple"
