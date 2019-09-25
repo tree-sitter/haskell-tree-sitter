@@ -42,7 +42,7 @@ import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
 -- Parse source code and produce AST
-parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
+parseByteString :: (Unmarshal t, UnmarshalAnn a) => Ptr TS.Language -> ByteString -> IO (Either String (t a))
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
   if treePtr == nullPtr then
     pure (Left "error: didn't get a root node")
