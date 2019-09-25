@@ -141,6 +141,7 @@ pointToPos :: TSPoint -> Pos
 pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
 
 
+-- | Optional/repeated fields occurring in product datatypes are wrapped in type constructors, e.g. 'Maybe', '[]', or 'NonEmpty', and thus can unmarshal zero or more nodes for the same field name.
 class UnmarshalField t where
   unmarshalField
     :: ( Carrier sig m
