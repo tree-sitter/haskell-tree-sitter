@@ -269,8 +269,8 @@ getFields = go Map.empty
           if keepGoing then go fs'
           else pure fs'
 
-getField :: FieldName -> Fields -> [Node]
-getField k = fromMaybe [] . Map.lookup k
+lookupField :: FieldName -> Fields -> [Node]
+lookupField k = fromMaybe [] . Map.lookup k
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
@@ -366,11 +366,11 @@ instance GUnmarshalProduct (M1 S c Par1) where
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
   gunmarshalProductNode _ fields =
-    M1 . Comp1 <$> unmarshalField (getField (FieldName (selName @c undefined)) fields)
+    M1 . Comp1 <$> unmarshalField (lookupField (FieldName (selName @c undefined)) fields)
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode _ fields =
-    case getField (FieldName (selName @c undefined)) fields of
+    case lookupField (FieldName (selName @c undefined)) fields of
       []  -> fail "expected a node but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
       _   -> fail "expected a node but got multiple"
