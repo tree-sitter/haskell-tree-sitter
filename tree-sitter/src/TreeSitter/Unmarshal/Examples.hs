@@ -5,29 +5,26 @@ import qualified Data.Text as Text
 import GHC.Generics ((:+:), Generic1)
 import TreeSitter.Unmarshal
 
-data Stmt a
-  = IfStmt (If a)
-  | BlockStmt (Block a)
+data Expr a
+  = IfExpr (If a)
+  | BlockExpr (Block a)
+  | LitExpr (Lit a)
+  | BinExpr (Bin a)
   deriving (Generic1, Unmarshal)
 
-data If a = If { ann :: a, condition :: Expr a, consequence :: Stmt a, alternative :: Stmt a }
+data If a = If { ann :: a, condition :: Expr a, consequence :: Expr a, alternative :: Expr a }
   deriving (Generic1, Unmarshal)
 
 instance SymbolMatching If where
   symbolMatch _ _ = False
   showFailure _ _ = ""
 
-data Block a = Block { ann :: a, body :: [Stmt a] }
+data Block a = Block { ann :: a, body :: [Expr a] }
   deriving (Generic1, Unmarshal)
 
 instance SymbolMatching Block where
   symbolMatch _ _ = False
   showFailure _ _ = ""
-
-data Expr a
-  = LitExpr (Lit a)
-  | BinExpr (Bin a)
-  deriving (Generic1, Unmarshal)
 
 data Lit a = Lit { ann :: a, text :: Text.Text }
   deriving (Generic1, Unmarshal)
