@@ -21,6 +21,7 @@ instance SymbolMatching (If a) where
   symbolMatch _ _ = False
   showFailure _ _ = ""
 
+-- | Single-field product.
 data Block a = Block { ann :: a, body :: [Expr a] }
   deriving (Generic, Unmarshal)
 
