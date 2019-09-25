@@ -49,7 +49,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= maybe (fail "expected a root node") unmarshalNode))))
+        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
@@ -228,16 +228,15 @@ goto node = do
   cursor <- ask
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
--- | Return the 'Node' that the cursor is pointing at (if any), or 'Nothing' otherwise.
-peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe Node)
+-- | Return the 'Node' that the cursor is pointing at.
+peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Node
 peekNode = do
   cursor <- ask
   liftIO $ alloca $ \ tsNodePtr -> do
     _ <- ts_tree_cursor_current_node_p cursor tsNodePtr
-    node <- alloca $ \ nodePtr -> do
+    alloca $ \ nodePtr -> do
       ts_node_poke_p tsNodePtr nodePtr
       peek nodePtr
-    pure (Just node)
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekFieldName :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe FieldName)
@@ -257,19 +256,16 @@ getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m F
 getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
   where go fs = do
           node <- peekNode
-          case node of
-            Just node' -> do
-              fieldName <- peekFieldName
-              keepGoing <- step
-              let fs' = case fieldName of
-                    Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node'] fs
-                    -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-                    _ -> if nodeIsNamed node' /= 0 && nodeIsExtra node' == 0
-                      then Map.insertWith (flip (++)) (FieldName "extraChildren") [node'] fs
-                      else fs
-              if keepGoing then go fs'
-              else pure fs'
-            _ -> pure fs
+          fieldName <- peekFieldName
+          keepGoing <- step
+          let fs' = case fieldName of
+                Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node] fs
+                -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
+                _ -> if nodeIsNamed node /= 0 && nodeIsExtra node == 0
+                  then Map.insertWith (flip (++)) (FieldName "extraChildren") [node] fs
+                  else fs
+          if keepGoing then go fs'
+          else pure fs'
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
 slice :: Int -> Int -> ByteString -> ByteString
