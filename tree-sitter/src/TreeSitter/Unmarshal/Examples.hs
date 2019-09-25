@@ -14,7 +14,7 @@ data Expr a
   deriving (Generic, Unmarshal)
 
 -- | Product with multiple fields.
-data If a = If { ann :: a, condition :: Expr a, consequence :: Expr a, alternative :: Expr a }
+data If a = If { ann :: a, condition :: Expr a, consequence :: Expr a, alternative :: Maybe (Expr a) }
   deriving (Generic, Unmarshal)
 
 instance SymbolMatching (If a) where
