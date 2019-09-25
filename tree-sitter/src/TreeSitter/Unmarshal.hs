@@ -75,6 +75,9 @@ class UnmarshalAnn a where
     => Node
     -> m a
 
+instance UnmarshalAnn () where
+  unmarshalAnn _ = pure ()
+
 
 class UnmarshalField t where
   unmarshalField
