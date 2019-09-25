@@ -313,37 +313,22 @@ instance UnmarshalAnn k => GUnmarshal (K1 c k) where
 instance GUnmarshal Par1 where
   gunmarshalNode node = Par1 <$> unmarshalAnn node
 
--- For sum datatypes:
-instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gunmarshalNode = gunmarshalSumNode @(f :+: g)
-
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
   gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
 
-class GUnmarshalSum f where
-  gunmarshalSumNode
-    :: ( Carrier sig m
-       , Member (Reader ByteString) sig
-       , Member (Reader (Ptr Cursor)) sig
-       , MonadFail m
-       , MonadIO m
-       , UnmarshalAnn a
-       )
-    => Node
-    -> m (f a)
+instance (Unmarshal t, SymbolMatching t) => GUnmarshal (Rec1 t) where
+  gunmarshalNode node = Rec1 <$> unmarshalNode node
 
-instance (Unmarshal t, SymbolMatching t) => GUnmarshalSum (M1 C c (M1 S s (Rec1 t))) where
-  gunmarshalSumNode node = M1 . M1 . Rec1 <$> unmarshalNode node
-
-instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
-  gunmarshalSumNode node = do
+-- For sum datatypes:
+instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
+  gunmarshalNode node = do
     let lhsSymbolMatch = symbolMatch (Proxy @f) node
         rhsSymbolMatch = symbolMatch (Proxy @g) node
     if lhsSymbolMatch then
-      L1 <$> gunmarshalSumNode @f node
+      L1 <$> gunmarshalNode @f node
     else if rhsSymbolMatch then
-      R1 <$> gunmarshalSumNode @g node
+      R1 <$> gunmarshalNode @g node
     else
       fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
 
