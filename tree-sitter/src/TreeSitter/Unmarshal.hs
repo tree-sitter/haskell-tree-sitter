@@ -168,20 +168,6 @@ instance UnmarshalField NonEmpty where
   unmarshalField [] = fail "expected a node but didn't get one"
 
 
-instance Unmarshal () where
-  unmarshalNodes _ = pure ()
-
-instance Unmarshal Span where
-  unmarshalNodes _ = do
-    node <- peekNode
-    case node of
-      Just node -> do
-        let spanStart = pointToPos (nodeStartPoint node)
-            spanEnd = pointToPos (nodeEndPoint node)
-        pure (Span spanStart spanEnd)
-      Nothing -> fail "expected a node but didn't get one"
-
-
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
 
