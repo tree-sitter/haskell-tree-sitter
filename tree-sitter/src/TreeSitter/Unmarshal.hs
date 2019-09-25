@@ -297,10 +297,7 @@ class GUnmarshal f where
     => Node
     -> m (f a)
 
-instance GUnmarshal f => GUnmarshal (M1 D c f) where
-  gunmarshalNode node = M1 <$> gunmarshalNode node
-
-instance GUnmarshal f => GUnmarshal (M1 C c f) where
+instance GUnmarshal f => GUnmarshal (M1 i c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
 
 -- For anonymous leaf nodes:
@@ -309,12 +306,12 @@ instance GUnmarshal U1 where
 
 
 -- For unary products:
-instance (Selector s, UnmarshalAnn k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode node = push getFields >>= gunmarshalProductNode node . fromMaybe Map.empty
+instance UnmarshalAnn k => GUnmarshal (K1 c k) where
+  gunmarshalNode node = K1 <$> unmarshalAnn node
 
 -- For anonymous leaf nodes
-instance GUnmarshal (M1 S s Par1) where
-  gunmarshalNode = fmap (M1 . Par1) <$> unmarshalAnn
+instance GUnmarshal Par1 where
+  gunmarshalNode node = Par1 <$> unmarshalAnn node
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
