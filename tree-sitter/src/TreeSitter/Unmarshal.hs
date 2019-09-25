@@ -252,8 +252,11 @@ peekFieldName = do
   else
     Just . FieldName <$> liftIO (peekCString fieldName)
 
+
+type Fields = Map.Map FieldName [Node]
+
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName [Node])
+getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Fields
 getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
   where go fs = do
           node <- peekNode
@@ -364,7 +367,7 @@ class GUnmarshalProduct f where
        , UnmarshalAnn a
        )
     => Node
-    -> Map.Map FieldName [Node]
+    -> Fields
     -> m (f a)
 
 -- Product structure
