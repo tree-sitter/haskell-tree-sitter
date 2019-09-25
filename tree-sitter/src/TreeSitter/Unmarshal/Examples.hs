@@ -13,6 +13,7 @@ data Expr a
   | BinExpr (Bin a)
   deriving (Generic, Unmarshal)
 
+-- | Product with multiple fields.
 data If a = If { ann :: a, condition :: Expr a, consequence :: Expr a, alternative :: Expr a }
   deriving (Generic, Unmarshal)
 
