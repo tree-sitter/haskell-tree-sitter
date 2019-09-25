@@ -84,6 +84,12 @@ instance UnmarshalAnn Text.Text where
     bytestring <- ask
     pure (decodeUtf8 (slice start end bytestring))
 
+-- | Instance for pairs of annotations
+instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
+  unmarshalAnn node = (,)
+    <$> unmarshalAnn @a node
+    <*> unmarshalAnn @b node
+
 
 class UnmarshalField t where
   unmarshalField
