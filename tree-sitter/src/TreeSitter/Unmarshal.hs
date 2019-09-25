@@ -4,6 +4,8 @@ module TreeSitter.Unmarshal
 ( parseByteString
 , FieldName(..)
 , Unmarshal(..)
+, UnmarshalAnn(..)
+, UnmarshalField(..)
 , SymbolMatching(..)
 , step
 , push
