@@ -20,7 +20,7 @@ import           GHC.Generics
 
 -- TODO: add tests that verify correctness for product, sum and leaf types
 
-shouldParseInto :: (MonadIO m, MonadTest m, Unmarshal t, Eq t, Show t) => ByteString -> t -> m ()
+shouldParseInto :: (MonadIO m, MonadTest m, Unmarshal t, UnmarshalAnn a, Eq (t a), Show (t a)) => ByteString -> t a -> m ()
 s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
   parsed === Right t
