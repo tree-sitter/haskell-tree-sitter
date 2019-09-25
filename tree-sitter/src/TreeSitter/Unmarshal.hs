@@ -63,6 +63,7 @@ class Unmarshal a where
     to <$> gunmarshalNode x
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
+
 class UnmarshalAnn a where
   unmarshalAnn
     :: ( Carrier sig m
@@ -73,6 +74,7 @@ class UnmarshalAnn a where
        )
     => Node
     -> m a
+
 
 class UnmarshalField t where
   unmarshalField
