@@ -183,14 +183,6 @@ class SymbolMatching a where
   -- | Provide error message describing the node symbol vs. the symbols this can match
   showFailure :: Proxy a -> Node -> String
 
-instance SymbolMatching a => SymbolMatching (Maybe a) where
-  symbolMatch _ = symbolMatch (Proxy @a)
-  showFailure _ = showFailure (Proxy @a)
-
-instance SymbolMatching a => SymbolMatching [a] where
-  symbolMatch _ = symbolMatch (Proxy @a)
-  showFailure _ = showFailure (Proxy @a)
-
 instance SymbolMatching f => SymbolMatching (M1 i c f) where
   symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
