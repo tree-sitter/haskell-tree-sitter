@@ -92,6 +92,13 @@ instance UnmarshalField Maybe where
   unmarshalField [x] = Just <$> unmarshalNode x
   unmarshalField _   = fail "expected a node of type ((f :+: g) a) but got multiple"
 
+instance UnmarshalField [] where
+  unmarshalField (x:xs) = do
+    head' <- unmarshalNode x
+    tail' <- unmarshalField xs
+    pure $ head' : tail'
+  unmarshalField [] = pure []
+
 
 instance Unmarshal () where
   unmarshalNodes _ = pure ()
