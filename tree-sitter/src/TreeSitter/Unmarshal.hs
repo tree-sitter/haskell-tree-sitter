@@ -78,6 +78,12 @@ class UnmarshalAnn a where
 instance UnmarshalAnn () where
   unmarshalAnn _ = pure ()
 
+instance UnmarshalAnn Text.Text where
+  unmarshalAnn node = do
+    Range start end <- unmarshalAnn node
+    bytestring <- ask
+    pure (decodeUtf8 (slice start end bytestring))
+
 
 class UnmarshalField t where
   unmarshalField
