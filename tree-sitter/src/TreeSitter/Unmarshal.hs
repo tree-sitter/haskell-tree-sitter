@@ -159,10 +159,6 @@ instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
   showFailure _ = sep <$> showFailure (Proxy @f) <*> showFailure (Proxy @g)
 
-instance (SymbolMatching (f a), SymbolMatching (g a)) => SymbolMatching ((f :+: g) a) where
-  symbolMatch _ = (||) <$> symbolMatch (Proxy @(f a)) <*> symbolMatch (Proxy @(g a))
-  showFailure _ = sep <$> showFailure (Proxy @(f a)) <*> showFailure (Proxy @(g a))
-
 sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
 
