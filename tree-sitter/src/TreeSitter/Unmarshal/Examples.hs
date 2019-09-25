@@ -5,6 +5,7 @@ import qualified Data.Text as Text
 import GHC.Generics ((:+:), Generic)
 import TreeSitter.Unmarshal
 
+-- | An example of a sum-of-products datatype.
 data Expr a
   = IfExpr (If a)
   | BlockExpr (Block a)
