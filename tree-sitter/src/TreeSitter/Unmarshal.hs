@@ -87,6 +87,11 @@ class UnmarshalField t where
     => [Node]
     -> m (t (f a))
 
+instance UnmarshalField Maybe where
+  unmarshalField []  = pure Nothing
+  unmarshalField [x] = Just <$> unmarshalNode x
+  unmarshalField _   = fail "expected a node of type ((f :+: g) a) but got multiple"
+
 
 instance Unmarshal () where
   unmarshalNodes _ = pure ()
