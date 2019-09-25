@@ -284,7 +284,16 @@ newtype FieldName = FieldName { getFieldName :: String }
 --
 --   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
-  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
+  gunmarshalNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (f a)
 
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
@@ -298,8 +307,12 @@ instance GUnmarshal U1 where
 
 
 -- For unary products:
-instance (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode _ = push getFields >>= gunmarshalProductNode . fromMaybe Map.empty
+instance (Selector s, UnmarshalAnn k) => GUnmarshal (M1 S s (K1 c k)) where
+  gunmarshalNode node = push getFields >>= gunmarshalProductNode node . fromMaybe Map.empty
+
+-- For anonymous leaf nodes
+instance GUnmarshal (M1 S s Par1) where
+  gunmarshalNode = fmap (M1 . Par1) <$> unmarshalAnn
 
 -- For sum datatypes:
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
@@ -307,7 +320,7 @@ instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) 
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g) . fromMaybe Map.empty
+  gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
 
 class GUnmarshalSum f where
   gunmarshalSumNode
