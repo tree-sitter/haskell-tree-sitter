@@ -53,7 +53,7 @@ syntaxDatatype language datatype = do
   case datatype of
     SumType (DatatypeName datatypeName) _ subtypes -> do
       cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
-      result <- symbolMatchingInstanceForSums language name subtypes
+      result <- symbolMatchingInstanceForSums name subtypes
       pure $ generatedDatatype name cons typeParameterName:result
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
@@ -80,8 +80,8 @@ symbolMatchingInstance language name str = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums :: Ptr TS.Language -> Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
-symbolMatchingInstanceForSums _ name subtypes =
+symbolMatchingInstanceForSums :: Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
+symbolMatchingInstanceForSums name subtypes =
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
