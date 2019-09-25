@@ -233,14 +233,11 @@ peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (M
 peekNode = do
   cursor <- ask
   liftIO $ alloca $ \ tsNodePtr -> do
-    isValid <- ts_tree_cursor_current_node_p cursor tsNodePtr
-    if isValid then do
-      node <- alloca $ \ nodePtr -> do
-        ts_node_poke_p tsNodePtr nodePtr
-        peek nodePtr
-      pure (Just node)
-    else
-      pure Nothing
+    _ <- ts_tree_cursor_current_node_p cursor tsNodePtr
+    node <- alloca $ \ nodePtr -> do
+      ts_node_poke_p tsNodePtr nodePtr
+      peek nodePtr
+    pure (Just node)
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekFieldName :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe FieldName)
