@@ -63,6 +63,17 @@ class Unmarshal a where
     to <$> gunmarshalNode x
   unmarshalNodes [] = fail "expected a node but didn't get one"
   unmarshalNodes _ = fail "expected a node but got multiple"
+class UnmarshalAnn a where
+  unmarshalAnn
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       )
+    => Node
+    -> m a
+
 
 instance Unmarshal () where
   unmarshalNodes _ = pure ()
