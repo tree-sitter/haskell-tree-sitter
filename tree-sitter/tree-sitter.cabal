@@ -47,6 +47,7 @@ library
                      , TreeSitter.GenerateSyntax
                      , TreeSitter.Deserialize
                      , TreeSitter.Cursor
+  other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
                      , vendor/tree-sitter/lib/utf8proc
