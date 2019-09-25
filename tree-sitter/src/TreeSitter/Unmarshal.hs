@@ -53,7 +53,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
---   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic' instance.
+--   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic1' instance.
 class Unmarshal t where
   unmarshalNode
     :: ( Carrier sig m
