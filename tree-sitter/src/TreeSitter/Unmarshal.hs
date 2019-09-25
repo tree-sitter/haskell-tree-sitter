@@ -228,6 +228,10 @@ instance SymbolMatching f => SymbolMatching (M1 i c f) where
   symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
 
+instance SymbolMatching f => SymbolMatching (Rec1 f) where
+  symbolMatch _ = symbolMatch (Proxy @f)
+  showFailure _ = showFailure (Proxy @f)
+
 instance SymbolMatching k => SymbolMatching (K1 i k) where
   symbolMatch _ = symbolMatch (Proxy @k)
   showFailure _ = showFailure (Proxy @k)
