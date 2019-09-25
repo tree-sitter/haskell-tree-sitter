@@ -1,5 +1,5 @@
-{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances,
-             PolyKinds, ScopedTypeVariables, TypeApplications, TypeOperators #-}
+{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, KindSignatures,
+             ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Unmarshal
 ( parseByteString
 , FieldName(..)
@@ -177,7 +177,7 @@ instance UnmarshalField NonEmpty where
   unmarshalField [] = fail "expected a node but didn't get one"
 
 
-class SymbolMatching a where
+class SymbolMatching (a :: * -> *) where
   symbolMatch :: Proxy a -> Node -> Bool
 
   -- | Provide error message describing the node symbol vs. the symbols this can match
