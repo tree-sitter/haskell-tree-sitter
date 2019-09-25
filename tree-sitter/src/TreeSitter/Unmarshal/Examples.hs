@@ -53,6 +53,7 @@ instance SymbolMatching (AnonPlus a) where
   symbolMatch _ _ = False
   showFailure _ _ = ""
 
+-- | Anonymous leaf node.
 newtype AnonTimes a = AnonTimes { ann :: a }
   deriving (Generic, Unmarshal)
 
