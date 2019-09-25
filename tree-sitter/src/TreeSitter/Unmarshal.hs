@@ -38,7 +38,7 @@ import           Source.Span
 import           Source.Range
 import           Data.Proxy
 import           Prelude hiding (fail)
-import           Data.Maybe (fromMaybe, maybeToList)
+import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
 -- Parse source code and produce AST
@@ -49,7 +49,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNodes . maybeToList))))
+        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= maybe (fail "expected a root node") unmarshalNode))))
 
 -- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
