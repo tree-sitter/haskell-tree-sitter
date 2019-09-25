@@ -74,6 +74,19 @@ class UnmarshalAnn a where
     => Node
     -> m a
 
+class UnmarshalField t where
+  unmarshalField
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , Unmarshal f
+       , UnmarshalAnn a
+       )
+    => [Node]
+    -> m (t (f a))
+
 
 instance Unmarshal () where
   unmarshalNodes _ = pure ()
