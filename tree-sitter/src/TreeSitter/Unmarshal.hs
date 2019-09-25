@@ -90,6 +90,12 @@ instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
     <$> unmarshalAnn @a node
     <*> unmarshalAnn @b node
 
+instance UnmarshalAnn Range where
+  unmarshalAnn node = do
+    let start = fromIntegral (nodeStartByte node)
+        end   = fromIntegral (nodeEndByte node)
+    pure (Range start end)
+
 
 class UnmarshalField t where
   unmarshalField
