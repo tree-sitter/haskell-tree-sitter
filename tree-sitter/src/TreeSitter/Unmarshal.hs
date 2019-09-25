@@ -96,6 +96,9 @@ instance Unmarshal t => Unmarshal (Rec1 t) where
   unmarshalNode = fmap Rec1 . unmarshalNode
 
 
+-- | Unmarshal an annotation field.
+--
+--   Leaf nodes have 'Text.Text' fields, and leaves, anonymous leaves, and products all have parametric annotation fields. All of these fields are unmarshalled using the metadata of the node, e.g. its start/end bytes, without reference to any child nodes it may contain.
 class UnmarshalAnn a where
   unmarshalAnn
     :: ( Carrier sig m
