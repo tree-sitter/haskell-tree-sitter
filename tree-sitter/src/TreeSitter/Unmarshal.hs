@@ -224,7 +224,11 @@ instance SymbolMatching a => SymbolMatching [a] where
   symbolMatch _ = symbolMatch (Proxy @a)
   showFailure _ = showFailure (Proxy @a)
 
-instance SymbolMatching k => SymbolMatching (M1 C c (M1 S s (K1 i k))) where
+instance SymbolMatching f => SymbolMatching (M1 i c f) where
+  symbolMatch _ = symbolMatch (Proxy @f)
+  showFailure _ = showFailure (Proxy @f)
+
+instance SymbolMatching k => SymbolMatching (K1 i k) where
   symbolMatch _ = symbolMatch (Proxy @k)
   showFailure _ = showFailure (Proxy @k)
 
