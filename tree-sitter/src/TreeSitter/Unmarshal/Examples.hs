@@ -29,6 +29,7 @@ instance SymbolMatching (Block a) where
   symbolMatch _ _ = False
   showFailure _ _ = ""
 
+-- | Leaf node.
 data Lit a = Lit { ann :: a, text :: Text.Text }
   deriving (Generic, Unmarshal)
 
