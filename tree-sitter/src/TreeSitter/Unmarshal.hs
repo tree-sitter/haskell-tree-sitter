@@ -269,6 +269,10 @@ getFields = go Map.empty
           if keepGoing then go fs'
           else pure fs'
 
+getField :: FieldName -> Fields -> [Node]
+getField k = fromMaybe [] . Map.lookup k
+
+
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
 slice :: Range -> ByteString -> ByteString
 slice (Range start end) = take . drop
@@ -370,7 +374,3 @@ instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
       []  -> fail "expected a node but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
       _   -> fail "expected a node but got multiple"
-
-
-getField :: FieldName -> Fields -> [Node]
-getField k = fromMaybe [] . Map.lookup k
