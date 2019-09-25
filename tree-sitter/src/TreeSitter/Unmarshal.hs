@@ -115,9 +115,9 @@ instance UnmarshalAnn () where
 
 instance UnmarshalAnn Text.Text where
   unmarshalAnn node = do
-    Range start end <- unmarshalAnn node
+    range <- unmarshalAnn node
     bytestring <- ask
-    pure (decodeUtf8 (slice start end bytestring))
+    pure (decodeUtf8 (slice range bytestring))
 
 -- | Instance for pairs of annotations
 instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
@@ -268,8 +268,8 @@ getFields = go Map.empty
           else pure fs'
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
-slice :: Int -> Int -> ByteString -> ByteString
-slice start end = take . drop
+slice :: Range -> ByteString -> ByteString
+slice (Range start end) = take . drop
   where drop = B.drop start
         take = B.take (end - start)
 
