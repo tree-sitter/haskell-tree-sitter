@@ -102,6 +102,9 @@ instance UnmarshalAnn Span where
         spanEnd   = pointToPos (nodeEndPoint node)
     pure (Span spanStart spanEnd)
 
+pointToPos :: TSPoint -> Pos
+pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
+
 
 class UnmarshalField t where
   unmarshalField
@@ -174,8 +177,6 @@ instance Unmarshal Span where
         pure (Span spanStart spanEnd)
       Nothing -> fail "expected a node but didn't get one"
 
-pointToPos :: TSPoint -> Pos
-pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
 
 instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
