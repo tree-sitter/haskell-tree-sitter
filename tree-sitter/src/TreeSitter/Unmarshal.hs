@@ -310,25 +310,30 @@ instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) wher
   gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g) . fromMaybe Map.empty
 
 class GUnmarshalSum f where
-  gunmarshalSumNode :: (MonadFail m
-                   , Carrier sig m
-                   , Member (Reader ByteString) sig
-                   , Member (Reader (Ptr Cursor)) sig
-                   , MonadIO m)
-                   => Node -> m (f a)
+  gunmarshalSumNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (f a)
 
-instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
-  gunmarshalSumNode node = M1 . M1 . K1 <$> unmarshalNodes [node]
+instance (Unmarshal t, SymbolMatching t) => GUnmarshalSum (M1 C c (M1 S s (Rec1 t))) where
+  gunmarshalSumNode node = M1 . M1 . Rec1 <$> unmarshalNode node
 
 instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
   gunmarshalSumNode node = do
     let lhsSymbolMatch = symbolMatch (Proxy @f) node
         rhsSymbolMatch = symbolMatch (Proxy @g) node
-    if lhsSymbolMatch
-      then L1 <$> gunmarshalSumNode @f node
-      else if rhsSymbolMatch
-        then R1 <$> gunmarshalSumNode @g node
-        else fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
+    if lhsSymbolMatch then
+      L1 <$> gunmarshalSumNode @f node
+    else if rhsSymbolMatch then
+      R1 <$> gunmarshalSumNode @g node
+    else
+      fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
 
 
 -- | Generically unmarshal products
