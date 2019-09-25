@@ -16,6 +16,7 @@ import           System.Exit (exitFailure, exitSuccess)
 import           TreeSitter.Python
 import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Unmarshal
+import           GHC.Generics
 
 -- TODO: add tests that verify correctness for product, sum and leaf types
 
@@ -25,16 +26,18 @@ s `shouldParseInto` t = do
   parsed === Right t
 
 pass = Py.PassStatementSimpleStatement (Py.PassStatement () "pass" )
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
-function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [Left (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
+one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
+function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
   "" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [] }
   "# bah" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [] }
-  "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right pass] }
-  "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right one] }
-  "expensive" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right function] }
-  "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [Right one, Right pass] }
+  "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 pass] }
+  "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one] }
+  "expensive" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 function] }
+  "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one, R1 pass] }
+
+
 
 main = checkParallel $$(discover) >>= bool exitFailure exitSuccess
