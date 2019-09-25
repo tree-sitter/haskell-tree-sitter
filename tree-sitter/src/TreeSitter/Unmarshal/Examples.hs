@@ -9,7 +9,7 @@ import TreeSitter.Unmarshal
 data Expr a
   = IfExpr (If a)
   | BlockExpr (Block a)
-  | LitExpr (Lit a)
+  | VarExpr (Var a)
   | BinExpr (Bin a)
   deriving (Generic1, Unmarshal)
 
@@ -30,10 +30,10 @@ instance SymbolMatching Block where
   showFailure _ _ = ""
 
 -- | Leaf node.
-data Lit a = Lit { ann :: a, text :: Text.Text }
+data Var a = Var { ann :: a, text :: Text.Text }
   deriving (Generic1, Unmarshal)
 
-instance SymbolMatching Lit where
+instance SymbolMatching Var where
   symbolMatch _ _ = False
   showFailure _ _ = ""
 
