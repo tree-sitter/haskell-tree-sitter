@@ -92,6 +92,9 @@ instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmar
     else
       fail $ showFailure (Proxy @(f :+: g)) node
 
+instance Unmarshal t => Unmarshal (Rec1 t) where
+  unmarshalNode = fmap Rec1 . unmarshalNode
+
 
 class UnmarshalAnn a where
   unmarshalAnn
