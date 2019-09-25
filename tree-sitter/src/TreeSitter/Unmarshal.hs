@@ -385,11 +385,15 @@ instance GUnmarshalProduct (M1 S c Par1) where
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
   gunmarshalProductNode _ fields =
-    M1 . Comp1 <$> unmarshalField (fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields))
+    M1 . Comp1 <$> unmarshalField (getField (FieldName (selName @c undefined)) fields)
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode _ fields =
-    case fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields) of
+    case getField (FieldName (selName @c undefined)) fields of
       []  -> fail "expected a node but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
       _   -> fail "expected a node but got multiple"
+
+
+getField :: FieldName -> Fields -> [Node]
+getField k = fromMaybe [] . Map.lookup k
