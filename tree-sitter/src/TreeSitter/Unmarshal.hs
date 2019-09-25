@@ -96,6 +96,12 @@ instance UnmarshalAnn Range where
         end   = fromIntegral (nodeEndByte node)
     pure (Range start end)
 
+instance UnmarshalAnn Span where
+  unmarshalAnn node = do
+    let spanStart = pointToPos (nodeStartPoint node)
+        spanEnd   = pointToPos (nodeEndPoint node)
+    pure (Span spanStart spanEnd)
+
 
 class UnmarshalField t where
   unmarshalField
