@@ -313,12 +313,12 @@ instance UnmarshalAnn k => GUnmarshal (K1 c k) where
 instance GUnmarshal Par1 where
   gunmarshalNode node = Par1 <$> unmarshalAnn node
 
+instance (Unmarshal t, SymbolMatching t) => GUnmarshal (Rec1 t) where
+  gunmarshalNode node = Rec1 <$> unmarshalNode node
+
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
   gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
-
-instance (Unmarshal t, SymbolMatching t) => GUnmarshal (Rec1 t) where
-  gunmarshalNode node = Rec1 <$> unmarshalNode node
 
 -- For sum datatypes:
 instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
