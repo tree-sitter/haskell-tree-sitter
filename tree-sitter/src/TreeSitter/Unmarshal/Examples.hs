@@ -37,6 +37,7 @@ instance SymbolMatching (Lit a) where
   symbolMatch _ _ = False
   showFailure _ _ = ""
 
+-- | Product with anonymous sum field.
 data Bin a = Bin { ann :: a, lhs :: Expr a, op :: (AnonPlus :+: AnonTimes) a, rhs :: Expr a }
   deriving (Generic, Unmarshal)
 
