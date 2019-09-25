@@ -54,15 +54,44 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
 -- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic' instance.
-class Unmarshal a where
-
-  unmarshalNodes :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
-  default unmarshalNodes :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
-  unmarshalNodes [x] = do
+class Unmarshal t where
+  unmarshalNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (t a)
+  default unmarshalNode
+    :: ( Carrier sig m
+       , Generic1 t
+       , GUnmarshal (Rep1 t)
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (t a)
+  unmarshalNode x = do
     goto (nodeTSNode x)
-    to <$> gunmarshalNode x
-  unmarshalNodes [] = fail "expected a node but didn't get one"
-  unmarshalNodes _ = fail "expected a node but got multiple"
+    to1 <$> gunmarshalNode x
+
+instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmarshal (f :+: g) where
+  unmarshalNode node = do
+    let lhsSymbolMatch = symbolMatch (Proxy @f) node
+        rhsSymbolMatch = symbolMatch (Proxy @g) node
+    if lhsSymbolMatch then
+      L1 <$> unmarshalNode @f node
+    else if rhsSymbolMatch then
+      R1 <$> unmarshalNode @g node
+    else
+      fail $ showFailure (Proxy @(f :+: g)) node
+
 
 class UnmarshalAnn a where
   unmarshalAnn
@@ -142,31 +171,6 @@ instance UnmarshalField NonEmpty where
 instance Unmarshal () where
   unmarshalNodes _ = pure ()
 
-instance Unmarshal Text.Text where
-  unmarshalNodes _ = do
-    node <- peekNode
-    bytestring <- ask
-    case node of
-      Just node -> do
-        let start = fromIntegral (nodeStartByte node)
-            end = fromIntegral (nodeEndByte node)
-        pure (decodeUtf8 (slice start end bytestring))
-      Nothing -> fail "expected a node but didn't get one"
-
--- | Instance for pairs of annotations
-instance (Unmarshal a, Unmarshal b) => Unmarshal (a,b) where
-  unmarshalNodes listofNodes = (,) <$> unmarshalNodes @a listofNodes <*> unmarshalNodes @b listofNodes
-
-instance Unmarshal Range where
-  unmarshalNodes _ = do
-    node <- peekNode
-    case node of
-      Just node -> do
-        let start = fromIntegral (nodeStartByte node)
-            end = fromIntegral (nodeEndByte node)
-        pure (Range start end)
-      Nothing -> fail "expected a node but didn't get one"
-
 instance Unmarshal Span where
   unmarshalNodes _ = do
     node <- peekNode
@@ -177,38 +181,6 @@ instance Unmarshal Span where
         pure (Span spanStart spanEnd)
       Nothing -> fail "expected a node but didn't get one"
 
-
-instance Unmarshal a => Unmarshal (Maybe a) where
-  unmarshalNodes [] = pure Nothing
-  unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
-
-instance (Unmarshal (f a), Unmarshal (g a), SymbolMatching (f a), SymbolMatching (g a)) => Unmarshal ((f :+: g) a) where
-  unmarshalNodes [node] = do
-    let lhsSymbolMatch = symbolMatch (Proxy @(f a)) node
-        rhsSymbolMatch = symbolMatch (Proxy @(g a)) node
-    if lhsSymbolMatch
-      then L1 <$> unmarshalNodes @(f a) [node]
-      else if rhsSymbolMatch
-        then R1 <$> unmarshalNodes @(g a) [node]
-        else fail $ showFailure (Proxy @((f :+: g) a)) node
-  unmarshalNodes [] = fail "expected a node of type ((f :+: g) a) but didn't get one"
-  unmarshalNodes _ = fail "expected a node of type ((f :+: g) a) but got multiple"
-
-
-instance Unmarshal a => Unmarshal [a] where
-  unmarshalNodes (x:xs) = do
-    head' <- unmarshalNodes [x]
-    tail' <- unmarshalNodes xs
-    pure $ head' : tail'
-  unmarshalNodes [] = pure []
-
-
-instance Unmarshal a => Unmarshal (NonEmpty a) where
-  unmarshalNodes (x:xs) = do
-    head' <- unmarshalNodes [x]
-    tail' <- unmarshalNodes xs
-    pure $ head' :| tail'
-  unmarshalNodes [] = fail "expected a node but didn't get one"
 
 class SymbolMatching a where
   symbolMatch :: Proxy a -> Node -> Bool
