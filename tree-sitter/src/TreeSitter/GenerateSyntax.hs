@@ -67,7 +67,7 @@ syntaxDatatype language datatype = do
         Named -> generatedDatatype name [con] typeParameterName:result
   where
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
-    deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic ] ]
+    deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
     generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons deriveClause
 
 
@@ -129,11 +129,11 @@ ctorForTypes named constructorName types = recC (toName named constructorName) r
 
 -- | Convert field types to Q types
 fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
-fieldTypesToNestedEither xs typeParameterName = foldr1 combine $ fmap convertToQType xs
+fieldTypesToNestedEither xs typeParameterName = foldr1 combine (fmap convertToQType xs) `appT` varT typeParameterName
   where
-    combine convertedQType = appT (appT (conT ''Either) convertedQType)
-    convertToQType (MkType (DatatypeName n) named) = appT (conT (toName named n)) (varT typeParameterName)
-    -- TODO: pull convertToQType out to top-level fn
+    combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs
+    convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
+
 
 -- | Create bang required to build records
 strictness :: BangQ

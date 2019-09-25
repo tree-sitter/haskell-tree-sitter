@@ -109,17 +109,17 @@ instance Unmarshal a => Unmarshal (Maybe a) where
   unmarshalNodes [] = pure Nothing
   unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
 
-instance (Unmarshal a, Unmarshal b, SymbolMatching a, SymbolMatching b) => Unmarshal (Either a b) where
+instance (Unmarshal (f a), Unmarshal (g a), SymbolMatching (f a), SymbolMatching (g a)) => Unmarshal ((f :+: g) a) where
   unmarshalNodes [node] = do
-    let lhsSymbolMatch = symbolMatch (Proxy @a) node
-        rhsSymbolMatch = symbolMatch (Proxy @b) node
+    let lhsSymbolMatch = symbolMatch (Proxy @(f a)) node
+        rhsSymbolMatch = symbolMatch (Proxy @(g a)) node
     if lhsSymbolMatch
-      then Left <$> unmarshalNodes @a [node]
+      then L1 <$> unmarshalNodes @(f a) [node]
       else if rhsSymbolMatch
-        then Right <$> unmarshalNodes @b [node]
-        else fail $ showFailure (Proxy @(Either a b)) node
-  unmarshalNodes [] = fail "expected a node of type (Either a b) but didn't get one"
-  unmarshalNodes _ = fail "expected a node of type (Either a b) but got multiple"
+        then R1 <$> unmarshalNodes @(g a) [node]
+        else fail $ showFailure (Proxy @((f :+: g) a)) node
+  unmarshalNodes [] = fail "expected a node of type ((f :+: g) a) but didn't get one"
+  unmarshalNodes _ = fail "expected a node of type ((f :+: g) a) but got multiple"
 
 
 instance Unmarshal a => Unmarshal [a] where
@@ -147,10 +147,6 @@ instance SymbolMatching a => SymbolMatching (Maybe a) where
   symbolMatch _ = symbolMatch (Proxy @a)
   showFailure _ = showFailure (Proxy @a)
 
-instance (SymbolMatching a, SymbolMatching b) => SymbolMatching (Either a b) where
-  symbolMatch _ = (||) <$> symbolMatch (Proxy @a) <*> symbolMatch (Proxy @b)
-  showFailure _ = sep <$> showFailure (Proxy @a) <*> showFailure (Proxy @b)
-
 instance SymbolMatching a => SymbolMatching [a] where
   symbolMatch _ = symbolMatch (Proxy @a)
   showFailure _ = showFailure (Proxy @a)
@@ -162,6 +158,10 @@ instance SymbolMatching k => SymbolMatching (M1 C c (M1 S s (K1 i k))) where
 instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
   showFailure _ = sep <$> showFailure (Proxy @f) <*> showFailure (Proxy @g)
+
+instance (SymbolMatching (f a), SymbolMatching (g a)) => SymbolMatching ((f :+: g) a) where
+  symbolMatch _ = (||) <$> symbolMatch (Proxy @(f a)) <*> symbolMatch (Proxy @(g a))
+  showFailure _ = sep <$> showFailure (Proxy @(f a)) <*> showFailure (Proxy @(g a))
 
 sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
