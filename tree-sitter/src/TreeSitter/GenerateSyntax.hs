@@ -53,15 +53,15 @@ syntaxDatatype language datatype = do
   case datatype of
     SumType (DatatypeName datatypeName) _ subtypes -> do
       cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
-      result <- symbolMatchingInstanceForSums language name subtypes typeParameterName
+      result <- symbolMatchingInstanceForSums name subtypes
       pure $ generatedDatatype name cons typeParameterName:result
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
-      result <- symbolMatchingInstance language name datatypeName typeParameterName
+      result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
     LeafType (DatatypeName datatypeName) named -> do
       con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
-      result <- symbolMatchingInstance language name datatypeName typeParameterName
+      result <- symbolMatchingInstance language name datatypeName
       pure $ case named of
         Anonymous -> NewtypeD [] name [PlainTV typeParameterName] Nothing con deriveClause:result
         Named -> generatedDatatype name [con] typeParameterName:result
@@ -72,20 +72,20 @@ syntaxDatatype language datatype = do
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
-symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Name -> Q [Dec]
-symbolMatchingInstance language name str typeParameterName = do
+symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
+symbolMatchingInstance language name str = do
   tsSymbol <- runIO $ withCString str (TS.ts_language_symbol_for_name language)
   tsSymbolType <- toEnum <$> runIO (TS.ts_language_symbol_type language tsSymbol)
-  [d|instance TS.SymbolMatching $(appT (conT name) (varT typeParameterName)) where
+  [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [TreeSitter.Deserialize.Type] -> Name -> Q [Dec]
-symbolMatchingInstanceForSums _ name subtypes typeParameterName =
-  [d|instance TS.SymbolMatching $(appT (conT name) (varT typeParameterName)) where
+symbolMatchingInstanceForSums :: Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
+symbolMatchingInstanceForSums name subtypes =
+  [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
-  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(appT (conT (toName named n)) (varT typeParameterName))) |]
+  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName named n))) |]
         mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
         extractn (MkType (DatatypeName n) Named) = toCamelCase n
         extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n

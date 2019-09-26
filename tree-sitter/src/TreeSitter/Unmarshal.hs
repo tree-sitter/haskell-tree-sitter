@@ -1,9 +1,11 @@
-{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances,
-             PolyKinds, ScopedTypeVariables, TypeApplications, TypeOperators #-}
+{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, KindSignatures,
+             ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Unmarshal
 ( parseByteString
 , FieldName(..)
 , Unmarshal(..)
+, UnmarshalAnn(..)
+, UnmarshalField(..)
 , SymbolMatching(..)
 , step
 , push
@@ -38,130 +40,160 @@ import           Source.Span
 import           Source.Range
 import           Data.Proxy
 import           Prelude hiding (fail)
-import           Data.Maybe (fromMaybe, maybeToList)
+import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
 -- Parse source code and produce AST
-parseByteString :: Unmarshal t => Ptr TS.Language -> ByteString -> IO (Either String t)
+parseByteString :: (Unmarshal t, UnmarshalAnn a) => Ptr TS.Language -> ByteString -> IO (Either String (t a))
 parseByteString language bytestring = withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
   if treePtr == nullPtr then
     pure (Left "error: didn't get a root node")
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNodes . maybeToList))))
+        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
 
--- | Unmarshal is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
+-- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
---   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic' instance.
-class Unmarshal a where
-
-  unmarshalNodes :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
-  default unmarshalNodes :: (MonadFail m, Carrier sig m, GUnmarshal (Rep a), Generic a, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => [Node] -> m a
-  unmarshalNodes [x] = do
+--   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic1' instance.
+class Unmarshal t where
+  unmarshalNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (t a)
+  default unmarshalNode
+    :: ( Carrier sig m
+       , Generic1 t
+       , GUnmarshal (Rep1 t)
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (t a)
+  unmarshalNode x = do
     goto (nodeTSNode x)
-    to <$> gunmarshalNode x
-  unmarshalNodes [] = fail "expected a node but didn't get one"
-  unmarshalNodes _ = fail "expected a node but got multiple"
+    to1 <$> gunmarshalNode x
 
-instance Unmarshal () where
-  unmarshalNodes _ = pure ()
+instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmarshal (f :+: g) where
+  unmarshalNode node = do
+    let lhsSymbolMatch = symbolMatch (Proxy @f) node
+        rhsSymbolMatch = symbolMatch (Proxy @g) node
+    if lhsSymbolMatch then
+      L1 <$> unmarshalNode @f node
+    else if rhsSymbolMatch then
+      R1 <$> unmarshalNode @g node
+    else
+      fail $ showFailure (Proxy @(f :+: g)) node
 
-instance Unmarshal Text.Text where
-  unmarshalNodes _ = do
-    node <- peekNode
+instance Unmarshal t => Unmarshal (Rec1 t) where
+  unmarshalNode = fmap Rec1 . unmarshalNode
+
+
+-- | Unmarshal an annotation field.
+--
+--   Leaf nodes have 'Text.Text' fields, and leaves, anonymous leaves, and products all have parametric annotation fields. All of these fields are unmarshalled using the metadata of the node, e.g. its start/end bytes, without reference to any child nodes it may contain.
+class UnmarshalAnn a where
+  unmarshalAnn
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       )
+    => Node
+    -> m a
+
+instance UnmarshalAnn () where
+  unmarshalAnn _ = pure ()
+
+instance UnmarshalAnn Text.Text where
+  unmarshalAnn node = do
+    range <- unmarshalAnn node
     bytestring <- ask
-    case node of
-      Just node -> do
-        let start = fromIntegral (nodeStartByte node)
-            end = fromIntegral (nodeEndByte node)
-        pure (decodeUtf8 (slice start end bytestring))
-      Nothing -> fail "expected a node but didn't get one"
+    pure (decodeUtf8 (slice range bytestring))
 
 -- | Instance for pairs of annotations
-instance (Unmarshal a, Unmarshal b) => Unmarshal (a,b) where
-  unmarshalNodes listofNodes = (,) <$> unmarshalNodes @a listofNodes <*> unmarshalNodes @b listofNodes
+instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
+  unmarshalAnn node = (,)
+    <$> unmarshalAnn @a node
+    <*> unmarshalAnn @b node
 
-instance Unmarshal Range where
-  unmarshalNodes _ = do
-    node <- peekNode
-    case node of
-      Just node -> do
-        let start = fromIntegral (nodeStartByte node)
-            end = fromIntegral (nodeEndByte node)
-        pure (Range start end)
-      Nothing -> fail "expected a node but didn't get one"
+instance UnmarshalAnn Range where
+  unmarshalAnn node = do
+    let start = fromIntegral (nodeStartByte node)
+        end   = fromIntegral (nodeEndByte node)
+    pure (Range start end)
 
-instance Unmarshal Span where
-  unmarshalNodes _ = do
-    node <- peekNode
-    case node of
-      Just node -> do
-        let spanStart = pointToPos (nodeStartPoint node)
-            spanEnd = pointToPos (nodeEndPoint node)
-        pure (Span spanStart spanEnd)
-      Nothing -> fail "expected a node but didn't get one"
+instance UnmarshalAnn Span where
+  unmarshalAnn node = do
+    let spanStart = pointToPos (nodeStartPoint node)
+        spanEnd   = pointToPos (nodeEndPoint node)
+    pure (Span spanStart spanEnd)
 
 pointToPos :: TSPoint -> Pos
 pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
 
-instance Unmarshal a => Unmarshal (Maybe a) where
-  unmarshalNodes [] = pure Nothing
-  unmarshalNodes listOfNodes = Just <$> unmarshalNodes listOfNodes
 
-instance (Unmarshal (f a), Unmarshal (g a), SymbolMatching (f a), SymbolMatching (g a)) => Unmarshal ((f :+: g) a) where
-  unmarshalNodes [node] = do
-    let lhsSymbolMatch = symbolMatch (Proxy @(f a)) node
-        rhsSymbolMatch = symbolMatch (Proxy @(g a)) node
-    if lhsSymbolMatch
-      then L1 <$> unmarshalNodes @(f a) [node]
-      else if rhsSymbolMatch
-        then R1 <$> unmarshalNodes @(g a) [node]
-        else fail $ showFailure (Proxy @((f :+: g) a)) node
-  unmarshalNodes [] = fail "expected a node of type ((f :+: g) a) but didn't get one"
-  unmarshalNodes _ = fail "expected a node of type ((f :+: g) a) but got multiple"
+-- | Optional/repeated fields occurring in product datatypes are wrapped in type constructors, e.g. 'Maybe', '[]', or 'NonEmpty', and thus can unmarshal zero or more nodes for the same field name.
+class UnmarshalField t where
+  unmarshalField
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , Unmarshal f
+       , UnmarshalAnn a
+       )
+    => [Node]
+    -> m (t (f a))
 
+instance UnmarshalField Maybe where
+  unmarshalField []  = pure Nothing
+  unmarshalField [x] = Just <$> unmarshalNode x
+  unmarshalField _   = fail "expected a node of type ((f :+: g) a) but got multiple"
 
-instance Unmarshal a => Unmarshal [a] where
-  unmarshalNodes (x:xs) = do
-    head' <- unmarshalNodes [x]
-    tail' <- unmarshalNodes xs
+instance UnmarshalField [] where
+  unmarshalField (x:xs) = do
+    head' <- unmarshalNode x
+    tail' <- unmarshalField xs
     pure $ head' : tail'
-  unmarshalNodes [] = pure []
+  unmarshalField [] = pure []
 
-
-instance Unmarshal a => Unmarshal (NonEmpty a) where
-  unmarshalNodes (x:xs) = do
-    head' <- unmarshalNodes [x]
-    tail' <- unmarshalNodes xs
+instance UnmarshalField NonEmpty where
+  unmarshalField (x:xs) = do
+    head' <- unmarshalNode x
+    tail' <- unmarshalField xs
     pure $ head' :| tail'
-  unmarshalNodes [] = fail "expected a node but didn't get one"
+  unmarshalField [] = fail "expected a node but didn't get one"
 
-class SymbolMatching a where
+
+class SymbolMatching (a :: * -> *) where
   symbolMatch :: Proxy a -> Node -> Bool
 
   -- | Provide error message describing the node symbol vs. the symbols this can match
   showFailure :: Proxy a -> Node -> String
 
-instance SymbolMatching a => SymbolMatching (Maybe a) where
-  symbolMatch _ = symbolMatch (Proxy @a)
-  showFailure _ = showFailure (Proxy @a)
+instance SymbolMatching f => SymbolMatching (M1 i c f) where
+  symbolMatch _ = symbolMatch (Proxy @f)
+  showFailure _ = showFailure (Proxy @f)
 
-instance SymbolMatching a => SymbolMatching [a] where
-  symbolMatch _ = symbolMatch (Proxy @a)
-  showFailure _ = showFailure (Proxy @a)
-
-instance SymbolMatching k => SymbolMatching (M1 C c (M1 S s (K1 i k))) where
-  symbolMatch _ = symbolMatch (Proxy @k)
-  showFailure _ = showFailure (Proxy @k)
+instance SymbolMatching f => SymbolMatching (Rec1 f) where
+  symbolMatch _ = symbolMatch (Proxy @f)
+  showFailure _ = showFailure (Proxy @f)
 
 instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
   showFailure _ = sep <$> showFailure (Proxy @f) <*> showFailure (Proxy @g)
-
-instance (SymbolMatching (f a), SymbolMatching (g a)) => SymbolMatching ((f :+: g) a) where
-  symbolMatch _ = (||) <$> symbolMatch (Proxy @(f a)) <*> symbolMatch (Proxy @(g a))
-  showFailure _ = sep <$> showFailure (Proxy @(f a)) <*> showFailure (Proxy @(g a))
 
 sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
@@ -186,19 +218,15 @@ goto node = do
   cursor <- ask
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
--- | Return the 'Node' that the cursor is pointing at (if any), or 'Nothing' otherwise.
-peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe Node)
+-- | Return the 'Node' that the cursor is pointing at.
+peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Node
 peekNode = do
   cursor <- ask
   liftIO $ alloca $ \ tsNodePtr -> do
-    isValid <- ts_tree_cursor_current_node_p cursor tsNodePtr
-    if isValid then do
-      node <- alloca $ \ nodePtr -> do
-        ts_node_poke_p tsNodePtr nodePtr
-        peek nodePtr
-      pure (Just node)
-    else
-      pure Nothing
+    _ <- ts_tree_cursor_current_node_p cursor tsNodePtr
+    alloca $ \ nodePtr -> do
+      ts_node_poke_p tsNodePtr nodePtr
+      peek nodePtr
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekFieldName :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe FieldName)
@@ -210,28 +238,32 @@ peekFieldName = do
   else
     Just . FieldName <$> liftIO (peekCString fieldName)
 
+
+type Fields = Map.Map FieldName [Node]
+
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Map.Map FieldName [Node])
-getFields = go Map.empty -- >>= \fields -> liftIO (print (Map.keys fields)) >> pure fields
+getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Fields
+getFields = go Map.empty
   where go fs = do
           node <- peekNode
-          case node of
-            Just node' -> do
-              fieldName <- peekFieldName
-              keepGoing <- step
-              let fs' = case fieldName of
-                    Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node'] fs
-                    -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-                    _ -> if nodeIsNamed node' /= 0 && nodeIsExtra node' == 0
-                      then Map.insertWith (flip (++)) (FieldName "extraChildren") [node'] fs
-                      else fs
-              if keepGoing then go fs'
-              else pure fs'
-            _ -> pure fs
+          fieldName <- peekFieldName
+          keepGoing <- step
+          let fs' = case fieldName of
+                Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node] fs
+                -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
+                _ -> if nodeIsNamed node /= 0 && nodeIsExtra node == 0
+                  then Map.insertWith (flip (++)) (FieldName "extraChildren") [node] fs
+                  else fs
+          if keepGoing then go fs'
+          else pure fs'
+
+lookupField :: FieldName -> Fields -> [Node]
+lookupField k = fromMaybe [] . Map.lookup k
+
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
-slice :: Int -> Int -> ByteString -> ByteString
-slice start end = take . drop
+slice :: Range -> ByteString -> ByteString
+slice (Range start end) = take . drop
   where drop = B.drop start
         take = B.take (end - start)
 
@@ -246,12 +278,18 @@ newtype FieldName = FieldName { getFieldName :: String }
 --
 --   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
-  gunmarshalNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Node -> m (f a)
+  gunmarshalNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> m (f a)
 
-instance GUnmarshal f => GUnmarshal (M1 D c f) where
-  gunmarshalNode node = M1 <$> gunmarshalNode node
-
-instance GUnmarshal f => GUnmarshal (M1 C c f) where
+instance GUnmarshal f => GUnmarshal (M1 i c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
 
 -- For anonymous leaf nodes:
@@ -260,48 +298,67 @@ instance GUnmarshal U1 where
 
 
 -- For unary products:
-instance (Selector s, Unmarshal k) => GUnmarshal (M1 S s (K1 c k)) where
-  gunmarshalNode _ = push getFields >>= gunmarshalProductNode . fromMaybe Map.empty
+instance UnmarshalAnn k => GUnmarshal (K1 c k) where
+  gunmarshalNode node = K1 <$> unmarshalAnn node
 
--- For sum datatypes:
-instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gunmarshalNode = gunmarshalSumNode @(f :+: g)
+-- For anonymous leaf nodes
+instance GUnmarshal Par1 where
+  gunmarshalNode node = Par1 <$> unmarshalAnn node
+
+instance (Unmarshal t, SymbolMatching t) => GUnmarshal (Rec1 t) where
+  gunmarshalNode node = Rec1 <$> unmarshalNode node
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode _ = push getFields >>= gunmarshalProductNode @(f :*: g) . fromMaybe Map.empty
+  gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
 
-class GUnmarshalSum f where
-  gunmarshalSumNode :: (MonadFail m
-                   , Carrier sig m
-                   , Member (Reader ByteString) sig
-                   , Member (Reader (Ptr Cursor)) sig
-                   , MonadIO m)
-                   => Node -> m (f a)
-
-instance (Unmarshal k, SymbolMatching k) => GUnmarshalSum (M1 C c (M1 S s (K1 i k))) where
-  gunmarshalSumNode node = M1 . M1 . K1 <$> unmarshalNodes [node]
-
-instance (GUnmarshalSum f, GUnmarshalSum g, SymbolMatching f, SymbolMatching g) => GUnmarshalSum (f :+: g) where
-  gunmarshalSumNode node = do
+-- For sum datatypes:
+instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
+  gunmarshalNode node = do
     let lhsSymbolMatch = symbolMatch (Proxy @f) node
         rhsSymbolMatch = symbolMatch (Proxy @g) node
-    if lhsSymbolMatch
-      then L1 <$> gunmarshalSumNode @f node
-      else if rhsSymbolMatch
-        then R1 <$> gunmarshalSumNode @g node
-        else fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
+    if lhsSymbolMatch then
+      L1 <$> gunmarshalNode @f node
+    else if rhsSymbolMatch then
+      R1 <$> gunmarshalNode @g node
+    else
+      fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
 
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
-  gunmarshalProductNode :: (MonadFail m, Carrier sig m, Member (Reader ByteString) sig, Member (Reader (Ptr Cursor)) sig, MonadIO m) => Map.Map FieldName [Node] -> m (f a)
+  gunmarshalProductNode
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
+       , MonadFail m
+       , MonadIO m
+       , UnmarshalAnn a
+       )
+    => Node
+    -> Fields
+    -> m (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
-  gunmarshalProductNode fields = (:*:) <$> gunmarshalProductNode @f fields <*> gunmarshalProductNode @g fields
+  gunmarshalProductNode node fields = (:*:)
+    <$> gunmarshalProductNode @f node fields
+    <*> gunmarshalProductNode @g node fields
 
 -- Contents of product types (ie., the leaves of the product tree)
-instance (Unmarshal k, Selector c) => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gunmarshalProductNode fields =
-   M1 . K1 <$> unmarshalNodes (fromMaybe [] (Map.lookup (FieldName (selName @c undefined)) fields))
+instance UnmarshalAnn k => GUnmarshalProduct (M1 S c (K1 i k)) where
+  gunmarshalProductNode node _ = M1 . K1 <$> unmarshalAnn node
+
+instance GUnmarshalProduct (M1 S c Par1) where
+  gunmarshalProductNode node _ = M1 . Par1 <$> unmarshalAnn node
+
+instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
+  gunmarshalProductNode _ fields =
+    M1 . Comp1 <$> unmarshalField (lookupField (FieldName (selName @c undefined)) fields)
+
+instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
+  gunmarshalProductNode _ fields =
+    case lookupField (FieldName (selName @c undefined)) fields of
+      []  -> fail "expected a node but didn't get one"
+      [x] -> M1 . Rec1 <$> unmarshalNode x
+      _   -> fail "expected a node but got multiple"
