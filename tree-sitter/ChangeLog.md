@@ -1,3 +1,7 @@
+### 0.3.0.0
+
+* `Node` has a `nodeIsExtra` field stating whether it was produced via the `extras` rule.
+
 # v0.2.1.0
 
 * Add `TreeSitter.Range` and `TreeSitter.Span`.
