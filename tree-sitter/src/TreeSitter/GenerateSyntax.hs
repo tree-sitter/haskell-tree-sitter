@@ -79,10 +79,6 @@ symbolMatchingInstance language name str typeParameterName = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
--- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-constructorForSumChoice :: String -> Name -> TreeSitter.Deserialize.Type -> Q Con
-constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
-  where child = TH.bangType strictness (appT (conT (toName named n)) (varT typeParameterName))
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
