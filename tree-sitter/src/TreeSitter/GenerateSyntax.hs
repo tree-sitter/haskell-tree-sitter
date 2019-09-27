@@ -79,17 +79,6 @@ symbolMatchingInstance language name str typeParameterName = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums ::  Ptr TS.Language -> Name -> [TreeSitter.Deserialize.Type] -> Name -> Q [Dec]
-symbolMatchingInstanceForSums _ name subtypes typeParameterName =
-  [d|instance TS.SymbolMatching $(appT (conT name) (varT typeParameterName)) where
-      showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
-      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
-  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(appT (conT (toName named n)) (varT typeParameterName))) |]
-        mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
-        extractn (MkType (DatatypeName n) Named) = toCamelCase n
-        extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
-
-
 -- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
 constructorForSumChoice :: String -> Name -> TreeSitter.Deserialize.Type -> Q Con
 constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
