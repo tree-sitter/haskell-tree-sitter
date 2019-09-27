@@ -27,7 +27,6 @@ import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
 import qualified TreeSitter.Language as TS
 import Foreign.C.String
-import Data.Proxy
 import Data.Aeson hiding (String)
 import System.Directory
 import System.FilePath.Posix
