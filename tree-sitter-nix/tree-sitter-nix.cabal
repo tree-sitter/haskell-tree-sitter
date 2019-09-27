@@ -1,4 +1,3 @@
-cabal-version:       2.2
 name:                tree-sitter-nix
 version:             0.2.0.1
 synopsis:            tree-sitter Nix language bindings
