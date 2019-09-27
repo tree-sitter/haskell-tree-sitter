@@ -88,7 +88,7 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
   fieldList = map (fmap toType) fields
   childList = toList $ fmap toTypeChild children
   toType (MkField required fieldTypes mult) =
-    let ftypes = fieldTypesToNestedSum fieldTypes typeParameterName
+    let ftypes = fieldTypesToNestedSum fieldTypes `appT` varT typeParameterName
     in case (required, mult) of
       (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
       (Required, Single) -> ftypes
