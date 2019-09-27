@@ -112,8 +112,8 @@ ctorForTypes named constructorName types = recC (toName named constructorName) r
 
 
 -- | Convert field types to Q types
-fieldTypesToNestedSum :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
-fieldTypesToNestedSum xs typeParameterName = foldr1 combine (fmap convertToQType xs) `appT` varT typeParameterName
+fieldTypesToNestedSum :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
+fieldTypesToNestedSum xs = foldr1 combine (fmap convertToQType xs)
   where
     combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
