@@ -1,3 +1,5 @@
+### v0.4.0.0
+
 * `Unmarshal` has been split into `Unmarshal`, `UnmarshalAnn`, and `UnmarshalField`, with the first newly taking type constructors of kind `* -> *`. `UnmarshalAnn` can be used to unmarshal annotation types relating to the entire node, and `UnmarshalField` can be used to unmarshal fields of zero or more nodes.
 
 * `UnmarshalAnn` instances are provided for the `semantic-source` types `Loc`, `Range`, and `Span`.
