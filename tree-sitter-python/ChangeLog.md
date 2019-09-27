@@ -1,3 +1,7 @@
+# v0.5.0.0
+
+* Bumps `tree-sitter` to `^>= 0.4`.
+
 # v0.4.0.0
 
 * Fixes a bug where comments were mistakenly being added to `extraChildren` fields. ([#204](https://github.com/tree-sitter/haskell-tree-sitter/pull/203))
