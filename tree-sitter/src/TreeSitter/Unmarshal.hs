@@ -36,8 +36,8 @@ import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
+import           Source.Loc
 import           Source.Span
-import           Source.Range
 import           Data.Proxy
 import           Prelude hiding (fail)
 import           Data.Maybe (fromMaybe)
@@ -126,6 +126,11 @@ instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
   unmarshalAnn node = (,)
     <$> unmarshalAnn @a node
     <*> unmarshalAnn @b node
+
+instance UnmarshalAnn Loc where
+  unmarshalAnn node = Loc
+    <$> unmarshalAnn @Range node
+    <*> unmarshalAnn @Span  node
 
 instance UnmarshalAnn Range where
   unmarshalAnn node = do
