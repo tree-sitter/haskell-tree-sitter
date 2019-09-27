@@ -51,10 +51,9 @@ syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = do
   typeParameterName <- newName "a"
   case datatype of
-    SumType (DatatypeName datatypeName) _ subtypes -> do
-      cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
-      result <- symbolMatchingInstanceForSums language name subtypes typeParameterName
-      pure $ generatedDatatype name cons typeParameterName:result
+    SumType (DatatypeName _) _ subtypes -> do
+      types' <- fieldTypesToNestedSum subtypes
+      pure [TySynD name [] types']
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance language name datatypeName typeParameterName
