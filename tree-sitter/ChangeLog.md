@@ -1,4 +1,4 @@
-### 0.3.0.0
+### v0.3.0.0
 
 * `Node` has a `nodeIsExtra` field stating whether it was produced via the `extras` rule.
 
