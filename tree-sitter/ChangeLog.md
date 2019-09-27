@@ -2,6 +2,8 @@
 
 * `UnmarshalAnn` instances are provided for the `semantic-source` types `Loc`, `Range`, and `Span`.
 
+* AST datatypes are generated with `GHC.Generics.:+:` for anonymous sums in field positions instead of `Either`s.
+
 ### v0.3.0.0
 
 * `Node` has a `nodeIsExtra` field stating whether it was produced via the `extras` rule.
