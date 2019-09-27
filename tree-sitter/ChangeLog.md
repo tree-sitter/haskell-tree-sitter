@@ -2,7 +2,7 @@
 
 * `UnmarshalAnn` instances are provided for the `semantic-source` types `Loc`, `Range`, and `Span`.
 
-* AST datatypes are generated with `GHC.Generics.:+:` for anonymous sums in field positions instead of `Either`s.
+* AST datatypes are generated with `GHC.Generics.:+:` for anonymous sums in field positions instead of `Either`s. This makes it possible to define typeclasses over them at kind `* -> *` instead of only at kind `*`.
 
 * AST datatypes receive derived instances of `Foldable`, `Functor`, `Generic`, `Generic1`, and `Traversable`.
 
