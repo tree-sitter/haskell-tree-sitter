@@ -28,7 +28,7 @@ data Datatype
   = SumType
   { datatypeName       :: DatatypeName
   , datatypeNameStatus :: Named
-  , datatypeSubtypes   :: [Type]
+  , datatypeSubtypes   :: NonEmpty Type
   }
   | ProductType
   { datatypeName       :: DatatypeName
