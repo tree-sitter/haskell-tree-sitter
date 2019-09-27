@@ -1,5 +1,5 @@
 name:                tree-sitter-nix
-version:             0.2.0
+version:             0.2.0.1
 synopsis:            tree-sitter Nix language bindings
 description:         Please see README.md
 homepage:            https://github.com/tree-sitter/haskell-tree-sitter#readme
@@ -13,8 +13,8 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     TreeSitter.Nix
-  build-depends:       base >= 4.7 && < 5
-                     , tree-sitter == 0.3.0.0
+  build-depends:       base              >= 4.7 && < 5
+                     , tree-sitter       >= 0.3 && < 1
                      , template-haskell
                      , tree-sitter-nix-internal
   default-language:    Haskell2010
