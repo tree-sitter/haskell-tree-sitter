@@ -12,7 +12,9 @@ category:            Tree-sitter, Java
 build-type:          Simple
 
 library
-  exposed-modules:     TreeSitter.Java
+  exposed-modules:
+    TreeSitter.Java
+    TreeSitter.Java.AST
   build-depends:       base              >= 4.12 && < 5
                      , tree-sitter      ^>= 0.4
                      , template-haskell  >= 2.12.0.0 && < 2.15.0.0
