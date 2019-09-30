@@ -201,9 +201,8 @@ instance SymbolMatching f => SymbolMatching (Rec1 f) where
   symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
 
-instance KnownSymbol sym => SymbolMatching (Token sym n) where
-  -- FIXME: this should compare the node’s symbol against @sym@
-  symbolMatch _ _ = False
+instance (KnownNat n, KnownSymbol sym) => SymbolMatching (Token sym n) where
+  symbolMatch _ node = nodeSymbol node == fromIntegral (natVal (Proxy @n))
   showFailure _ _ = "expected " ++ symbolVal (Proxy @sym)
 
 instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
