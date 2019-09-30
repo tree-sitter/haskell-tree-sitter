@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveLift, LambdaCase #-}
+{-# LANGUAGE DeriveLift, ScopedTypeVariables, LambdaCase #-}
 module TreeSitter.Symbol where
 
 import Data.Char (isAlpha, toUpper, isControl)
@@ -13,11 +13,8 @@ type TSSymbol = Word16
 -- | Map a 'TSSymbol' to the corresponding value of a 'Symbol' datatype.
 --
 --   This should be used instead of 'toEnum' to perform this conversion, because tree-sitter represents parse errors with the unsigned short @65535@, which is generally not contiguous with the other symbols.
-fromTSSymbol :: Symbol symbol => TSSymbol -> symbol
-fromTSSymbol symbol
-  | symbol >= fromIntegral (fromEnum err) = err
-  | otherwise                             = toEnum (fromIntegral symbol)
-  where err = parseErrorSymbol
+fromTSSymbol :: forall symbol . Symbol symbol => TSSymbol -> symbol
+fromTSSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
 
 -- | The value of a 'Symbol' datatype representing parse errors.
 parseErrorSymbol :: Symbol symbol => symbol
