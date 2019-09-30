@@ -19,6 +19,14 @@ fromTSSymbol symbol
   | otherwise                             = toEnum (fromIntegral symbol)
   where err = parseErrorSymbol
 
+-- | Map a value of a 'Symbol' datatype to the corresponding 'TSSymbol'.
+--
+--   This should be used instead of 'fromEnum' to perform this conversion, because tree-sitter represents parse errors with the unsigned short @65535@, which is generally not contiguous with the other symbols.
+toTSSymbol :: Symbol symbol => symbol -> TSSymbol
+toTSSymbol symbol
+  | symbol == parseErrorSymbol = maxBound
+  | otherwise                  = fromIntegral (fromEnum symbol)
+
 -- | The value of a 'Symbol' datatype representing parse errors.
 parseErrorSymbol :: Symbol symbol => symbol
 parseErrorSymbol = maxBound
