@@ -31,6 +31,7 @@ import           Foreign.Marshal.Utils
 import           Foreign.Ptr
 import           Foreign.Storable
 import           GHC.Generics
+import           GHC.TypeLits
 import           TreeSitter.Cursor as TS
 import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
@@ -199,6 +200,10 @@ instance SymbolMatching f => SymbolMatching (M1 i c f) where
 instance SymbolMatching f => SymbolMatching (Rec1 f) where
   symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
+
+instance KnownSymbol sym => SymbolMatching (Token sym) where
+  symbolMatch _ _ = False
+  showFailure _ _ = "expected " ++ symbolVal (Proxy @sym)
 
 instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
