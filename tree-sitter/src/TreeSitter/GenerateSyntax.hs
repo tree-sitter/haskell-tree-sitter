@@ -64,7 +64,7 @@ syntaxDatatype language datatype = do
       tsSymbol <- runIO $ withCString datatypeName (TS.ts_language_symbol_for_name language)
       pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
     LeafType (DatatypeName datatypeName) Named -> do
-      con <- ctorForLeafType Named (DatatypeName datatypeName) typeParameterName
+      con <- ctorForLeafType (DatatypeName datatypeName) typeParameterName
       result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
@@ -115,12 +115,11 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
   toTypeChild (MkChildren field) = ("extra_children", toType field)
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
-ctorForLeafType named datatypeName typeParameterName =
-  case (named, datatypeName) of
-    (Anonymous, DatatypeName name) -> ctorForTypes Anonymous name [annotation]
-    (Named, DatatypeName name) -> ctorForTypes Named name [annotation, ("bytes", conT ''Text)]
-  where annotation = ("ann", varT typeParameterName) -- ann :: a
+ctorForLeafType :: DatatypeName -> Name -> Q Con
+ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes Named name
+  [ ("ann",   varT typeParameterName) -- ann :: a
+  , ("bytes", conT ''Text)
+  ]
 
 -- | Build Q Constructor for records
 ctorForTypes :: Named -> String -> [(String, Q TH.Type)] -> Q Con
