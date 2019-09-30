@@ -36,6 +36,7 @@ import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
+import           TreeSitter.Token as TS
 import           Source.Loc
 import           Source.Span
 import           Data.Proxy
@@ -96,6 +97,9 @@ instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmar
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
   unmarshalNode = fmap Rec1 . unmarshalNode
+
+instance Unmarshal (Token sym) where
+  unmarshalNode = fmap Token . unmarshalAnn
 
 
 -- | Unmarshal an annotation field.
