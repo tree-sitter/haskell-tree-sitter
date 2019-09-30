@@ -99,7 +99,7 @@ instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmar
 instance Unmarshal t => Unmarshal (Rec1 t) where
   unmarshalNode = fmap Rec1 . unmarshalNode
 
-instance Unmarshal (Token sym) where
+instance Unmarshal (Token sym n) where
   unmarshalNode = fmap Token . unmarshalAnn
 
 
@@ -201,7 +201,7 @@ instance SymbolMatching f => SymbolMatching (Rec1 f) where
   symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
 
-instance KnownSymbol sym => SymbolMatching (Token sym) where
+instance KnownSymbol sym => SymbolMatching (Token sym n) where
   -- FIXME: this should compare the node’s symbol against @sym@
   symbolMatch _ _ = False
   showFailure _ _ = "expected " ++ symbolVal (Proxy @sym)

@@ -63,10 +63,10 @@ instance SymbolMatching Bin where
   showFailure _ _ = ""
 
 -- | Anonymous leaf node.
-type AnonPlus = Token "+"
+type AnonPlus = Token "+" 0
 
 -- | Anonymous leaf node.
-type AnonTimes = Token "*"
+type AnonTimes = Token "*" 1
 
 
 newtype IntegerLit = IntegerLit Integer

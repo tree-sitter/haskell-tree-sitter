@@ -5,5 +5,5 @@ module TreeSitter.Token
 
 import GHC.Generics (Generic, Generic1)
 
-newtype Token sym a = Token { ann :: a }
+newtype Token symName symVal a = Token { ann :: a }
   deriving (Eq, Foldable, Functor, Generic, Generic1, Ord, Show, Traversable)
