@@ -1,0 +1,2 @@
+module TreeSitter.Token
+() where
