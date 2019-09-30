@@ -16,10 +16,6 @@ type TSSymbol = Word16
 fromTSSymbol :: forall symbol . Symbol symbol => TSSymbol -> symbol
 fromTSSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
 
--- | The value of a 'Symbol' datatype representing parse errors.
-parseErrorSymbol :: Symbol symbol => symbol
-parseErrorSymbol = maxBound
-
 
 data SymbolType = Regular | Anonymous | Auxiliary
   deriving (Enum, Eq, Lift, Ord, Show)
