@@ -1,4 +1,4 @@
-{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, KindSignatures,
+{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, PolyKinds,
              ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Unmarshal
 ( parseByteString
