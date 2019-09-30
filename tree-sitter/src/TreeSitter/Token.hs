@@ -1,2 +1,5 @@
 module TreeSitter.Token
-() where
+( Token(..)
+) where
+
+newtype Token sym a = Token { ann :: a }
