@@ -63,12 +63,10 @@ syntaxDatatype language datatype = do
     LeafType (DatatypeName datatypeName) Anonymous -> do
       tsSymbol <- runIO $ withCString datatypeName (TS.ts_language_symbol_for_name language)
       pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
-    LeafType (DatatypeName datatypeName) named -> do
-      con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
+    LeafType (DatatypeName datatypeName) Named -> do
+      con <- ctorForLeafType Named (DatatypeName datatypeName) typeParameterName
       result <- symbolMatchingInstance language name datatypeName
-      pure $ case named of
-        Anonymous -> NewtypeD [] name [PlainTV typeParameterName] Nothing con deriveClause:result
-        Named -> generatedDatatype name [con] typeParameterName:result
+      pure $ generatedDatatype name [con] typeParameterName:result
   where
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
