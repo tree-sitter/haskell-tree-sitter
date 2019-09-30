@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, DeriveTraversable #-}
+{-# LANGUAGE DeriveGeneric, DeriveTraversable, PolyKinds #-}
 module TreeSitter.Token
 ( Token(..)
 ) where
