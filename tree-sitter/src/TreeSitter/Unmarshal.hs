@@ -202,6 +202,7 @@ instance SymbolMatching f => SymbolMatching (Rec1 f) where
   showFailure _ = showFailure (Proxy @f)
 
 instance KnownSymbol sym => SymbolMatching (Token sym) where
+  -- FIXME: this should compare the node’s symbol against @sym@
   symbolMatch _ _ = False
   showFailure _ _ = "expected " ++ symbolVal (Proxy @sym)
 
