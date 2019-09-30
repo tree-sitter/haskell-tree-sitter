@@ -100,7 +100,7 @@ constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = 
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
-ctorForProductType constructorName typeParameterName children fields = ctorForTypes Named constructorName lists where
+ctorForProductType constructorName typeParameterName children fields = ctorForTypes constructorName lists where
   lists = annotation : fieldList ++ childList
   annotation = ("ann", varT typeParameterName)
   fieldList = map (fmap toType) fields
@@ -116,14 +116,14 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: DatatypeName -> Name -> Q Con
-ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes Named name
+ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes name
   [ ("ann",   varT typeParameterName) -- ann :: a
   , ("bytes", conT ''Text)
   ]
 
 -- | Build Q Constructor for records
-ctorForTypes :: Named -> String -> [(String, Q TH.Type)] -> Q Con
-ctorForTypes named constructorName types = recC (toName named constructorName) recordFields where
+ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
+ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
   recordFields = map (uncurry toVarBangType) types
   toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
 
