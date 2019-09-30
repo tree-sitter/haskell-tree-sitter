@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TypeOperators #-}
+{-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DuplicateRecordFields, TypeOperators #-}
 module TreeSitter.Unmarshal.Examples () where
 
 import Control.Effect.Reader
@@ -10,6 +10,7 @@ import GHC.Generics ((:+:), Generic1)
 import Numeric (readDec)
 import Prelude hiding (fail)
 import Source.Range
+import TreeSitter.Token
 import TreeSitter.Unmarshal
 
 -- | An example of a sum-of-products datatype.
@@ -62,20 +63,10 @@ instance SymbolMatching Bin where
   showFailure _ _ = ""
 
 -- | Anonymous leaf node.
-newtype AnonPlus a = AnonPlus { ann :: a }
-  deriving (Generic1, Unmarshal)
-
-instance SymbolMatching AnonPlus where
-  symbolMatch _ _ = False
-  showFailure _ _ = ""
+type AnonPlus = Token "+"
 
 -- | Anonymous leaf node.
-newtype AnonTimes a = AnonTimes { ann :: a }
-  deriving (Generic1, Unmarshal)
-
-instance SymbolMatching AnonTimes where
-  symbolMatch _ _ = False
-  showFailure _ _ = ""
+type AnonTimes = Token "*"
 
 
 newtype IntegerLit = IntegerLit Integer
