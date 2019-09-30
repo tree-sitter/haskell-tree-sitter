@@ -28,7 +28,7 @@ s `shouldParseInto` t = do
 
 pass = Py.PassStatementSimpleStatement (Py.PassStatement () "pass" )
 one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
-plusOne = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.UnaryOperatorPrimaryExpression (Py.UnaryOperator () (L1 (Token () :: Py.AnonymousPlus ())) (Py.IntegerPrimaryExpression (Py.Integer () "1")))))])
+plusOne = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.UnaryOperatorPrimaryExpression (Py.UnaryOperator () (L1 (Token ())) (Py.IntegerPrimaryExpression (Py.Integer () "1")))))])
 function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
 
 prop_simpleExamples :: Property
