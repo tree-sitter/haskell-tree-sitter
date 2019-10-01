@@ -27,6 +27,7 @@ import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
 import qualified TreeSitter.Language as TS
 import Foreign.C.String
+import Data.Proxy
 import Data.Aeson hiding (String)
 import System.Directory
 import System.FilePath.Posix
@@ -50,9 +51,10 @@ syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = do
   typeParameterName <- newName "a"
   case datatype of
-    SumType (DatatypeName _) _ subtypes -> do
-      types' <- fieldTypesToNestedSum subtypes
-      pure [TySynD name [] types']
+    SumType (DatatypeName datatypeName) _ subtypes -> do
+      cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
+      result <- symbolMatchingInstanceForSums name subtypes
+      pure $ generatedDatatype name cons typeParameterName:result
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance language name datatypeName
@@ -78,6 +80,21 @@ symbolMatchingInstance language name str = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
+symbolMatchingInstanceForSums :: Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
+symbolMatchingInstanceForSums name subtypes =
+  [d|instance TS.SymbolMatching $(conT name) where
+      showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
+      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
+  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName named n))) |]
+        mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
+        extractn (MkType (DatatypeName n) Named) = toCamelCase n
+        extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
+
+
+-- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
+constructorForSumChoice :: String -> Name -> TreeSitter.Deserialize.Type -> Q Con
+constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
+  where child = TH.bangType strictness (appT (conT (toName named n)) (varT typeParameterName))
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
@@ -87,7 +104,7 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
   fieldList = map (fmap toType) fields
   childList = toList $ fmap toTypeChild children
   toType (MkField required fieldTypes mult) =
-    let ftypes = fieldTypesToNestedSum fieldTypes `appT` varT typeParameterName
+    let ftypes = fieldTypesToNestedEither fieldTypes typeParameterName
     in case (required, mult) of
       (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
       (Required, Single) -> ftypes
@@ -111,8 +128,8 @@ ctorForTypes named constructorName types = recC (toName named constructorName) r
 
 
 -- | Convert field types to Q types
-fieldTypesToNestedSum :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
-fieldTypesToNestedSum xs = foldr1 combine (fmap convertToQType xs)
+fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
+fieldTypesToNestedEither xs typeParameterName = foldr1 combine (fmap convertToQType xs) `appT` varT typeParameterName
   where
     combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
