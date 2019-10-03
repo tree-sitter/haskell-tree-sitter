@@ -1,15 +1,16 @@
+cabal-version:       2.2
 name:                tree-sitter-nix
 version:             0.2.0.1
 synopsis:            tree-sitter Nix language bindings
-description:         Please see README.md
+description:         A parser for Nix for use with the tree-sitter package.
+license:             BSD-3-Clause
 homepage:            https://github.com/tree-sitter/haskell-tree-sitter#readme
 author:              Robert Hensing
--- maintainer:
+maintainer:          Robert Hensing
 copyright:           Hercules Labs OÜ
 category:            Web
 build-type:          Simple
 -- extra-source-files:
-cabal-version:       >=1.10
 
 library
   exposed-modules:     TreeSitter.Nix
