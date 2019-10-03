@@ -1,22 +1,22 @@
 {-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, OverloadedLists, TemplateHaskell #-}
 module Main (main) where
 
-import           TreeSitter.GenerateSyntax
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
 import           Data.Char
 import           Data.Foldable
+import           GHC.Generics
 import           Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import           System.Exit (exitFailure, exitSuccess)
+import           TreeSitter.GenerateSyntax
 import           TreeSitter.Python
 import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Token
 import           TreeSitter.Unmarshal
-import           GHC.Generics
 
 -- TODO: add tests that verify correctness for product, sum and leaf types
 
