@@ -69,6 +69,7 @@ syntaxDatatype language datatype = skipDefined $ do
       result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
+    -- Skip generating datatypes that have already been defined (overridden) in the module where the splice is running.
     skipDefined m = do
       isLocal <- lookupTypeName nameStr >>= maybe (pure False) isLocalName
       if isLocal then pure [] else m
