@@ -2,6 +2,7 @@
 module TreeSitter.Symbol
 ( TSSymbol
 , fromTSSymbol
+, SymbolType(..)
 , Symbol(..)
 , symbolToName
 , escapeOperatorPunctuation
