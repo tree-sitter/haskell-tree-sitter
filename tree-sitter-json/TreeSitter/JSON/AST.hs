@@ -11,7 +11,7 @@ import qualified TreeSitter.JSON as Grammar
 import qualified TreeSitter.Unmarshal as TS
 
 data StringContent a = StringContent
-  { ann :: a
+  { ann  :: a
   , text :: Text.Text
   }
   deriving (Eq, Foldable, Functor, Generic, Generic1, Ord, Show, Traversable, TS.Unmarshal)
