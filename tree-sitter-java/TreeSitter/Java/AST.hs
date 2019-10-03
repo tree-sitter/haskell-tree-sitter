@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DeriveTraversable, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
-module TreeSitter.Java.AST where
+module TreeSitter.Java.AST
+( module TreeSitter.Java.AST
+) where
 
 import TreeSitter.GenerateSyntax
 import Prelude hiding (True, False, Float, Integer, String)
