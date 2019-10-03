@@ -37,7 +37,7 @@ import TreeSitter.Token
 import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
--- Auto-generate Haskell datatypes from node-types.json
+-- | Derive Haskell datatypes from a language and its @node-types.json@ file.
 astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> Q [Dec]
 astDeclarationsForLanguage language filePath = do
   _ <- TS.addDependentFileRelative filePath
