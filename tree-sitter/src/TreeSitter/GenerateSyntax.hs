@@ -170,6 +170,7 @@ toNameString named str = addTickIfNecessary $ case named of
 moduleForName :: Name -> Maybe Module
 moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
 
+-- | Test whether the name is defined in the module where the splice is executed.
 isLocalName :: Name -> Q Bool
 isLocalName n = (moduleForName n ==) . Just <$> thisModule
 
