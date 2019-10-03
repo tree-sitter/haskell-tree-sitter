@@ -45,6 +45,7 @@ library
                      , tree-sitter-python-internal
 
 library tree-sitter-python-internal
+  import: common
   exposed-modules:     TreeSitter.Python.Internal
   hs-source-dirs:      internal
   build-depends:       base
