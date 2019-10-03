@@ -3,8 +3,7 @@ module TreeSitter.Java.AST
 ( module TreeSitter.Java.AST
 ) where
 
-import           TreeSitter.GenerateSyntax
-import           TreeSitter.Java (tree_sitter_java)
-import qualified TreeSitter.Java.Grammar as Grammar
+import TreeSitter.GenerateSyntax
+import qualified TreeSitter.Java as Grammar
 
-astDeclarationsForLanguage tree_sitter_java "../../vendor/tree-sitter-java/src/node-types.json"
+astDeclarationsForLanguage Grammar.tree_sitter_java "../../vendor/tree-sitter-java/src/node-types.json"
