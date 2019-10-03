@@ -12,20 +12,38 @@ category:            Web
 build-type:          Simple
 -- extra-source-files:
 
+common common
+  default-language: Haskell2010
+  ghc-options:
+    -Weverything
+    -Wno-all-missed-specialisations
+    -Wno-implicit-prelude
+    -Wno-missed-specialisations
+    -Wno-missing-import-lists
+    -Wno-missing-local-signatures
+    -Wno-monomorphism-restriction
+    -Wno-name-shadowing
+    -Wno-safe
+    -Wno-unsafe
+  if (impl(ghc >= 8.6))
+    ghc-options: -Wno-star-is-type
+  if (impl(ghc >= 8.8))
+    ghc-options: -Wno-missing-deriving-strategies
+
 library
+  import: common
   exposed-modules:     TreeSitter.Nix
   build-depends:       base              >= 4.7 && < 5
                      , tree-sitter       >= 0.3 && < 1
                      , template-haskell  >= 2.12 && < 2.16
                      , tree-sitter-nix-internal
-  default-language:    Haskell2010
 
 library tree-sitter-nix-internal
+  import: common
   exposed-modules:     TreeSitter.Nix.Internal
   hs-source-dirs:      internal
   build-depends:       base
                      , tree-sitter
-  default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-nix/src
   c-sources:           vendor/tree-sitter-nix/src/parser.c
                        vendor/tree-sitter-nix/src/scanner.cc

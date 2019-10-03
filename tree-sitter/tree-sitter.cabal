@@ -63,6 +63,8 @@ library
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
   ghc-options:         -Wall -fno-warn-name-shadowing
+  if (impl(ghc >= 8.8))
+    ghc-options: -Wno-missing-deriving-strategies
 
 test-suite test
   type:                exitcode-stdio-1.0
