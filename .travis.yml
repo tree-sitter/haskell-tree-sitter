@@ -4,6 +4,7 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
+    - $TRAVIS_BUILD_DIR/dist-newstyle
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -19,8 +20,10 @@ before_cache:
 
 matrix:
   include:
-    - compiler: "ghc-8.6.4"
-      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.4], sources: [hvr-ghc]}}
+    - compiler: "ghc-8.6.5"
+      addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.5], sources: [hvr-ghc]}}
+    # - compiler: "ghc-8.8.1"
+    #   addons: {apt: {packages: [cabal-install-3.0,ghc-8.8.1], sources: [hvr-ghc]}}
 
 before_install:
 - mkdir -p $HOME/.local/bin
@@ -29,10 +32,13 @@ before_install:
 - cabal --version
 
 install:
-- cabal new-update
-- cabal new-configure --enable-benchmarks --enable-tests --write-ghc-environment-files=always
-- cabal new-build -j --ghc-options="-O0" --only-dependencies all
+- cabal v2-update -v
+- cabal v2-configure --enable-benchmarks --enable-tests --write-ghc-environment-files=always -j2 -O0
+- cabal v2-build --only-dependencies all
 
 script:
-- cabal new-build -j --ghc-options="-O0" all
-- cabal new-test -j --ghc-options="-O0" all
+- cabal v2-build all
+- cabal v2-test all
+- cabal v2-haddock all
+- cabal v2-sdist all
+- for p in tree-sitter* ; do echo "$p" ; cd "$p" ; cabal check ; cd ..; done
