@@ -16,6 +16,7 @@ module TreeSitter.GenerateSyntax
 
 import Data.Char
 import Language.Haskell.TH as TH
+import Language.Haskell.TH.Syntax as TH
 import Data.HashSet (HashSet)
 import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
@@ -49,7 +50,7 @@ astDeclarationsForLanguage language filePath = do
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
-syntaxDatatype language datatype = do
+syntaxDatatype language datatype = skipDefined $ do
   typeParameterName <- newName "a"
   case datatype of
     SumType (DatatypeName datatypeName) _ subtypes -> do
@@ -68,6 +69,14 @@ syntaxDatatype language datatype = do
       result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
+    skipDefined m = do
+      isLocal <- lookupTypeName nameStr >>= maybe (pure False) isLocalName
+      if isLocal then pure [] else m
+    isLocalName n = do
+      Module pkg mod <- thisModule
+      pure
+        $  ((PkgName <$> namePackage n) == Just pkg)
+        && ((ModName <$> nameModule  n) == Just mod)
     name = mkName nameStr
     nameStr = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
