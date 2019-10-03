@@ -41,4 +41,4 @@ script:
 - cabal v2-test all
 - cabal v2-haddock all
 - cabal v2-sdist all
-- cabal check
+- for p in tree-sitter* ; do echo "$p" ; cd "$p" ; cabal check ; cd ..; done
