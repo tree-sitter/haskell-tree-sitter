@@ -154,7 +154,10 @@ addTickIfNecessary s
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName :: Named -> String -> Name
-toName named str = mkName $ addTickIfNecessary $ case named of
+toName named str = mkName (toNameString named str)
+
+toNameString :: Named -> String -> String
+toNameString named str = addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str
 
