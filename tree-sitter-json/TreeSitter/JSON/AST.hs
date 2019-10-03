@@ -12,6 +12,8 @@ import qualified TreeSitter.JSON as Grammar
 import qualified TreeSitter.Unmarshal as TS
 
 -- | The content of a string literal.
+--
+-- This is defined rather than being derived from the grammar to represent it as just the textual content, without explicit representation of escape sequences.
 data StringContent a = StringContent
   { ann  :: a
   , text :: Text.Text
