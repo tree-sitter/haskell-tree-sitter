@@ -32,6 +32,7 @@ import Data.Aeson hiding (String)
 import System.Directory
 import System.FilePath.Posix
 import TreeSitter.Node
+import TreeSitter.Token
 import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
@@ -59,12 +60,13 @@ syntaxDatatype language datatype = do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
-    LeafType (DatatypeName datatypeName) named -> do
-      con <- ctorForLeafType named (DatatypeName datatypeName) typeParameterName
+    LeafType (DatatypeName datatypeName) Anonymous -> do
+      tsSymbol <- runIO $ withCString datatypeName (TS.ts_language_symbol_for_name language)
+      pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
+    LeafType (DatatypeName datatypeName) Named -> do
+      con <- ctorForLeafType (DatatypeName datatypeName) typeParameterName
       result <- symbolMatchingInstance language name datatypeName
-      pure $ case named of
-        Anonymous -> NewtypeD [] name [PlainTV typeParameterName] Nothing con deriveClause:result
-        Named -> generatedDatatype name [con] typeParameterName:result
+      pure $ generatedDatatype name [con] typeParameterName:result
   where
     name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
@@ -98,7 +100,7 @@ constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = 
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
-ctorForProductType constructorName typeParameterName children fields = ctorForTypes Named constructorName lists where
+ctorForProductType constructorName typeParameterName children fields = ctorForTypes constructorName lists where
   lists = annotation : fieldList ++ childList
   annotation = ("ann", varT typeParameterName)
   fieldList = map (fmap toType) fields
@@ -113,16 +115,15 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
   toTypeChild (MkChildren field) = ("extra_children", toType field)
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
-ctorForLeafType :: Named -> DatatypeName -> Name -> Q Con
-ctorForLeafType named datatypeName typeParameterName =
-  case (named, datatypeName) of
-    (Anonymous, DatatypeName name) -> ctorForTypes Anonymous name [annotation]
-    (Named, DatatypeName name) -> ctorForTypes Named name [annotation, ("bytes", conT ''Text)]
-  where annotation = ("ann", varT typeParameterName) -- ann :: a
+ctorForLeafType :: DatatypeName -> Name -> Q Con
+ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes name
+  [ ("ann",   varT typeParameterName) -- ann :: a
+  , ("bytes", conT ''Text)
+  ]
 
 -- | Build Q Constructor for records
-ctorForTypes :: Named -> String -> [(String, Q TH.Type)] -> Q Con
-ctorForTypes named constructorName types = recC (toName named constructorName) recordFields where
+ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
+ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
   recordFields = map (uncurry toVarBangType) types
   toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
 

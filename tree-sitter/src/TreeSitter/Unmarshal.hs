@@ -1,4 +1,4 @@
-{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, KindSignatures,
+{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, PolyKinds,
              ScopedTypeVariables, TypeApplications, TypeOperators #-}
 module TreeSitter.Unmarshal
 ( parseByteString
@@ -31,11 +31,13 @@ import           Foreign.Marshal.Utils
 import           Foreign.Ptr
 import           Foreign.Storable
 import           GHC.Generics
+import           GHC.TypeLits
 import           TreeSitter.Cursor as TS
 import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
+import           TreeSitter.Token as TS
 import           Source.Loc
 import           Source.Span
 import           Data.Proxy
@@ -96,6 +98,9 @@ instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmar
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
   unmarshalNode = fmap Rec1 . unmarshalNode
+
+instance Unmarshal (Token sym n) where
+  unmarshalNode = fmap Token . unmarshalAnn
 
 
 -- | Unmarshal an annotation field.
@@ -195,6 +200,10 @@ instance SymbolMatching f => SymbolMatching (M1 i c f) where
 instance SymbolMatching f => SymbolMatching (Rec1 f) where
   symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
+
+instance (KnownNat n, KnownSymbol sym) => SymbolMatching (Token sym n) where
+  symbolMatch _ node = nodeSymbol node == fromIntegral (natVal (Proxy @n))
+  showFailure _ _ = "expected " ++ symbolVal (Proxy @sym)
 
 instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
   symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
