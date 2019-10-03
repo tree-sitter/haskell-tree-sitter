@@ -11,6 +11,7 @@ import TreeSitter.GenerateSyntax
 import qualified TreeSitter.JSON as Grammar
 import qualified TreeSitter.Unmarshal as TS
 
+-- | The content of a string literal.
 data StringContent a = StringContent
   { ann  :: a
   , text :: Text.Text
