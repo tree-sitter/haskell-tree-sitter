@@ -319,7 +319,7 @@ instance UnmarshalAnn k => GUnmarshal (K1 c k) where
 instance GUnmarshal Par1 where
   gunmarshalNode node = Par1 <$> unmarshalAnn node
 
-instance (Unmarshal t, SymbolMatching t) => GUnmarshal (Rec1 t) where
+instance Unmarshal t => GUnmarshal (Rec1 t) where
   gunmarshalNode node = Rec1 <$> unmarshalNode node
 
 -- For product datatypes:
