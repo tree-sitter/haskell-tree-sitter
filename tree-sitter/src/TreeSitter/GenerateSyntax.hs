@@ -72,11 +72,8 @@ syntaxDatatype language datatype = skipDefined $ do
     skipDefined m = do
       isLocal <- lookupTypeName nameStr >>= maybe (pure False) isLocalName
       if isLocal then pure [] else m
-    isLocalName n = do
-      Module pkg mod <- thisModule
-      pure
-        $  ((PkgName <$> namePackage n) == Just pkg)
-        && ((ModName <$> nameModule  n) == Just mod)
+    isLocalName n = (moduleForName n ==) . Just <$> thisModule
+    moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
     name = mkName nameStr
     nameStr = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
