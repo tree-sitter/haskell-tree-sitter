@@ -1,10 +1,11 @@
 {-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DeriveTraversable, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
 module TreeSitter.JSON.AST
 ( module TreeSitter.JSON.AST
+, (:+:)(..)
 ) where
 
 import qualified Data.Text as Text
-import GHC.Generics (Generic, Generic1)
+import GHC.Generics (Generic, Generic1, (:+:)(..))
 import Prelude hiding (String)
 import TreeSitter.GenerateSyntax
 import qualified TreeSitter.JSON as Grammar
