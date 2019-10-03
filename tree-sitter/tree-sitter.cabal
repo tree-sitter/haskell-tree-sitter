@@ -18,6 +18,7 @@ build-type:          Simple
 
 tested-with:
   GHC == 8.6.5
+  GHC == 8.8.1
 
 extra-source-files:  vendor/tree-sitter/lib/src/*.c
                    , vendor/tree-sitter/lib/src/*.h
