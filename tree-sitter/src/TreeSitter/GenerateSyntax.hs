@@ -73,7 +73,6 @@ syntaxDatatype language datatype = skipDefined $ do
       isLocal <- lookupTypeName nameStr >>= maybe (pure False) isLocalName
       if isLocal then pure [] else m
     isLocalName n = (moduleForName n ==) . Just <$> thisModule
-    moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
     name = mkName nameStr
     nameStr = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
@@ -167,6 +166,9 @@ toNameString :: Named -> String -> String
 toNameString named str = addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str
+
+moduleForName :: Name -> Maybe Module
+moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
 
 -- Helper function to output camel cased data type names
 initUpper :: String -> String
