@@ -38,6 +38,8 @@ import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
 -- | Derive Haskell datatypes from a language and its @node-types.json@ file.
+--
+-- Datatypes will be generated according to the specification in the @node-types.json@ file, with anonymous leaf types defined as synonyms for the 'Token' datatype.
 astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> Q [Dec]
 astDeclarationsForLanguage language filePath = do
   _ <- TS.addDependentFileRelative filePath
