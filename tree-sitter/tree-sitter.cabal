@@ -15,7 +15,10 @@ maintainer:          rob.rix@github.com
 copyright:           2015 GitHub
 category:            Parsing, Tree-sitter
 build-type:          Simple
-tested-with:         GHC == 8.6.4
+
+tested-with:
+  GHC == 8.6.5
+
 extra-source-files:  vendor/tree-sitter/lib/src/*.c
                    , vendor/tree-sitter/lib/src/*.h
                    , vendor/tree-sitter/lib/utf8proc/utf8proc.c
