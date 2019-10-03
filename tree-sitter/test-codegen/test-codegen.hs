@@ -1,6 +1,5 @@
 {-# LANGUAGE TemplateHaskell, TypeApplications #-}
-
-module Main where
+module Main (main) where
 
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -38,8 +37,8 @@ initialCaps = Gen.frequency
 
 prop_initUpper :: Property
 prop_initUpper = property $ do
-  (x:xs) <- forAll (Gen.string (Range.constant 1 5) initialCaps)
-  (y:ys) <- pure $ initUpper (x:xs)
+  x:xs <- forAll (Gen.string (Range.constant 1 5) initialCaps)
+  y:_  <- pure $ initUpper (x:xs)
   when (isLower x) (assert (isUpper y))
 
 prop_escapePunct :: Property
