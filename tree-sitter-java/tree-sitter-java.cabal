@@ -10,6 +10,7 @@ maintainer:          tclem@github.com
 copyright:           2017 GitHub
 category:            Tree-sitter, Java
 build-type:          Simple
+extra-source-files:  ChangeLog.md
 
 library
   exposed-modules:
