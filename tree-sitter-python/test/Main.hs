@@ -1,6 +1,5 @@
 {-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, OverloadedLists, TemplateHaskell #-}
-
-module Main where
+module Main (main) where
 
 import           TreeSitter.GenerateSyntax
 import           Control.Monad
