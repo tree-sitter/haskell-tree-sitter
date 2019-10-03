@@ -167,6 +167,7 @@ toNameString named str = addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str
 
+-- | Get the 'Module', if any, for a given 'Name'.
 moduleForName :: Name -> Maybe Module
 moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
 
