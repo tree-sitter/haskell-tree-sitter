@@ -1,11 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Main where
+module Main (main) where
 
 import Data.Bool (bool)
 import Control.Monad.IO.Class
 import Foreign
 import Foreign.C.Types
-import Foreign.Storable
 import Hedgehog
 import System.Exit (exitFailure, exitSuccess)
 import TreeSitter.Cursor
@@ -45,6 +44,7 @@ prop_Parser_timeout = property $ do
   timeout === 1000
   liftIO (ts_parser_delete parser)
 
+main :: IO ()
 main = checkSequential $$(discover) >>= bool exitFailure exitSuccess
 
 foreign import ccall unsafe "src/bridge.c sizeof_tsnode" sizeof_tsnode :: CSize
