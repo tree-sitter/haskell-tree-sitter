@@ -13,7 +13,26 @@ build-type:          Simple
 data-files:          vendor/tree-sitter-python/src/node-types.json
 extra-source-files:  ChangeLog.md
 
+common common
+  default-language: Haskell2010
+  ghc-options:
+    -Weverything
+    -Wno-all-missed-specialisations
+    -Wno-implicit-prelude
+    -Wno-missed-specialisations
+    -Wno-missing-import-lists
+    -Wno-missing-local-signatures
+    -Wno-monomorphism-restriction
+    -Wno-name-shadowing
+    -Wno-safe
+    -Wno-unsafe
+  if (impl(ghc >= 8.6))
+    ghc-options: -Wno-star-is-type
+  if (impl(ghc >= 8.8))
+    ghc-options: -Wno-missing-deriving-strategies
+
 library
+  import: common
   exposed-modules:     TreeSitter.Python
                      , TreeSitter.Python.AST
   build-depends:       base              >= 4.12 && < 5
@@ -24,31 +43,24 @@ library
                      , semantic-source  ^>= 0
                      , template-haskell  >= 2.12 && < 2.16
                      , tree-sitter-python-internal
-  default-language:    Haskell2010
-  ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists
-  if (impl(ghc >= 8.6))
-    ghc-options:       -Wno-star-is-type
 
 library tree-sitter-python-internal
+  import: common
   exposed-modules:     TreeSitter.Python.Internal
   hs-source-dirs:      internal
   build-depends:       base
                      , tree-sitter
-  default-language:    Haskell2010
   Include-dirs:        vendor/tree-sitter-python/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-python/src/parser.c
                      , vendor/tree-sitter-python/src/scanner.cc
   extra-libraries:     stdc++
-  ghc-options:         -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Wno-monomorphism-restriction -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-missing-export-lists
-  if (impl(ghc >= 8.6))
-    ghc-options:       -Wno-star-is-type
 
 test-suite test
+  import: common
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
   main-is:          Main.hs
-  default-language: Haskell2010
   build-depends:    base
                   , tree-sitter
                   , tree-sitter-python

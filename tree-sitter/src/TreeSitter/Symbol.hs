@@ -1,5 +1,12 @@
 {-# LANGUAGE DeriveLift, ScopedTypeVariables, LambdaCase #-}
-module TreeSitter.Symbol where
+module TreeSitter.Symbol
+( TSSymbol
+, fromTSSymbol
+, SymbolType(..)
+, Symbol(..)
+, symbolToName
+, escapeOperatorPunctuation
+) where
 
 import Data.Char (isAlpha, toUpper, isControl)
 import Data.Function ((&))

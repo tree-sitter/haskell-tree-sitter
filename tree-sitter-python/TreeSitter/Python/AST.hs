@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DeriveTraversable, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
-module TreeSitter.Python.AST where
+module TreeSitter.Python.AST
+( module TreeSitter.Python.AST
+) where
 
 import TreeSitter.GenerateSyntax
 import Prelude hiding (True, False, Float, Integer, String)
