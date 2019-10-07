@@ -104,7 +104,7 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
   fieldList = map (fmap toType) fields
   childList = toList $ fmap toTypeChild children
   toType (MkField required fieldTypes mult) =
-    let ftypes = fieldTypesToNestedSum fieldTypes typeParameterName
+    let ftypes = fieldTypesToNestedEither fieldTypes typeParameterName
     in case (required, mult) of
       (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
       (Required, Single) -> ftypes
@@ -128,7 +128,7 @@ ctorForTypes named constructorName types = recC (toName named constructorName) r
 
 
 -- | Convert field types to Q types
-fieldTypesToNestedSum :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
+fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
 fieldTypesToNestedEither xs typeParameterName = foldr1 combine (fmap convertToQType xs) `appT` varT typeParameterName
   where
     combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs
