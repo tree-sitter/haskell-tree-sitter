@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DeriveTraversable, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
+{-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DeriveTraversable, DuplicateRecordFields, TemplateHaskell, TypeApplications, GeneralizedNewtypeDeriving, DerivingStrategies #-}
 module TreeSitter.JSON.AST
 ( module TreeSitter.JSON.AST
 , (:+:)(..)
