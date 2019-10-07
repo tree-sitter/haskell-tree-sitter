@@ -52,6 +52,7 @@ syntaxDatatype language datatype = do
   case datatype of
     SumType (DatatypeName _) _ subtypes -> do
       types' <- fieldTypesToNestedSum subtypes
+      con <- normalC name [TH.bangType strictness (pure types' `appT` varT typeParameterName)]
       pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
