@@ -1,3 +1,8 @@
+# v0.6.0.0
+
+* AST datatypes use a shared `Token` datatype for all anonymous leaves.
+* Bumps the lower bound on `tree-sitter` to 0.5.
+
 # v0.5.0.0
 
 * Bumps `tree-sitter` to `^>= 0.4`.
