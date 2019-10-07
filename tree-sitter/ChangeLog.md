@@ -1,3 +1,8 @@
+### v0.5.0.0
+
+* Use a shared `Token` type for anonymous leaves in generated AST types.
+* Allow generated ASTs to override the representation for portions of the AST by defining specialized datatypes. Note that this should be used sparingly to keep the maintenance burden of the AST types low.
+
 ### v0.4.0.0
 
 * `Unmarshal` has been split into `Unmarshal`, `UnmarshalAnn`, and `UnmarshalField`, with the first newly taking type constructors of kind `* -> *`. `UnmarshalAnn` can be used to unmarshal annotation types relating to the entire node, and `UnmarshalField` can be used to unmarshal fields of zero or more nodes.
