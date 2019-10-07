@@ -53,6 +53,7 @@ syntaxDatatype language datatype = do
     SumType (DatatypeName _) _ subtypes -> do
       types' <- fieldTypesToNestedSum subtypes
       pure [TySynD name [] types']
+      pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance language name datatypeName
