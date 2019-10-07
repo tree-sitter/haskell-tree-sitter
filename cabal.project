@@ -1,2 +1,7 @@
 packages: tree-sitter tree-sitter-*
 jobs: $ncpus
+
+source-repository-package
+  type: git
+  location: https://github.com/fused-effects/fused-effects
+  tag: e762ee14b5c76a63fe98f2123433da17ba4f14fd
