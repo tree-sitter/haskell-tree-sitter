@@ -1,4 +1,13 @@
-{-# LANGUAGE DataKinds, DeriveAnyClass, DeriveGeneric, DeriveTraversable, GeneralizedNewtypeDeriving, DerivingStrategies, DuplicateRecordFields, TemplateHaskell, TypeApplications #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingStrategies #-}
+
 module TreeSitter.Python.AST
 ( module TreeSitter.Python.AST
 ) where
