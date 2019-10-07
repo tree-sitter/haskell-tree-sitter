@@ -16,6 +16,7 @@ module TreeSitter.GenerateSyntax
 
 import Data.Char
 import Language.Haskell.TH as TH
+import Language.Haskell.TH.Syntax as TH
 import Data.HashSet (HashSet)
 import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
@@ -36,7 +37,11 @@ import TreeSitter.Token
 import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
--- Auto-generate Haskell datatypes from node-types.json
+-- | Derive Haskell datatypes from a language and its @node-types.json@ file.
+--
+-- Datatypes will be generated according to the specification in the @node-types.json@ file, with anonymous leaf types defined as synonyms for the 'Token' datatype.
+--
+-- Any datatypes among the node types which have already been defined in the module where the splice is run will be skipped, allowing customization of the representation of parts of the tree. Note that this should be used sparingly, as it imposes extra maintenance burden, particularly when the grammar is changed. This may be used to e.g. parse literals into Haskell equivalents (e.g. parsing the textual contents of integer literals into 'Integer's), and may require defining 'TS.UnmarshalAnn' or 'TS.SymbolMatching' instances for (parts of) the custom datatypes, depending on where and how the datatype occurs in the generated tree, in addition to the usual 'Foldable', 'Functor', etc. instances provided for generated datatypes.
 astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> Q [Dec]
 astDeclarationsForLanguage language filePath = do
   _ <- TS.addDependentFileRelative filePath
@@ -49,7 +54,7 @@ astDeclarationsForLanguage language filePath = do
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
-syntaxDatatype language datatype = do
+syntaxDatatype language datatype = skipDefined $ do
   typeParameterName <- newName "a"
   case datatype of
     SumType (DatatypeName datatypeName) _ subtypes -> do
@@ -68,7 +73,12 @@ syntaxDatatype language datatype = do
       result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
-    name = toName (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
+    -- Skip generating datatypes that have already been defined (overridden) in the module where the splice is running.
+    skipDefined m = do
+      isLocal <- lookupTypeName nameStr >>= maybe (pure False) isLocalName
+      if isLocal then pure [] else m
+    name = mkName nameStr
+    nameStr = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
     generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons deriveClause
 
@@ -154,9 +164,20 @@ addTickIfNecessary s
 
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName :: Named -> String -> Name
-toName named str = mkName $ addTickIfNecessary $ case named of
+toName named str = mkName (toNameString named str)
+
+toNameString :: Named -> String -> String
+toNameString named str = addTickIfNecessary $ case named of
   Anonymous -> "Anonymous" <> toCamelCase str
   Named -> toCamelCase str
+
+-- | Get the 'Module', if any, for a given 'Name'.
+moduleForName :: Name -> Maybe Module
+moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
+
+-- | Test whether the name is defined in the module where the splice is executed.
+isLocalName :: Name -> Q Bool
+isLocalName n = (moduleForName n ==) . Just <$> thisModule
 
 -- Helper function to output camel cased data type names
 initUpper :: String -> String
