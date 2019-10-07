@@ -126,10 +126,12 @@ ctorForTypes constructorName types = recC (toName Named constructorName) recordF
 
 -- | Convert field types to Q types
 fieldTypesToNestedSum :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
-fieldTypesToNestedSum xs = foldr1 combine (fmap convertToQType xs)
+fieldTypesToNestedSum xs = go (toList xs)
   where
-    combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs
+    combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs -- (((((a :+: b) :+: c) :+: d)) :+: e)   ((a :+: b) :+: (c :+: d))
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
+    go [x] = convertToQType x
+    go xs = let (l,r) = splitAt (length xs `div` 2) xs in (combine (go l) (go r))
 
 
 -- | Create bang required to build records
