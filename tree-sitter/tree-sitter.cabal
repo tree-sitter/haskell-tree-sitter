@@ -1,4 +1,4 @@
-cabal-version:       2.2
+cabal-version:       2.4
 name:                tree-sitter
 version:             0.4.0.0
 synopsis:            Unstable bindings for the tree-sitter parsing library.
@@ -15,14 +15,37 @@ maintainer:          rob.rix@github.com
 copyright:           2015 GitHub
 category:            Parsing, Tree-sitter
 build-type:          Simple
-tested-with:         GHC == 8.6.4
+
+tested-with:
+  GHC == 8.6.5
+  GHC == 8.8.1
+
 extra-source-files:  vendor/tree-sitter/lib/src/*.c
                    , vendor/tree-sitter/lib/src/*.h
                    , vendor/tree-sitter/lib/utf8proc/utf8proc.c
                    , vendor/tree-sitter/lib/utf8proc/utf8proc_data.c
                    , ChangeLog.md
 
+common common
+  default-language: Haskell2010
+  ghc-options:
+    -Weverything
+    -Wno-all-missed-specialisations
+    -Wno-implicit-prelude
+    -Wno-missed-specialisations
+    -Wno-missing-import-lists
+    -Wno-missing-local-signatures
+    -Wno-monomorphism-restriction
+    -Wno-name-shadowing
+    -Wno-safe
+    -Wno-unsafe
+  if (impl(ghc >= 8.6))
+    ghc-options: -Wno-star-is-type
+  if (impl(ghc >= 8.8))
+    ghc-options: -Wno-missing-deriving-strategies
+
 library
+  import: common
   hs-source-dirs:      src
   build-depends:       base                  >= 4.12 && < 5
                      , aeson                ^>= 1.4.2
@@ -32,12 +55,11 @@ library
                      , filepath             ^>= 1.4.1
                      , fused-effects         >= 0.4 && <1
                      , split                ^>= 0.2.3
-                     , template-haskell      >= 2.12.0.0 && < 2.15.0.0
+                     , template-haskell      >= 2.12 && < 2.16
                      , text                 ^>= 1.2.3.1
                      , unordered-containers ^>= 0.2.9
                      , containers            >= 0.6.0.1
                      , semantic-source      ^>= 0.0.0.0
-  default-language:    Haskell2010
   exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Unmarshal
                      , TreeSitter.Language
@@ -47,6 +69,7 @@ library
                      , TreeSitter.GenerateSyntax
                      , TreeSitter.Deserialize
                      , TreeSitter.Cursor
+                     , TreeSitter.Token
   other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
@@ -57,9 +80,9 @@ library
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
-  ghc-options:         -Wall -fno-warn-name-shadowing
 
 test-suite test
+  import: common
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
@@ -67,13 +90,12 @@ test-suite test
                      , tree-sitter
                      , hedgehog >= 0.6 && <2
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  default-language:    Haskell2010
 
 test-suite codegen-test
+  import: common
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test-codegen
   main-is:          test-codegen.hs
-  default-language: Haskell2010
   build-depends:    base
                   , tree-sitter
                   , hedgehog >= 0.6 && <2

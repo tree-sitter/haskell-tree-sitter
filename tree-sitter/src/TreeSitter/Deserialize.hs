@@ -3,6 +3,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
+-- Turn off partial field warnings for Datatype.
+{-# OPTIONS_GHC -Wno-partial-fields #-}
 module TreeSitter.Deserialize
 ( Datatype (..)
 , Field (..)
