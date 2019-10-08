@@ -67,4 +67,4 @@ library tree-sitter-haskell-internal
 
 source-repository head
   type:     git
-  location: https://github.com/tree-sitter/tree-sitter-haskell
+  location: https://github.com/tree-sitter/haskell-tree-sitter
