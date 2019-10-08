@@ -94,3 +94,6 @@ set -x
 
 cabal upload --publish "$TGZ_LOC"
 cabal upload --publish --documentation "$DOCS_LOC"
+
+echo "Tagging $PACKAGE_VERSION"
+git tag "$PACKAGE_VERSION"
