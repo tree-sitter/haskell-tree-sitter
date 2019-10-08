@@ -51,10 +51,38 @@ Right (Module {ann = Range {start = 0, end = 3}, extraChildren = [R1 (SimpleStat
 
 ### Inspecting auto-generated datatypes
 
-Datatypes are derived from a language and its `node-types.json` file.
+Datatypes are derived from a language and its `node-types.json` file using the GenerateSyntax API (more on that below). To inspect it in the repl, you can look at its definition using `:i`:
 
 ```
 :i TreeSitter.Python.AST.Module
+```
+
+This shows the auto-generated `Module` datatype:
+
+```
+data TreeSitter.Python.AST.Module a
+  = TreeSitter.Python.AST.Module {TreeSitter.Python.AST.ann :: a,
+                                  TreeSitter.Python.AST.extraChildren :: [(GHC.Generics.:+:)
+                                                                            TreeSitter.Python.AST.CompoundStatement
+                                                                            TreeSitter.Python.AST.SimpleStatement
+                                                                            a]}
+  	-- Defined at TreeSitter/Python/AST.hs:10:1
+instance Show a => Show (TreeSitter.Python.AST.Module a)
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Ord a => Ord (TreeSitter.Python.AST.Module a)
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Eq a => Eq (TreeSitter.Python.AST.Module a)
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Traversable TreeSitter.Python.AST.Module
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Functor TreeSitter.Python.AST.Module
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Foldable TreeSitter.Python.AST.Module
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Unmarshal TreeSitter.Python.AST.Module
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance SymbolMatching TreeSitter.Python.AST.Module
+  -- Defined at TreeSitter/Python/AST.hs:10:1
 ```
 
 ### Tests
