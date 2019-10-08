@@ -2,6 +2,9 @@
 
 * Use a shared `Token` type for anonymous leaves in generated AST types.
 * Allow generated ASTs to override the representation for portions of the AST by defining specialized datatypes. Note that this should be used sparingly to keep the maintenance burden of the AST types low.
+* Generate named sum types as `newtype` wrappers around sums constructed with `:+:`.
+* Generate named & anonymous sum types as balanced binary trees of `:+:`s instead of right-chained lists.
+* Rename the `bytes` field of leaves to `text`.
 
 ### v0.4.0.0
 
