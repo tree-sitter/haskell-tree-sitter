@@ -113,8 +113,8 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
 ctorForLeafType :: DatatypeName -> Name -> Q Con
 ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes name
-  [ ("ann",   varT typeParameterName) -- ann :: a
-  , ("bytes", conT ''Text)
+  [ ("ann",  varT typeParameterName) -- ann :: a
+  , ("text", conT ''Text)
   ]
 
 -- | Build Q Constructor for records
