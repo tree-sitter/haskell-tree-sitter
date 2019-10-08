@@ -114,7 +114,7 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
 ctorForLeafType :: DatatypeName -> Name -> Q Con
 ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes name
   [ ("ann",  varT typeParameterName) -- ann :: a
-  , ("text", conT ''Text)
+  , ("text", conT ''Text)            -- text :: Text
   ]
 
 -- | Build Q Constructor for records
