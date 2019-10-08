@@ -19,10 +19,11 @@ s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
   parsed === Right t
 
-pass = Py.PassStatementSimpleStatement (Py.PassStatement () "pass" )
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
-plusOne = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.UnaryOperatorPrimaryExpression (Py.UnaryOperator () (L1 (Token ())) (Py.IntegerPrimaryExpression (Py.Integer () "1")))))])
-function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
+pass = Py.SimpleStatement (R1 (R1 (L1 (L1 (Py.PassStatement () "pass")))))
+one = Py.SimpleStatement (L1 (R1 (R1 (L1 (Py.ExpressionStatement () [L1 (L1 (Py.Expression (L1 (L1 (L1 (Py.PrimaryExpression (R1 (L1 (L1 (L1 (Py.Integer () "1")))))))))))])))))
+plusOne = Py.SimpleStatement (L1 (R1 (R1 (L1 (Py.ExpressionStatement () [L1 (L1 (Py.Expression (L1 (L1 (L1 (Py.PrimaryExpression (R1 (R1 (R1 (R1 (R1 (Py.UnaryOperator () (L1 (Token ())) (Py.PrimaryExpression (R1 (L1 (L1 (L1 (Py.Integer () "1")))))) ))))))))))))])))))
+identifier = Py.SimpleStatement (L1 (R1 (R1 (L1 (Py.ExpressionStatement () [L1 (L1 (Py.Expression (L1 (L1 (L1 (Py.PrimaryExpression (L1 (R1 (R1 (R1 (R1 (Py.Identifier () "hello"))))))))))))])))))
+
 
 prop_simpleExamples :: Property
 prop_simpleExamples = property $ do
@@ -31,7 +32,7 @@ prop_simpleExamples = property $ do
   "pass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 pass] }
   "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one] }
   "+1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 plusOne] }
-  "expensive" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 function] }
+  "hello" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 identifier] }
   "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one, R1 pass] }
 
 main :: IO ()

@@ -28,7 +28,6 @@ import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
 import qualified TreeSitter.Language as TS
 import Foreign.C.String
-import Data.Proxy
 import Data.Aeson hiding (String)
 import System.Directory
 import System.FilePath.Posix
@@ -57,10 +56,10 @@ syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
 syntaxDatatype language datatype = skipDefined $ do
   typeParameterName <- newName "a"
   case datatype of
-    SumType (DatatypeName datatypeName) _ subtypes -> do
-      cons <- traverse (constructorForSumChoice datatypeName typeParameterName) subtypes
-      result <- symbolMatchingInstanceForSums name subtypes
-      pure $ generatedDatatype name cons typeParameterName:result
+    SumType (DatatypeName _) _ subtypes -> do
+      types' <- fieldTypesToNestedSum subtypes
+      con <- normalC name [TH.bangType strictness (pure types' `appT` varT typeParameterName)]
+      pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
     ProductType (DatatypeName datatypeName) _ children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance language name datatypeName
@@ -79,8 +78,10 @@ syntaxDatatype language datatype = skipDefined $ do
       if isLocal then pure [] else m
     name = mkName nameStr
     nameStr = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
-    deriveClause = [ DerivClause Nothing [ ConT ''TS.Unmarshal, ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1] ]
-    generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons deriveClause
+    deriveStockClause = DerivClause (Just StockStrategy) [ ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1]
+    deriveAnyClassClause = DerivClause (Just AnyclassStrategy) [ConT ''TS.Unmarshal]
+    deriveGN = DerivClause (Just NewtypeStrategy) [ConT ''TS.SymbolMatching]
+    generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons [deriveStockClause, deriveAnyClassClause]
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
@@ -92,21 +93,6 @@ symbolMatchingInstance language name str = do
       showFailure _ node = "Expected " <> $(litE (stringL (show name))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
 
-symbolMatchingInstanceForSums :: Name -> [TreeSitter.Deserialize.Type] -> Q [Dec]
-symbolMatchingInstanceForSums name subtypes =
-  [d|instance TS.SymbolMatching $(conT name) where
-      showFailure _ node = "Expected " <> $(litE (stringL (show (map extractn subtypes)))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
-      symbolMatch _ = $(foldr1 mkOr (perMkType `map` subtypes)) |]
-  where perMkType (MkType (DatatypeName n) named) = [e|TS.symbolMatch (Proxy :: Proxy $(conT (toName named n))) |]
-        mkOr lhs rhs = [e| (||) <$> $(lhs) <*> $(rhs) |]
-        extractn (MkType (DatatypeName n) Named) = toCamelCase n
-        extractn (MkType (DatatypeName n) Anonymous) = "Anonymous" <> toCamelCase n
-
-
--- | Append string with constructor name (ex., @IfStatementStatement IfStatement@)
-constructorForSumChoice :: String -> Name -> TreeSitter.Deserialize.Type -> Q Con
-constructorForSumChoice str typeParameterName (MkType (DatatypeName n) named) = normalC (toName named (n ++ str)) [child]
-  where child = TH.bangType strictness (appT (conT (toName named n)) (varT typeParameterName))
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
@@ -116,7 +102,7 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
   fieldList = map (fmap toType) fields
   childList = toList $ fmap toTypeChild children
   toType (MkField required fieldTypes mult) =
-    let ftypes = fieldTypesToNestedEither fieldTypes typeParameterName
+    let ftypes = fieldTypesToNestedSum fieldTypes `appT` varT typeParameterName
     in case (required, mult) of
       (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
       (Required, Single) -> ftypes
@@ -139,11 +125,13 @@ ctorForTypes constructorName types = recC (toName Named constructorName) recordF
 
 
 -- | Convert field types to Q types
-fieldTypesToNestedEither :: NonEmpty TreeSitter.Deserialize.Type -> Name -> Q TH.Type
-fieldTypesToNestedEither xs typeParameterName = foldr1 combine (fmap convertToQType xs) `appT` varT typeParameterName
+fieldTypesToNestedSum :: NonEmpty TreeSitter.Deserialize.Type -> Q TH.Type
+fieldTypesToNestedSum xs = go (toList xs)
   where
-    combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs
+    combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs -- (((((a :+: b) :+: c) :+: d)) :+: e)   ((a :+: b) :+: (c :+: d))
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
+    go [x] = convertToQType x
+    go xs = let (l,r) = splitAt (length xs `div` 2) xs in (combine (go l) (go r))
 
 
 -- | Create bang required to build records
