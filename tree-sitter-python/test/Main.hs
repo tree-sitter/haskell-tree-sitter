@@ -19,10 +19,10 @@ s `shouldParseInto` t = do
   parsed <- liftIO $ parseByteString tree_sitter_python s
   parsed === Right t
 
-one = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IntegerPrimaryExpression (Py.Integer () "1")))])
 plusOne = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.UnaryOperatorPrimaryExpression (Py.UnaryOperator () (L1 (Token ())) (Py.IntegerPrimaryExpression (Py.Integer () "1")))))])
 function = Py.ExpressionStatementSimpleStatement (Py.ExpressionStatement () [L1 (Py.PrimaryExpressionExpression (Py.IdentifierPrimaryExpression (Py.Identifier () "expensive")))])
 pass = Py.SimpleStatement (R1 (R1 (L1 (L1 (Py.PassStatement () "pass")))))
+one = Py.SimpleStatement (L1 (R1 (R1 (L1 (Py.ExpressionStatement () [L1 (L1 (Py.Expression (L1 (L1 (L1 (Py.PrimaryExpression (R1 (L1 (L1 (L1 (Py.Integer () "1")))))))))))])))))
 
 
 prop_simpleExamples :: Property
