@@ -33,17 +33,7 @@ prop_simpleExamples = property $ do
   "1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one] }
   "+1" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 plusOne] }
   "hello" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 identifier] }
-  -- "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one, R1 pass] }
+  "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one, R1 pass] }
 
 main :: IO ()
 main = checkParallel $$(discover) >>= bool exitFailure exitSuccess
-
--- Right (Module {ann = Range {start = 0, end = 2}, extraChildren = [R1 (SimpleStatement (L1 (R1 (R1 (L1 (ExpressionStatement {ann = Range {start = 0, end = 2}, extraChildren = L1 (L1 (Expression (L1 (L1 (L1 (PrimaryExpression (R1 (R1 (R1 (R1 (R1 (UnaryOperator {ann = Range {start = 0, end = 2}, operator = L1 (Token {ann = Range {start = 0, end = 1}}), argument = PrimaryExpression (R1 (L1 (L1 (L1 (Integer {ann = Range {start = 1, end = 2}, bytes = "1"})))))})))))))))))) :| []}))))))]})
-
--- SimpleStatement (L1 (R1 (R1 (L1 (ExpressionStatement {ann = Range {start = 0, end = 2}, extraChildren = L1 (L1 (Expression (L1 (L1 (L1 (PrimaryExpression (R1 (R1 (R1 (R1 (R1 (UnaryOperator {ann = Range {start = 0, end = 2}, operator = L1 (Token {ann = Range {start = 0, end = 1}}), argument = PrimaryExpression (R1 (L1 (L1 (L1 (Integer {ann = Range {start = 1, end = 2}, bytes = "1"})))))})))))))))))) :| []})))))
-
-
--- Right (Module {ann = Range {start = 0, end = 5}, extraChildren = [R1 (SimpleStatement (L1 (R1 (R1 (L1 (ExpressionStatement {ann = Range {start = 0, end = 5}, extraChildren = L1 (L1 (Expression (L1 (L1 (L1 (PrimaryExpression (L1 (R1 (R1 (R1 (R1 (Identifier {ann = Range {start = 0, end = 5}, bytes = "hello"})))))))))))) :| []}))))))]})
-
-
--- {ann = Range {start = 0, end = 5}, extraChildren = L1 (L1 (Expression (L1 (L1 (L1 (PrimaryExpression (L1 (R1 (R1 (R1 (R1 (Identifier {ann = Range {start = 0, end = 5}, bytes = "hello"})))))))))))) :| []})))))
