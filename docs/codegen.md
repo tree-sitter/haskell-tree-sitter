@@ -93,23 +93,95 @@ To run tests:
 
 `cabal new-test tree-sitter-python`
 
-## Understanding the API
+## Relevant modules
 
 #### Deserialize
-
-The node-types.json file captures
 
 There are four distinct types represented node-types.json file takes on: sums, products, named leaves and anonymous leaves. We deserialize these into their respective shapes before using Template Haskell to generate specific datatypes of each shape.
 
 | Datatype | JSON example | TH example |
 |----------|--------------|------------|
-|sums|||
-|products|||
+|sum|<code>{<br>"type": "_compound_statement",<br>"named": true,<br>"subtypes": [<br>{"type": "class_definition",<br>"named": true<br>},<br>{<br>"type": "decorated_definition",<br>"named": true<br>},<br>{<br>"type": "for_statement",<br>"named": true<br>},<br>{<br>"type": "function_definition",<br>"named": true<br>},<br>{<br>"type": "if_statement",<br>"named": true<br>},<br>{<br>"type": "try_statement",<br>"named": true<br>},<br>{<br>"type": "while_statement",<br>"named": true<br>},<br>{"type": "with_statement","named": true<br>}<br>]<br>},||
+|product|||
 |named leaves|||
 |anonymous leaves|||
 
-_TODO:_
-- fill in examples, elaborate on this
+sum
+
+```Haskell
+data TreeSitter.Python.AST.CompoundStatement a
+  = TreeSitter.Python.AST.ClassDefinitionCompoundStatement (TreeSitter.Python.AST.ClassDefinition
+                                                              a)
+  | TreeSitter.Python.AST.DecoratedDefinitionCompoundStatement (TreeSitter.Python.AST.DecoratedDefinition
+                                                                  a)
+  | TreeSitter.Python.AST.ForStatementCompoundStatement (TreeSitter.Python.AST.ForStatement
+                                                           a)
+  | TreeSitter.Python.AST.FunctionDefinitionCompoundStatement (TreeSitter.Python.AST.FunctionDefinition
+                                                                 a)
+  | TreeSitter.Python.AST.IfStatementCompoundStatement (TreeSitter.Python.AST.IfStatement
+                                                          a)
+  | TreeSitter.Python.AST.TryStatementCompoundStatement (TreeSitter.Python.AST.TryStatement
+                                                           a)
+  | TreeSitter.Python.AST.WhileStatementCompoundStatement (TreeSitter.Python.AST.WhileStatement
+                                                             a)
+  | TreeSitter.Python.AST.WithStatementCompoundStatement (TreeSitter.Python.AST.WithStatement
+                                                            a)
+  	-- Defined at TreeSitter/Python/AST.hs:10:1
+instance Show a => Show (TreeSitter.Python.AST.CompoundStatement a)
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Ord a => Ord (TreeSitter.Python.AST.CompoundStatement a)
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Eq a => Eq (TreeSitter.Python.AST.CompoundStatement a)
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Traversable TreeSitter.Python.AST.CompoundStatement
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Functor TreeSitter.Python.AST.CompoundStatement
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Foldable TreeSitter.Python.AST.CompoundStatement
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance Unmarshal TreeSitter.Python.AST.CompoundStatement
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+instance SymbolMatching TreeSitter.Python.AST.CompoundStatement
+  -- Defined at TreeSitter/Python/AST.hs:10:1```
+
+product
+
+```JSON
+{
+  "type": "await",
+  "named": true,
+  "fields": {},
+  "children": {
+    "multiple": false,
+    "required": true,
+    "types": [
+      {
+        "type": "_expression",
+        "named": true
+      }
+    ]
+  }
+},
+```
+
+named leaf
+
+```JSON
+{
+  "type": "identifier",
+  "named": true
+}
+```
+
+
+anonymous leaf
+```JSON
+{
+  "type": "lambda",
+  "named": false
+},
+```
+
 
 #### Generate Syntax
 _TODO:_
