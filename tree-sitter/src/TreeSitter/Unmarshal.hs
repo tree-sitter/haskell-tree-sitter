@@ -166,7 +166,7 @@ class UnmarshalField t where
 instance UnmarshalField Maybe where
   unmarshalField []  = pure Nothing
   unmarshalField [x] = Just <$> unmarshalNode x
-  unmarshalField _   = fail "expected a node of type ((f :+: g) a) but got multiple"
+  unmarshalField _   = fail "expected a node of type (Maybe a) but got multiple"
 
 instance UnmarshalField [] where
   unmarshalField (x:xs) = do

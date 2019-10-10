@@ -4,7 +4,7 @@ version:             0.2.0.1
 synopsis:            Tree-sitter grammar/parser for Go
 description:         This package provides a parser for Go suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
-homepage:            https://github.com/tree-sitter/tree-sitter-go#readme
+homepage:            https://github.com/tree-sitter/haskell-tree-sitter/tree/master/tree-sitter-go
 author:              Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey, Ayman Nadeem, Patrick Thomson
 maintainer:          tclem@github.com
 copyright:           2017 GitHub
