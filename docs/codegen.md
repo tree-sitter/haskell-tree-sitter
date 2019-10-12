@@ -151,7 +151,8 @@ instance Foldable TreeSitter.Python.AST.CompoundStatement
 instance Unmarshal TreeSitter.Python.AST.CompoundStatement
   -- Defined at TreeSitter/Python/AST.hs:10:1
 instance SymbolMatching TreeSitter.Python.AST.CompoundStatement
-  -- Defined at TreeSitter/Python/AST.hs:10:1```
+  -- Defined at TreeSitter/Python/AST.hs:10:1
+```
 
 product
 
@@ -196,7 +197,7 @@ anonymous leaf
 GenerateSyntax is our Template Haskell API for generating the datatypes to represent AST nodes. This file:
 
 1. Defines all of the necessary logic required to process node types that correspond to sums, products, leaves and anonymous leaves captured by `Deserialize`.
-2. Exports the top-level function `astDeclarationsForLanguage`, which is is invoked by a given language [AST](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter-python/TreeSitter/Python/AST.hs) module.
+2. Exports the top-level function `astDeclarationsForLanguage` to auto-generate datatypes at compile-time, which is is invoked by a given language [AST](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter-python/TreeSitter/Python/AST.hs) module.
 
 #### Things to note:
 - Anonymous leaf types are defined as synonyms for the `Token datatype`
@@ -205,9 +206,11 @@ GenerateSyntax is our Template Haskell API for generating the datatypes to repre
 
 ### Unmarshal
 
-_TODO:_
-- Parse source code and produce AST
-- Describe how `parseByteString` works, symbolMatching instances etc.
+Unmarshal is the process of iterating over a tree-sitter tree and mapping its nodes onto TH-generated datatypes. This file:
+
+1. Exports the top-level function `parseByteString`, which takes source code, a language and produces an AST.
+2. TODO: Symbol matching
+3. TODO: Generic behavior 
 
 Things to note:
 - We have generic and non-generic classes. This is because generic behaviors are different than what we get non-generically, and in the case of ` Maybe`, `[]`—we actually preference doing things non-generically. Since `[]` is a sum, the generic behavior for `:+:` would be invoked and expect that we’d have repetitions represented in the parse tree as right-nested singly-linked lists (ex., `(a (b (c (d…))))`) rather than as just consecutive sibling nodes (ex., `(a b c ...d)`, which is what our trees have). We want to match the latter.
