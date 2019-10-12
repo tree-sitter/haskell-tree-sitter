@@ -115,64 +115,6 @@ There are four distinct types represented node-types.json file takes on: sums, p
 |named leaves|||
 |anonymous leaves|||
 
-sum
-
-```Haskell
-data TreeSitter.Python.AST.CompoundStatement a
-  = TreeSitter.Python.AST.ClassDefinitionCompoundStatement (TreeSitter.Python.AST.ClassDefinition
-                                                              a)
-  | TreeSitter.Python.AST.DecoratedDefinitionCompoundStatement (TreeSitter.Python.AST.DecoratedDefinition
-                                                                  a)
-  | TreeSitter.Python.AST.ForStatementCompoundStatement (TreeSitter.Python.AST.ForStatement
-                                                           a)
-  | TreeSitter.Python.AST.FunctionDefinitionCompoundStatement (TreeSitter.Python.AST.FunctionDefinition
-                                                                 a)
-  | TreeSitter.Python.AST.IfStatementCompoundStatement (TreeSitter.Python.AST.IfStatement
-                                                          a)
-  | TreeSitter.Python.AST.TryStatementCompoundStatement (TreeSitter.Python.AST.TryStatement
-                                                           a)
-  | TreeSitter.Python.AST.WhileStatementCompoundStatement (TreeSitter.Python.AST.WhileStatement
-                                                             a)
-  | TreeSitter.Python.AST.WithStatementCompoundStatement (TreeSitter.Python.AST.WithStatement
-                                                            a)
-  	-- Defined at TreeSitter/Python/AST.hs:10:1
-instance Show a => Show (TreeSitter.Python.AST.CompoundStatement a)
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance Ord a => Ord (TreeSitter.Python.AST.CompoundStatement a)
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance Eq a => Eq (TreeSitter.Python.AST.CompoundStatement a)
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance Traversable TreeSitter.Python.AST.CompoundStatement
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance Functor TreeSitter.Python.AST.CompoundStatement
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance Foldable TreeSitter.Python.AST.CompoundStatement
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance Unmarshal TreeSitter.Python.AST.CompoundStatement
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-instance SymbolMatching TreeSitter.Python.AST.CompoundStatement
-  -- Defined at TreeSitter/Python/AST.hs:10:1
-```
-
-product
-
-```JSON
-{
-  "type": "await",
-  "named": true,
-  "fields": {},
-  "children": {
-    "multiple": false,
-    "required": true,
-    "types": [
-      {
-        "type": "_expression",
-        "named": true
-      }
-    ]
-  }
-},
-```
 
 named leaf
 
