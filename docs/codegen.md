@@ -103,11 +103,6 @@ To run tests:
 
 ### Deserialize
 
-_TODO: add bit about node field names_ https://tree-sitter.github.io/tree-sitter/using-parsers#node-field-names
-
-
-There are four distinct types represented node-types.json file takes on: sums, products, named leaves and anonymous leaves. We deserialize these into their respective shapes before using Template Haskell to generate specific datatypes of each shape.
-
 There are four distinct types represented in the node-types.json file takes on: sums, products, named leaves and anonymous leaves. We deserialize these into their respective shapes before using Template Haskell to generate specific datatypes of each shape. Here is an example of
 
 ### Generate Syntax
