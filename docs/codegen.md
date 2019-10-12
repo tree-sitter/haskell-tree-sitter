@@ -13,12 +13,12 @@ The following document provides more details on the generated ASTs, APIs and tes
 ### Table of Contents
 - [Generating ASTs](#Generating-ASTs)
 - [Inspecting auto-generated datatypes](#Inspecting-auto-generated-datatypes)
+- [Tests](#tests)
 - [Relevant modules](#Relevant-modules)
   - [Deserialize](#Deserialize)
   - [GenerateSyntax](#GenerateSyntax)
   - [Unmarshal](#unmarshal)
   - [TreeSitter.Language.AST](#treesitter-language-ast)
-- [Tests](#tests)
 
 ___
 
@@ -210,7 +210,7 @@ Unmarshal is the process of iterating over a tree-sitter tree and mapping its no
 
 1. Exports the top-level function `parseByteString`, which takes source code, a language and produces an AST.
 2. TODO: Symbol matching
-3. TODO: Generic behavior 
+3. TODO: Generic behavior
 
 Things to note:
 - We have generic and non-generic classes. This is because generic behaviors are different than what we get non-generically, and in the case of ` Maybe`, `[]`—we actually preference doing things non-generically. Since `[]` is a sum, the generic behavior for `:+:` would be invoked and expect that we’d have repetitions represented in the parse tree as right-nested singly-linked lists (ex., `(a (b (c (d…))))`) rather than as just consecutive sibling nodes (ex., `(a b c ...d)`, which is what our trees have). We want to match the latter.
