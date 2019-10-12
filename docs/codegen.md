@@ -108,31 +108,7 @@ _TODO: add bit about node field names_ https://tree-sitter.github.io/tree-sitter
 
 There are four distinct types represented node-types.json file takes on: sums, products, named leaves and anonymous leaves. We deserialize these into their respective shapes before using Template Haskell to generate specific datatypes of each shape.
 
-| Datatype | JSON example | TH example |
-|----------|--------------|------------|
-|sum|<code>{<br>"type": "_compound_statement",<br>"named": true,<br>"subtypes": [<br>{"type": "class_definition",<br>"named": true<br>},<br>{<br>"type": "decorated_definition",<br>"named": true<br>},<br>{<br>"type": "for_statement",<br>"named": true<br>},<br>{<br>"type": "function_definition",<br>"named": true<br>},<br>{<br>"type": "if_statement",<br>"named": true<br>},<br>{<br>"type": "try_statement",<br>"named": true<br>},<br>{<br>"type": "while_statement",<br>"named": true<br>},<br>{"type": "with_statement","named": true<br>}<br>]<br>},||
-|product|||
-|named leaves|||
-|anonymous leaves|||
-
-
-named leaf
-
-```JSON
-{
-  "type": "identifier",
-  "named": true
-}
-```
-
-
-anonymous leaf
-```JSON
-{
-  "type": "lambda",
-  "named": false
-},
-```
+There are four distinct types represented in the node-types.json file takes on: sums, products, named leaves and anonymous leaves. We deserialize these into their respective shapes before using Template Haskell to generate specific datatypes of each shape. Here is an example of
 
 ### Generate Syntax
 
@@ -145,6 +121,12 @@ GenerateSyntax is our Template Haskell API for generating the datatypes to repre
 - Anonymous leaf types are defined as synonyms for the `Token datatype`
 - Any datatypes among the node types which have already been defined in the module where the splice is run will be skipped, allowing customization of the representation of parts of the tree. Note that this should be used sparingly, as it imposes extra maintenance burden, particularly when the grammar is changed. This may be used to e.g. parse literals into Haskell equivalents (e.g. parsing the textual contents of integer literals into `Integer`s), and may require defining `TS.UnmarshalAnn` or `TS.SymbolMatching` instances for (parts of) the custom datatypes, depending on where and how the datatype occurs in the generated tree, in addition to the usual `Foldable`, `Functor`, etc. instances provided for generated datatypes.
 - Range and span info is captured by the parameter `a`
+
+Here is an example demonstrating the relationship between the JSON representation of an identifier provided by the `node-types.json` file, and the subsequent datatype generated as a result of parsing that JSON and using Template Haskell:
+
+| Type | JSON | TH |
+|----------|--------------|------------|
+|leaf|<code>{<br>"type": "identifier",<br>"named": true<br>}|<code>data TreeSitter.Python.AST.Identifier a<br>= TreeSitter.Python.AST.Identifier {TreeSitter.Python.AST.ann :: a,<br>TreeSitter.Python.AST.bytes :: text-1.2.3.1:Data.Text.Internal.Text} -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Show a => Show (TreeSitter.Python.AST.Identifier a) -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Ord a => Ord (TreeSitter.Python.AST.Identifier a) -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Eq a => Eq (TreeSitter.Python.AST.Identifier a) -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Traversable TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Functor TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Foldable TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Unmarshal TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance SymbolMatching TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1|
 
 ### Unmarshal
 
