@@ -63,7 +63,7 @@ Datatypes are derived from a language and its `node-types.json` file using the G
 :i TreeSitter.Python.AST.Module
 ```
 
-This shows the auto-generated `Module` datatype:
+This gives us the auto-generated `Module` datatype:
 
 ```
 data TreeSitter.Python.AST.Module a
