@@ -4,7 +4,7 @@ version:             0.2.0.1
 synopsis:            tree-sitter Nix language bindings
 description:         A parser for Nix for use with the tree-sitter package.
 license:             BSD-3-Clause
-homepage:            https://github.com/tree-sitter/haskell-tree-sitter#readme
+homepage:            https://github.com/tree-sitter/haskell-tree-sitter/tree/master/tree-sitter-nix
 author:              Robert Hensing
 maintainer:          Robert Hensing
 copyright:           Hercules Labs OÜ
