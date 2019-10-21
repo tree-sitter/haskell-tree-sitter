@@ -1,22 +1,30 @@
 # CodeGen Documentation
 
-CodeGen is the process for generating language-specific, strongly-typed ASTs for used by [Semantic](https://github.com/github/semantic-code/blob/d9f91a05dc30a61b9ff8c536d75661d417f3c506/design-docs/precise-code-navigation.md). The process depends on two prerequisites for any given language: 1) a [tree-sitter](http://tree-sitter.github.io/tree-sitter/) parser for that language must exist, and 2) a Cabal package for that supported language must also exist in order to provide an interface into tree-sitter's C source. [This](https://github.com/tree-sitter/haskell-tree-sitter/tree/master/tree-sitter-python) is an example of a library for the supported language Python that the remaining documentation will refer to.
+CodeGen is the process for auto-generating language-specific, strongly-typed ASTs to be used in [Semantic](https://github.com/github/semantic-code/blob/d9f91a05dc30a61b9ff8c536d75661d417f3c506/design-docs/precise-code-navigation.md).
 
-During parser generation, tree-sitter produces a JSON file that captures the structure of a particular grammar. This means that for a given language with an existing tree-sitter grammar, we're able to derive datatypes representing surface languages based on that JSON file, and then use those datatypes to create ASTs.
+### Prerequisites
+To get started, first make sure your language has:
+
+1. An existing [tree-sitter](http://tree-sitter.github.io/tree-sitter/) parser
+2. An existing Cabal package in this repository for said language in order to provide an interface into tree-sitter's C source. [This](https://github.com/tree-sitter/haskell-tree-sitter/tree/master/tree-sitter-python) is an example of a library for Python, a supported language that the remaining documentation will refer to.
+
+### CodeGen Pipeline
+
+During parser generation, tree-sitter produces a JSON file that captures the structure of a language's grammar. Based on this, we're able to derive datatypes representing surface languages, and then use those datatypes to generically build ASTs. This automates the engineering effort [historically required for adding a new language](https://github.com/github/semantic/blob/master/docs/adding-new-languages.md).
 
 The following steps provide a high-level outline of the process:
 
 1. [**Deserialize.**](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter/src/TreeSitter/Deserialize.hs) First, we deserialize the `node-types.json` file for a given language into the desired shape of datatypes via parsing capabilities afforded by the [Aeson](http://hackage.haskell.org/package/aeson) library. There are four distinct types represented in the node-types.json file takes on: sums, products, named leaves and anonymous leaves.
-2. [**Generate Syntax.**](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter/src/TreeSitter/GenerateSyntax.hs) We then use Template Haskell to auto-generate language-specific, strongly-typed datatypes that represent various language constructs at compile-time. This API exports the top-level function `astDeclarationsForLanguage` to auto-generate datatypes at compile-time, which is is invoked by a given language [AST](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter-python/TreeSitter/Python/AST.hs) module.
+2. [**Generate Syntax.**](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter/src/TreeSitter/GenerateSyntax.hs) We then use Template Haskell to auto-generate language-specific, strongly-typed datatypes that represent various language constructs. This API exports the top-level function `astDeclarationsForLanguage` to auto-generate datatypes at compile-time, which is is invoked by a given language [AST](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter-python/TreeSitter/Python/AST.hs) module.
 3. [**Unmarshal.**](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter/src/TreeSitter/Unmarshal.hs) Unmarshaling is the process of iterating over tree-sitter’s parse trees using its tree cursor API, and producing Haskell ASTs for the relevant nodes. We parse source code from tree-sitter and unmarshal the data we get to build these ASTs generically. This file exports the top-level function `parseByteString`, which takes source code and a language as arguments, and produces an AST.
 
-For example, here is relationship between a Python identifier represented in the json file, and a datatype generated based on its structure to be used in an AST:
+For example, here is relationship between a Python identifier represented in the `node-types.json` file, and a datatype generated based on its structure to be used in an AST:
 
 | Type | JSON | TH-generated code |
 |----------|--------------|------------|
 |Named leaf|<code>{<br>"type": "identifier",<br>"named": true<br>}|<code>data TreeSitter.Python.AST.Identifier a<br>= TreeSitter.Python.AST.Identifier {TreeSitter.Python.AST.ann :: a,<br>TreeSitter.Python.AST.bytes :: text-1.2.3.1:Data.Text.Internal.Text} -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Show a => Show (TreeSitter.Python.AST.Identifier a) -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Ord a => Ord (TreeSitter.Python.AST.Identifier a) -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Eq a => Eq (TreeSitter.Python.AST.Identifier a) -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Traversable TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Functor TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Foldable TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance Unmarshal TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1<br>instance SymbolMatching TreeSitter.Python.AST.Identifier -- Defined at TreeSitter/Python/AST.hs:10:1|
 
-The remaining document provides more details on the generated ASTs, APIs and tests.
+The remaining document provides more details on generating ASTs, inspecting datatypes, tests, and information on decisions pertaining to relevant APIs.
 ___
 
 ### Table of Contents
