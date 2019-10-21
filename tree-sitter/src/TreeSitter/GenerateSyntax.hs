@@ -64,6 +64,7 @@ syntaxDatatype language datatype = skipDefined $ do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance language name datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
+      -- Anonymous leaf types are defined as synonyms for the `Token` datatype
     LeafType (DatatypeName datatypeName) Anonymous -> do
       tsSymbol <- runIO $ withCString datatypeName (TS.ts_language_symbol_for_name language)
       pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
