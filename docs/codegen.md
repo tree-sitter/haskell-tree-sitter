@@ -55,7 +55,7 @@ import TreeSitter.Range
 import TreeSitter.Unmarshal
 ```
 
-3. You can now call `parseByteString`, passing in the desired language you wish to parse (in this case Python exemplified by `tree_sitter_python`), and the source code (in this case binary addition of two identifiers). Since the function is constrained by `(Unmarshal t, UnmarshalAnn a)`, you can use type applications to provide a top-level node `t`, an entry point into the tree, in addition to a polymorphic annotation `a` used to represent range and span:
+3. You can now call `parseByteString`, passing in the desired language you wish to parse (in this case Python exemplified by `tree_sitter_python`), and the source code (in this case an integer `1`). Since the function is constrained by `(Unmarshal t, UnmarshalAnn a)`, you can use type applications to provide a top-level node `t`, an entry point into the tree, in addition to a polymorphic annotation `a` used to represent range and span:
 
 ```
 parseByteString @(TreeSitter.Python.AST.Module (TreeSitter.Range.Range, Span)) tree_sitter_python "1"
