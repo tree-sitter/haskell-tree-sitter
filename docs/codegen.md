@@ -64,7 +64,99 @@ parseByteString @(TreeSitter.Python.AST.Module (TreeSitter.Range.Range, Span)) t
 This generates the following AST:
 
 ```
-Right (Module {ann = Range {start = 0, end = 3}, extraChildren = [R1 (SimpleStatement (L1 (R1 (R1 (L1 (ExpressionStatement {ann = Range {start = 0, end = 3}, extraChildren = L1 (L1 (Expression (L1 (L1 (L1 (PrimaryExpression (L1 (L1 (L1 (R1 (BinaryOperator {ann = Range {start = 0, end = 3}, operator = L1 (R1 (R1 (L1 (Token {ann = Range {start = 1, end = 2}})))), left = PrimaryExpression (L1 (R1 (R1 (R1 (R1 (Identifier {ann = Range {start = 0, end = 1}, bytes = "a"})))))), right = PrimaryExpression (L1 (R1 (R1 (R1 (R1 (Identifier {ann = Range {start = 2, end = 3}, bytes = "b"}))))))}))))))))))) :| []}))))))]})
+Right
+    ( Module
+        { ann =
+            ( Range
+                { start = 0
+                , end = 1
+                }
+            , Span
+                { start = Pos
+                    { line = 0
+                    , column = 0
+                    }
+                , end = Pos
+                    { line = 0
+                    , column = 1
+                    }
+                }
+            )
+        , extraChildren =
+            [ R1
+                ( SimpleStatement
+                    ( L1
+                        ( R1
+                            ( R1
+                                ( L1
+                                    ( ExpressionStatement
+                                        { ann =
+                                            ( Range
+                                                { start = 0
+                                                , end = 1
+                                                }
+                                            , Span
+                                                { start = Pos
+                                                    { line = 0
+                                                    , column = 0
+                                                    }
+                                                , end = Pos
+                                                    { line = 0
+                                                    , column = 1
+                                                    }
+                                                }
+                                            )
+                                        , extraChildren = L1
+                                            ( L1
+                                                ( Expression
+                                                    ( L1
+                                                        ( L1
+                                                            ( L1
+                                                                ( PrimaryExpression
+                                                                    ( R1
+                                                                        ( L1
+                                                                            ( L1
+                                                                                ( L1
+                                                                                    ( Integer
+                                                                                        { ann =
+                                                                                            ( Range
+                                                                                                { start = 0
+                                                                                                , end = 1
+                                                                                                }
+                                                                                            , Span
+                                                                                                { start = Pos
+                                                                                                    { line = 0
+                                                                                                    , column = 0
+                                                                                                    }
+                                                                                                , end = Pos
+                                                                                                    { line = 0
+                                                                                                    , column = 1
+                                                                                                    }
+                                                                                                }
+                                                                                            )
+                                                                                        , text = "1"
+                                                                                        }
+                                                                                    )
+                                                                                )
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            ) :| []
+                                        }
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ]
+        }
+    )
 ```
 
 ### Inspecting auto-generated datatypes
