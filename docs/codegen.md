@@ -169,7 +169,7 @@ Datatypes are derived from a language and its `node-types.json` file using the G
 
 This shows us the auto-generated `Module` datatype:
 
-```
+```Haskell
 data TreeSitter.Python.AST.Module a
   = TreeSitter.Python.AST.Module {TreeSitter.Python.AST.ann :: a,
                                   TreeSitter.Python.AST.extraChildren :: [(GHC.Generics.:+:)
