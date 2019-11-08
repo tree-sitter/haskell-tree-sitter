@@ -1,16 +1,17 @@
-{-# LANGUAGE TemplateHaskell, TypeApplications #-}
-module Main (main) where
+{-# LANGUAGE TemplateHaskell #-}
+module TreeSitter.Strings.Example (tests) where
 
 import           Control.Monad
-import           Data.Bool (bool)
 import           Data.Char
 import           Data.Foldable
 import           Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import           System.Exit (exitFailure, exitSuccess)
 import           TreeSitter.Strings
 import           TreeSitter.Symbol
+
+tests :: IO Bool
+tests = checkParallel $$(discover)
 
 -- | Generate permutations of alphabet and underscore combinations
 snakeChar :: MonadGen m => m Char
@@ -46,6 +47,3 @@ prop_escapePunct = property $ do
   xs <- forAll $ Gen.string (Range.constant 1 5) (Gen.filter p Gen.ascii)
   traverse_ (assert . isAlphaNum) (escapeOperatorPunctuation xs)
   where p = not . (\c -> isSpace c || c == '_' )
-
-main :: IO ()
-main = checkParallel $$discover >>= bool exitFailure exitSuccess
