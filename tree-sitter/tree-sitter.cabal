@@ -64,6 +64,7 @@ library
                      , TreeSitter.Unmarshal
                      , TreeSitter.Language
                      , TreeSitter.Node
+                     , TreeSitter.Strings
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
                      , TreeSitter.GenerateSyntax
