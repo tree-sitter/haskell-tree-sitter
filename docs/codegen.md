@@ -28,10 +28,14 @@ The remaining document provides more details on generating ASTs, inspecting data
 ___
 
 ### Table of Contents
-- [Generating ASTs](#Generating-ASTs)
-- [Inspecting auto-generated datatypes](#Inspecting-auto-generated-datatypes)
-- [Tests](#tests)
-- [Additional notes](#Additional-notes)
+- [CodeGen Documentation](#codegen-documentation)
+    - [Prerequisites](#prerequisites)
+    - [CodeGen Pipeline](#codegen-pipeline)
+    - [Table of Contents](#table-of-contents)
+    - [Generating ASTs](#generating-asts)
+    - [Inspecting auto-generated datatypes](#inspecting-auto-generated-datatypes)
+    - [Tests](#tests)
+    - [Additional notes](#additional-notes)
 ___
 
 ### Generating ASTs
@@ -44,21 +48,21 @@ To parse source code and produce ASTs locally:
 cabal new-repl lib:tree-sitter-python
 ```
 
-2. Set language extensions, `OverloadedStrings` and `TypeApplications`, and import relevant modules, `TreeSitter.Unmarshal`, `TreeSitter.Range` and `TreeSitter.Span`:
+2. Set language extensions, `OverloadedStrings` and `TypeApplications`, and import relevant modules, `TreeSitter.Unmarshal`, `Source.Range` and `Source.Span`:
 
 ```
 :seti -XOverloadedStrings
 :seti -XTypeApplications
 
-import TreeSitter.Span
-import TreeSitter.Range
+import Source.Span
+import Source.Range
 import TreeSitter.Unmarshal
 ```
 
 3. You can now call `parseByteString`, passing in the desired language you wish to parse (in this case Python exemplified by `tree_sitter_python`), and the source code (in this case an integer `1`). Since the function is constrained by `(Unmarshal t, UnmarshalAnn a)`, you can use type applications to provide a top-level node `t`, an entry point into the tree, in addition to a polymorphic annotation `a` used to represent range and span:
 
 ```
-parseByteString @(TreeSitter.Python.AST.Module (TreeSitter.Range.Range, Span)) tree_sitter_python "1"
+parseByteString @TreeSitter.Python.AST.Module @(Source.Span.Span, Source.Range.Range) tree_sitter_python "1"
 ```
 
 This generates the following AST:
