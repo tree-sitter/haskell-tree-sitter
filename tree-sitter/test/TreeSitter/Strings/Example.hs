@@ -36,8 +36,8 @@ initialCaps = Gen.frequency
   , (1, Gen.lower)
   ]
 
-prop_initUpper :: Property
-prop_initUpper = property $ do
+prop_capitalize :: Property
+prop_capitalize = property $ do
   x:xs <- forAll (Gen.string (Range.constant 1 5) initialCaps)
   y:_  <- pure $ capitalize (x:xs)
   when (isLower x) (assert (isUpper y))
