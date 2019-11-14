@@ -33,14 +33,13 @@ testCorpus :: Path.RelFile -> IO TestTree
 testCorpus path = do
   xs <- parseCorpusFile path
   case xs of
-    Left e -> print ("failed to parse corpus: " <> show path) *> print e *> exitFailure
-    Right xs -> testGroup (Path.toString path) <$> traverse toPropTest xs
+    Left e -> print ("Failed to parse corpus: " <> show (Path.toString path) <> " " <> "Error: " <> show e) *> exitFailure
+    Right xs -> testGroup (Path.toString path) <$> traverse corpusTestCase xs
   where
-    toPropTest (CorpusExample name code) =
-      testCase name . either (errMsg code) pass <$> parseByteString @Py.Module @() tree_sitter_python code
-      where
-        pass = const (pure ())
-        errMsg code e = assertFailure (e <> "\n``` python\n" <> unpack code <> "```")
+    corpusTestCase (CorpusExample name code) = testCase name . either (errMsg code) pass <$> parse code
+    parse = parseByteString @Py.Module @() tree_sitter_python
+    pass = const (pure ())
+    errMsg code e = assertFailure (e <> "\n``` python\n" <> unpack code <> "```")
 
 -- Read and parse tree-sitter corpus examples
 
