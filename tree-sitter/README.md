@@ -33,3 +33,7 @@ can be found [here](https://github.com/tree-sitter/haskell-tree-sitter/blob/mast
 To build these executables, pass the `build-examples` flag to your build tool.
 
 [tree-sitter]: https://github.com/tree-sitter/tree-sitter
+
+### CodeGen API
+
+CodeGen is the process for auto-generating language-specific, strongly-typed ASTs. To learn more, read [the docs](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/docs/codegen.md).
