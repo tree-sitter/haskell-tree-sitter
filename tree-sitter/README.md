@@ -1,5 +1,10 @@
 # haskell-tree-sitter
 
+There are two parts to this library:
+1. [Haskell bindings for tree-sitter](#haskell-bindings-for-tree-sitter)
+2. [CodeGen API](#codegen-api)
+
+### Haskell bindings for tree-sitter
 
 This is a set of Haskell bindings to the [tree-sitter][tree-sitter]
 parsing library. tree-sitter is a modern incremental parsing toolkit
