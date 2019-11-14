@@ -7,6 +7,7 @@ import           Data.Attoparsec.ByteString.Char8
 import           Data.ByteString (ByteString, readFile)
 import           Data.ByteString.Char8 (pack, unpack)
 import           Data.Either
+import           Data.Functor
 import           Prelude hiding (takeWhile)
 import           System.Exit (exitFailure)
 import qualified System.Path as Path
@@ -20,7 +21,7 @@ import           TreeSitter.Unmarshal
 import qualified Manual.Examples
 
 main :: IO ()
-main = corpusFiles >>= traverse testCorpus >>= defaultMain . tests
+main = readCorpusFiles (Path.relDir "./vendor/tree-sitter-python/corpus") >>= traverse testCorpus >>= defaultMain . tests
 
 tests :: [TestTree] -> TestTree
 tests xs = testGroup "Tests"
@@ -28,24 +29,26 @@ tests xs = testGroup "Tests"
   , Manual.Examples.tests
   ]
 
-data CorpusExample = CorpusExample { name :: String, code :: ByteString }
-  deriving (Eq, Show)
-
-corpusFiles :: IO [Path.RelFile]
-corpusFiles = let dir = Path.relDir "./vendor/tree-sitter-python/corpus"
-              in fmap (Path.combine dir) <$> Path.filesInDir dir
-
 testCorpus :: Path.RelFile -> IO TestTree
 testCorpus path = do
   xs <- parseCorpusFile path
   case xs of
     Left e -> print ("failed to parse corpus: " <> show path) *> print e *> exitFailure
-    Right xs -> (traverse toPropTest xs) >>= pure . testGroup (Path.toString path)
+    Right xs -> testGroup (Path.toString path) <$> traverse toPropTest xs
   where
     toPropTest (CorpusExample name code) = do
       res <- parseByteString @Py.Module @() tree_sitter_python code
       let failureMsg = "failed to parse:\n``` python\n" <> code <> "```"
       pure $ testCase name (assertBool (unpack failureMsg) (isRight res))
+
+
+-- Read and parse tree-sitter corpus examples
+
+readCorpusFiles :: Path.RelDir ->  IO [Path.RelFile]
+readCorpusFiles dir = fmap (Path.combine dir) <$> Path.filesInDir dir
+
+data CorpusExample = CorpusExample { name :: String, code :: ByteString }
+  deriving (Eq, Show)
 
 parseCorpusFile :: Path.RelFile -> IO (Either String [CorpusExample])
 parseCorpusFile path = do
@@ -62,7 +65,7 @@ exampleParser :: Parser CorpusExample
 exampleParser = do
   name <- exampleNameParser
   code <- manyTill anyChar (string "\n---\n")
-  _out <- manyTill anyChar (choice [endOfInput, char '=' *> pure ()])
+  _out <- manyTill anyChar (choice [endOfInput, char '=' $> ()])
   pure (CorpusExample name (pack code))
 
 exampleNameParser :: Parser String
