@@ -1,6 +1,5 @@
 # haskell-tree-sitter
 
-**Please note that this library is currently in flux. The maintainers are revising the core API to allow for generation of Haskell types from a tree-sitter grammar, and the automatic bridging of tree-sitter syntax nodes to these types.**
 
 This is a set of Haskell bindings to the [tree-sitter][tree-sitter]
 parsing library. tree-sitter is a modern incremental parsing toolkit
