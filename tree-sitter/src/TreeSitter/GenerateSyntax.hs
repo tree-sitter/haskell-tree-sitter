@@ -7,14 +7,9 @@
 -- {-# LANGUAGE TypeOperators #-}
 module TreeSitter.GenerateSyntax
 ( syntaxDatatype
-, removeUnderscore
-, initUpper
 , astDeclarationsForLanguage
--- * Internal functions exposed for testing
-
 ) where
 
-import Data.Char
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax as TH
 import Data.HashSet (HashSet)
@@ -33,6 +28,7 @@ import System.Directory
 import System.FilePath.Posix
 import TreeSitter.Node
 import TreeSitter.Token
+import TreeSitter.Strings
 import TreeSitter.Symbol (escapeOperatorPunctuation)
 
 
@@ -122,7 +118,7 @@ ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes name
 ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
 ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
   recordFields = map (uncurry toVarBangType) types
-  toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . removeUnderscore $ str) (TH.bangType strictness type')
+  toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . camelCase $ str) (TH.bangType strictness type')
 
 
 -- | Convert field types to Q types
@@ -139,10 +135,6 @@ fieldTypesToNestedSum xs = go (toList xs)
 strictness :: BangQ
 strictness = TH.bang noSourceUnpackedness noSourceStrictness
 
--- | Convert snake_case string to CamelCase String
-toCamelCase :: String -> String
-toCamelCase = initUpper . escapeOperatorPunctuation . removeUnderscore
-
 clashingNames :: HashSet String
 clashingNames = HashSet.fromList ["type", "module", "data"]
 
@@ -157,8 +149,8 @@ toName named str = mkName (toNameString named str)
 
 toNameString :: Named -> String -> String
 toNameString named str = addTickIfNecessary $ case named of
-  Anonymous -> "Anonymous" <> toCamelCase str
-  Named -> toCamelCase str
+  Anonymous -> "Anonymous" <> toEscapedPascalCase str
+  Named -> toEscapedPascalCase str
 
 -- | Get the 'Module', if any, for a given 'Name'.
 moduleForName :: Name -> Maybe Module
@@ -168,14 +160,6 @@ moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule
 isLocalName :: Name -> Q Bool
 isLocalName n = (moduleForName n ==) . Just <$> thisModule
 
--- Helper function to output camel cased data type names
-initUpper :: String -> String
-initUpper (c:cs) = toUpper c : cs
-initUpper "" = ""
-
--- Helper function to remove underscores from output of data type names
-removeUnderscore :: String -> String
-removeUnderscore = foldr appender ""
-  where appender :: Char -> String -> String
-        appender '_' cs = initUpper cs
-        appender c cs = c : cs
+-- | Replace operators and convert snake_case String to PascalCase
+toEscapedPascalCase :: String -> String
+toEscapedPascalCase = capitalize . escapeOperatorPunctuation . camelCase

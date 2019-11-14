@@ -64,6 +64,7 @@ library
                      , TreeSitter.Unmarshal
                      , TreeSitter.Language
                      , TreeSitter.Node
+                     , TreeSitter.Strings
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
                      , TreeSitter.GenerateSyntax
@@ -85,20 +86,13 @@ test-suite test
   import: common
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             Spec.hs
+  main-is:             Test.hs
+  other-modules:       TreeSitter.Example
+  other-modules:       TreeSitter.Strings.Example
   build-depends:       base
                      , tree-sitter
                      , hedgehog >= 0.6 && <2
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-
-test-suite codegen-test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test-codegen
-  main-is:          test-codegen.hs
-  build-depends:    base
-                  , tree-sitter
-                  , hedgehog >= 0.6 && <2
 
 source-repository head
   type:     git
