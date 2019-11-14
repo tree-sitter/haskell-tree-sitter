@@ -1,3 +1,5 @@
+-- Sets up required options and imports necessary for generically unmarshaling ASTs via @parseByteString@
+
 :seti -XTypeApplications
 :seti -XOverloadedStrings
 import TreeSitter.Unmarshal
