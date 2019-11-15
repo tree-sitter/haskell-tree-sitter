@@ -56,9 +56,9 @@ syntaxDatatype language datatype = skipDefined $ do
       types' <- fieldTypesToNestedSum subtypes
       con <- normalC name [TH.bangType strictness (pure types' `appT` varT typeParameterName)]
       pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
-    ProductType (DatatypeName datatypeName) _ children fields -> do
+    ProductType (DatatypeName datatypeName) named children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
-      result <- symbolMatchingInstance language name datatypeName
+      result <- symbolMatchingInstance language name named datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
       -- Anonymous leaf types are defined as synonyms for the `Token` datatype
     LeafType (DatatypeName datatypeName) Anonymous -> do
@@ -66,7 +66,7 @@ syntaxDatatype language datatype = skipDefined $ do
       pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
     LeafType (DatatypeName datatypeName) Named -> do
       con <- ctorForLeafType (DatatypeName datatypeName) typeParameterName
-      result <- symbolMatchingInstance language name datatypeName
+      result <- symbolMatchingInstance language name Named datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
     -- Skip generating datatypes that have already been defined (overridden) in the module where the splice is running.
@@ -82,9 +82,9 @@ syntaxDatatype language datatype = skipDefined $ do
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
-symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
-symbolMatchingInstance language name str = do
-  tsSymbol <- runIO $ withCStringLen str (\(s, len) -> TS.ts_language_symbol_for_name language s len True)
+symbolMatchingInstance :: Ptr TS.Language -> Name -> Named -> String -> Q [Dec]
+symbolMatchingInstance language name named str = do
+  tsSymbol <- runIO $ withCStringLen str (\(s, len) -> TS.ts_language_symbol_for_name language s len (named == Named))
   tsSymbolType <- toEnum <$> runIO (TS.ts_language_symbol_type language tsSymbol)
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (TS.symbolToName tsSymbolType str))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
