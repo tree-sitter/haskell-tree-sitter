@@ -62,7 +62,7 @@ syntaxDatatype language datatype = skipDefined $ do
       pure $ generatedDatatype name [con] typeParameterName:result
       -- Anonymous leaf types are defined as synonyms for the `Token` datatype
     LeafType (DatatypeName datatypeName) Anonymous -> do
-      tsSymbol <- runIO $ withCString datatypeName (TS.ts_language_symbol_for_name language)
+      tsSymbol <- runIO $ withCStringLen datatypeName (\(s, len) -> TS.ts_language_symbol_for_name language s len False)
       pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
     LeafType (DatatypeName datatypeName) Named -> do
       con <- ctorForLeafType (DatatypeName datatypeName) typeParameterName
@@ -84,12 +84,11 @@ syntaxDatatype language datatype = skipDefined $ do
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: Ptr TS.Language -> Name -> String -> Q [Dec]
 symbolMatchingInstance language name str = do
-  tsSymbol <- runIO $ withCString str (TS.ts_language_symbol_for_name language)
+  tsSymbol <- runIO $ withCStringLen str (\(s, len) -> TS.ts_language_symbol_for_name language s len True)
   tsSymbolType <- toEnum <$> runIO (TS.ts_language_symbol_type language tsSymbol)
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "Expected " <> $(litE (stringL (TS.symbolToName tsSymbolType str))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
       symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
-
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
