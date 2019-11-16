@@ -15,6 +15,7 @@ import Language.Haskell.TH.Syntax as TH
 import Data.HashSet (HashSet)
 import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
+import Data.List
 import Data.Foldable
 import Data.Text (Text)
 import qualified Data.HashSet as HashSet
@@ -29,8 +30,7 @@ import System.FilePath.Posix
 import TreeSitter.Node
 import TreeSitter.Token
 import TreeSitter.Strings
-import TreeSitter.Symbol (escapeOperatorPunctuation)
-
+import TreeSitter.Symbol (escapeOperatorPunctuation, TSSymbol)
 
 -- | Derive Haskell datatypes from a language and its @node-types.json@ file.
 --
@@ -44,12 +44,25 @@ astDeclarationsForLanguage language filePath = do
   pwd             <- runIO getCurrentDirectory
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
   input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
-  either fail (fmap (concat @[]) . traverse (syntaxDatatype language)) input
+  allSymbols <- runIO (getAllSymbols language)
+  either fail (fmap (concat @[]) . traverse (syntaxDatatype language allSymbols)) input
 
+-- Build a list of all symbols
+getAllSymbols :: Ptr TS.Language -> IO [(String, Named)]
+getAllSymbols language = do
+  count <- TS.ts_language_symbol_count language
+  mapM getSymbol [(0 :: TSSymbol) .. fromIntegral (pred count)]
+  where
+    getSymbol i = do
+      cname <- TS.ts_language_symbol_name language i
+      n <- peekCString cname
+      t <- TS.ts_language_symbol_type language i
+      let named = if t == 0 then Named else Anonymous
+      pure (n, named)
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
-syntaxDatatype :: Ptr TS.Language -> Datatype -> Q [Dec]
-syntaxDatatype language datatype = skipDefined $ do
+syntaxDatatype :: Ptr TS.Language -> [(String, Named)] -> Datatype -> Q [Dec]
+syntaxDatatype language allSymbols datatype = skipDefined $ do
   typeParameterName <- newName "a"
   case datatype of
     SumType (DatatypeName _) _ subtypes -> do
@@ -58,7 +71,7 @@ syntaxDatatype language datatype = skipDefined $ do
       pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
     ProductType (DatatypeName datatypeName) named children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
-      result <- symbolMatchingInstance language name named datatypeName
+      result <- symbolMatchingInstance allSymbols name named datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
       -- Anonymous leaf types are defined as synonyms for the `Token` datatype
     LeafType (DatatypeName datatypeName) Anonymous -> do
@@ -66,7 +79,7 @@ syntaxDatatype language datatype = skipDefined $ do
       pure [ TySynD name [] (ConT ''Token `AppT` LitT (StrTyLit datatypeName) `AppT` LitT (NumTyLit (fromIntegral tsSymbol))) ]
     LeafType (DatatypeName datatypeName) Named -> do
       con <- ctorForLeafType (DatatypeName datatypeName) typeParameterName
-      result <- symbolMatchingInstance language name Named datatypeName
+      result <- symbolMatchingInstance allSymbols name Named datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
     -- Skip generating datatypes that have already been defined (overridden) in the module where the splice is running.
@@ -82,13 +95,13 @@ syntaxDatatype language datatype = skipDefined $ do
 
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
-symbolMatchingInstance :: Ptr TS.Language -> Name -> Named -> String -> Q [Dec]
-symbolMatchingInstance language name named str = do
-  tsSymbol <- runIO $ withCStringLen str (\(s, len) -> TS.ts_language_symbol_for_name language s len (named == Named))
-  tsSymbolType <- toEnum <$> runIO (TS.ts_language_symbol_type language tsSymbol)
+symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec]
+symbolMatchingInstance allSymbols name named str = do
+  let tsSymbols = elemIndices (str, named) allSymbols
+  let names = intercalate ", " $ fmap (fst . (!!) allSymbols) tsSymbols
   [d|instance TS.SymbolMatching $(conT name) where
-      showFailure _ node = "Expected " <> $(litE (stringL (TS.symbolToName tsSymbolType str))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
-      symbolMatch _ node = TS.fromTSSymbol (nodeSymbol node) == $(conE (mkName $ "Grammar." <> TS.symbolToName tsSymbolType str))|]
+      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
+      symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
