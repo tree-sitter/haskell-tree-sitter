@@ -368,6 +368,6 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode _ fields =
     case lookupField (FieldName (selName @c undefined)) fields of
-      []  -> fail $ "expected a node '" <> selName @c undefined <> "' but didn't get one"
+      []  -> fail $ "expected a node " <> selName @c undefined <> " but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
       _   -> fail "expected a node but got multiple"
