@@ -7,7 +7,6 @@ import           Data.Foldable
 import           Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import           TreeSitter.Strings
 import           TreeSitter.Symbol
 
 tests :: IO Bool

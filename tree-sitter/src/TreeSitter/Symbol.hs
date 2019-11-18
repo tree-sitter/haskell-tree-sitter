@@ -5,15 +5,18 @@ module TreeSitter.Symbol
 , SymbolType(..)
 , Symbol(..)
 , symbolToName
+, toHaskellCamelCaseIdentifier
+, toHaskellPascalCaseIdentifier
 , escapeOperatorPunctuation
 ) where
 
-import Data.Char (isAlpha, toUpper, isControl)
-import Data.Function ((&))
-import Data.Ix (Ix)
-import Data.List.Split (condense, split, whenElt)
-import Data.Word (Word16)
-import Language.Haskell.TH.Syntax
+import           Data.Char (isAlpha, isControl, toUpper)
+import           Data.Function ((&))
+import qualified Data.HashSet as HashSet
+import           Data.Ix (Ix)
+import           Data.List.Split (condense, split, whenElt)
+import           Data.Word (Word16)
+import           Language.Haskell.TH.Syntax
 
 type TSSymbol = Word16
 
@@ -37,20 +40,32 @@ symbolToName ty name
   & toWords
   & filter (not . all (== '_'))
   & map escapeOperatorPunctuation
-  & (>>= initUpper)
+  & (>>= capitalize)
   & (prefix ++)
   where toWords = split (condense (whenElt (not . isAlpha)))
 
         prefixHidden s@('_':_) = "Hidden" ++ s
         prefixHidden s         = s
 
-        initUpper (c:cs) = toUpper c : cs
-        initUpper ""     = ""
-
         prefix = case ty of
           Regular   -> ""
           Anonymous -> "Anon"
           Auxiliary -> "Aux"
+
+
+toHaskellCamelCaseIdentifier :: String -> String
+toHaskellCamelCaseIdentifier = addTickIfNecessary . escapeOperatorPunctuation . camelCase
+
+addTickIfNecessary :: String -> String
+addTickIfNecessary s
+  | HashSet.member s reservedNames = s <> "'"
+  | otherwise = s
+  where
+    reservedNames :: HashSet.HashSet String
+    reservedNames = HashSet.fromList ["type", "module", "data"]
+
+toHaskellPascalCaseIdentifier :: String -> String
+toHaskellPascalCaseIdentifier = addTickIfNecessary . capitalize . escapeOperatorPunctuation . camelCase
 
 -- Ensures that we generate valid Haskell identifiers from
 -- the literal characters used for infix operators and punctuation.
@@ -93,3 +108,16 @@ escapeOperatorPunctuation = concatMap $ \case
   other
     | isControl other -> escapeOperatorPunctuation (show other)
     | otherwise       -> [other]
+
+-- | Convert a snake_case String to camelCase
+camelCase :: String -> String
+camelCase = foldr appender mempty
+  where
+    appender :: Char -> String -> String
+    appender '_' cs = capitalize cs
+    appender c cs   = c : cs
+
+-- | Capitalize a String
+capitalize :: String -> String
+capitalize (c:cs) = toUpper c : cs
+capitalize []     = []

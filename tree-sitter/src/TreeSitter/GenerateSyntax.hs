@@ -12,13 +12,11 @@ module TreeSitter.GenerateSyntax
 
 import Language.Haskell.TH as TH
 import Language.Haskell.TH.Syntax as TH
-import Data.HashSet (HashSet)
 import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.List
 import Data.Foldable
 import Data.Text (Text)
-import qualified Data.HashSet as HashSet
 import qualified TreeSitter.Unmarshal as TS
 import GHC.Generics hiding (Constructor, Datatype)
 import Foreign.Ptr
@@ -29,8 +27,7 @@ import System.Directory
 import System.FilePath.Posix
 import TreeSitter.Node
 import TreeSitter.Token
-import TreeSitter.Strings
-import TreeSitter.Symbol (escapeOperatorPunctuation, TSSymbol)
+import TreeSitter.Symbol (TSSymbol, toHaskellCamelCaseIdentifier, toHaskellPascalCaseIdentifier)
 
 -- | Derive Haskell datatypes from a language and its @node-types.json@ file.
 --
@@ -130,7 +127,7 @@ ctorForLeafType (DatatypeName name) typeParameterName = ctorForTypes name
 ctorForTypes :: String -> [(String, Q TH.Type)] -> Q Con
 ctorForTypes constructorName types = recC (toName Named constructorName) recordFields where
   recordFields = map (uncurry toVarBangType) types
-  toVarBangType str type' = TH.varBangType (mkName . addTickIfNecessary . camelCase $ str) (TH.bangType strictness type')
+  toVarBangType str type' = TH.varBangType (mkName . toHaskellCamelCaseIdentifier $ str) (TH.bangType strictness type')
 
 
 -- | Convert field types to Q types
@@ -147,22 +144,15 @@ fieldTypesToNestedSum xs = go (toList xs)
 strictness :: BangQ
 strictness = TH.bang noSourceUnpackedness noSourceStrictness
 
-clashingNames :: HashSet String
-clashingNames = HashSet.fromList ["type", "module", "data"]
-
-addTickIfNecessary :: String -> String
-addTickIfNecessary s
-  | HashSet.member s clashingNames = s ++ "'"
-  | otherwise                      = s
-
 -- | Prepend "Anonymous" to named node when false, otherwise use regular toName
 toName :: Named -> String -> Name
 toName named str = mkName (toNameString named str)
 
 toNameString :: Named -> String -> String
-toNameString named str = addTickIfNecessary $ case named of
-  Anonymous -> "Anonymous" <> toEscapedPascalCase str
-  Named -> toEscapedPascalCase str
+toNameString named str = prefix named <> toHaskellPascalCaseIdentifier str
+  where
+    prefix Anonymous = "Anonymous"
+    prefix Named     = ""
 
 -- | Get the 'Module', if any, for a given 'Name'.
 moduleForName :: Name -> Maybe Module
@@ -171,7 +161,3 @@ moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule
 -- | Test whether the name is defined in the module where the splice is executed.
 isLocalName :: Name -> Q Bool
 isLocalName n = (moduleForName n ==) . Just <$> thisModule
-
--- | Replace operators and convert snake_case String to PascalCase
-toEscapedPascalCase :: String -> String
-toEscapedPascalCase = capitalize . escapeOperatorPunctuation . camelCase
