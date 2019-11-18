@@ -37,7 +37,6 @@ import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
 import           TreeSitter.Tree as TS
-import           TreeSitter.Strings
 import           TreeSitter.Token as TS
 import           Source.Loc
 import           Source.Span
@@ -247,7 +246,7 @@ peekFieldName = do
   if fieldName == nullPtr then
     pure Nothing
   else
-    Just . FieldName . camelCase <$> liftIO (peekCString fieldName)
+    Just . FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString fieldName)
 
 
 type Fields = Map.Map FieldName [Node]
