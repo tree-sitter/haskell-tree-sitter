@@ -5,3 +5,4 @@
 import TreeSitter.Unmarshal
 import Source.Span
 import Source.Range
+:set prompt "> "
