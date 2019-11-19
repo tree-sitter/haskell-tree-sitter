@@ -73,10 +73,8 @@ library
   other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
-                     , vendor/tree-sitter/lib/utf8proc
   install-includes:    tree_sitter/api.h
                      , tree_sitter/parser.h
-                     , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
