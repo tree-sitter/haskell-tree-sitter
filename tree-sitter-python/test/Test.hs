@@ -19,6 +19,6 @@ main
 
 tests :: [TestTree] -> TestTree
 tests xs = testGroup "Tests"
-  [ testGroup "tree-sitter corpus tests" xs
+  [ testGroup "tree-sitter-python corpus tests" xs
   , Manual.Examples.tests
   ]

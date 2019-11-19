@@ -17,4 +17,4 @@ main
     parse = parseByteString @Java.Program @() tree_sitter_java
 
 tests :: [TestTree] -> TestTree
-tests = testGroup "tree-sitter corpus tests"
+tests = testGroup "tree-sitter-java corpus tests"
