@@ -29,11 +29,13 @@ type TSSymbol = Word16
 fromTSSymbol :: forall symbol. Symbol symbol => TSSymbol -> symbol
 fromTSSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
 
+
 data SymbolType = Regular | Anonymous | Auxiliary
   deriving (Enum, Eq, Lift, Ord, Show)
 
 class (Bounded s, Enum s, Ix s, Ord s, Show s) => Symbol s where
   symbolType :: s -> SymbolType
+
 
 symbolToName :: SymbolType -> String -> String
 symbolToName ty name
@@ -71,45 +73,44 @@ toHaskellPascalCaseIdentifier = addTickIfNecessary . capitalize . escapeOperator
 -- Ensures that we generate valid Haskell identifiers from
 -- the literal characters used for infix operators and punctuation.
 escapeOperatorPunctuation :: String -> String
-escapeOperatorPunctuation =
-  concatMap $ \case
-    '{' -> "LBrace"
-    '}' -> "RBrace"
-    '(' -> "LParen"
-    ')' -> "RParen"
-    '.' -> "Dot"
-    ':' -> "Colon"
-    ',' -> "Comma"
-    '|' -> "Pipe"
-    ';' -> "Semicolon"
-    '*' -> "Star"
-    '&' -> "Ampersand"
-    '=' -> "Equal"
-    '<' -> "LAngle"
-    '>' -> "RAngle"
-    '[' -> "LBracket"
-    ']' -> "RBracket"
-    '+' -> "Plus"
-    '-' -> "Minus"
-    '/' -> "Slash"
-    '\\' -> "Backslash"
-    '^' -> "Caret"
-    '!' -> "Bang"
-    '%' -> "Percent"
-    '@' -> "At"
-    '~' -> "Tilde"
-    '?' -> "Question"
-    '`' -> "Backtick"
-    '#' -> "Hash"
-    '$' -> "Dollar"
-    '"' -> "DQuote"
-    '\'' -> "SQuote"
-    '\t' -> "Tab"
-    '\n' -> "LF"
-    '\r' -> "CR"
-    other
-      | isControl other -> escapeOperatorPunctuation (show other)
-      | otherwise -> [other]
+escapeOperatorPunctuation = concatMap $ \case
+  '{' -> "LBrace"
+  '}' -> "RBrace"
+  '(' -> "LParen"
+  ')' -> "RParen"
+  '.' -> "Dot"
+  ':' -> "Colon"
+  ',' -> "Comma"
+  '|' -> "Pipe"
+  ';' -> "Semicolon"
+  '*' -> "Star"
+  '&' -> "Ampersand"
+  '=' -> "Equal"
+  '<' -> "LAngle"
+  '>' -> "RAngle"
+  '[' -> "LBracket"
+  ']' -> "RBracket"
+  '+' -> "Plus"
+  '-' -> "Minus"
+  '/' -> "Slash"
+  '\\' -> "Backslash"
+  '^' -> "Caret"
+  '!' -> "Bang"
+  '%' -> "Percent"
+  '@' -> "At"
+  '~' -> "Tilde"
+  '?' -> "Question"
+  '`' -> "Backtick"
+  '#' -> "Hash"
+  '$' -> "Dollar"
+  '"' -> "DQuote"
+  '\'' -> "SQuote"
+  '\t' -> "Tab"
+  '\n' -> "LF"
+  '\r' -> "CR"
+  other
+    | isControl other -> escapeOperatorPunctuation (show other)
+    | otherwise -> [other]
 
 -- | Convert a snake_case String to camelCase
 camelCase :: String -> String
