@@ -1,8 +1,6 @@
 {-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, TypeApplications #-}
 module Main (main) where
 
-import           Control.Monad
-import           Prelude hiding (takeWhile)
 import qualified System.Path as Path
 import           Test.Tasty
 import           TreeSitter.Python
