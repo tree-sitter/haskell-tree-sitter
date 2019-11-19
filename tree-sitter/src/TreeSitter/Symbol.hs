@@ -26,43 +26,36 @@ type TSSymbol = Word16
 -- | Map a 'TSSymbol' to the corresponding value of a 'Symbol' datatype.
 --
 --   This should be used instead of 'toEnum' to perform this conversion, because tree-sitter represents parse errors with the unsigned short @65535@, which is generally not contiguous with the other symbols.
-fromTSSymbol ::
-     forall symbol. Symbol symbol
-  => TSSymbol
-  -> symbol
-fromTSSymbol symbol =
-  toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
+fromTSSymbol :: forall symbol. Symbol symbol => TSSymbol -> symbol
+fromTSSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
 
-data SymbolType
-  = Regular
-  | Anonymous
-  | Auxiliary
+data SymbolType = Regular | Anonymous | Auxiliary
   deriving (Enum, Eq, Lift, Ord, Show)
 
-class (Bounded s, Enum s, Ix s, Ord s, Show s) =>
-      Symbol s
-  where
+class (Bounded s, Enum s, Ix s, Ord s, Show s) => Symbol s where
   symbolType :: s -> SymbolType
 
 symbolToName :: SymbolType -> String -> String
-symbolToName ty name =
-  prefixHidden name & toWords & filter (not . all (== '_')) &
-  map escapeOperatorPunctuation &
-  (>>= capitalize) &
-  (prefix ++)
+symbolToName ty name
+  = prefixHidden name
+  & toWords
+  & filter (not . all (== '_'))
+  & map escapeOperatorPunctuation
+  & (>>= capitalize)
+  & (prefix ++)
   where
     toWords = split (condense (whenElt (not . isAlpha)))
+
     prefixHidden s@('_':_) = "Hidden" ++ s
     prefixHidden s         = s
-    prefix =
-      case ty of
-        Regular   -> ""
-        Anonymous -> "Anon"
-        Auxiliary -> "Aux"
+
+    prefix = case ty of
+      Regular   -> ""
+      Anonymous -> "Anon"
+      Auxiliary -> "Aux"
 
 toHaskellCamelCaseIdentifier :: String -> String
-toHaskellCamelCaseIdentifier =
-  addTickIfNecessary . escapeOperatorPunctuation . camelCase
+toHaskellCamelCaseIdentifier = addTickIfNecessary . escapeOperatorPunctuation . camelCase
 
 addTickIfNecessary :: String -> String
 addTickIfNecessary s
@@ -73,8 +66,7 @@ addTickIfNecessary s
     reservedNames = HashSet.fromList ["type", "module", "data"]
 
 toHaskellPascalCaseIdentifier :: String -> String
-toHaskellPascalCaseIdentifier =
-  addTickIfNecessary . capitalize . escapeOperatorPunctuation . camelCase
+toHaskellPascalCaseIdentifier = addTickIfNecessary . capitalize . escapeOperatorPunctuation . camelCase
 
 -- Ensures that we generate valid Haskell identifiers from
 -- the literal characters used for infix operators and punctuation.
