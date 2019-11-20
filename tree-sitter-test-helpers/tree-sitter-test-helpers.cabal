@@ -34,7 +34,7 @@ common common
     ghc-options: -Wno-missing-deriving-strategies
 
 library
-  import common
+  import: common
   hs-source-dirs:     src
   exposed-modules:    TreeSitter.Test.Helpers
   build-depends:      base >= 4.12 && < 5
