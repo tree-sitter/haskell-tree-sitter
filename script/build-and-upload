@@ -74,8 +74,14 @@ echo "******************"
 echo "Uploading packages"
 echo "******************"
 
-cabal upload "$TGZ_LOC"
-cabal upload --documentation "$DOCS_LOC"
+echo -n "Hackage username: "
+read HACKAGE_USER
+echo
+echo -n "Hackage password: "
+read -s HACKAGE_PASS
+
+cabal upload --username="$HACKAGE_USER" --password="$HACKAGE_PASS" "$TGZ_LOC"
+cabal upload --username="$HACKAGE_USER" --password="$HACKAGE_PASS" --documentation "$DOCS_LOC"
 
 URL="https://hackage.haskell.org/package/$PACKAGE_VERSION/candidate"
 
@@ -92,8 +98,8 @@ fi
 
 set -x
 
-cabal upload --publish "$TGZ_LOC"
-cabal upload --publish --documentation "$DOCS_LOC"
+cabal upload --username="$HACKAGE_USER" --password="$HACKAGE_PASS" --publish "$TGZ_LOC"
+cabal upload --username="$HACKAGE_USER" --password="$HACKAGE_PASS" --publish --documentation "$DOCS_LOC"
 
 echo "Tagging $PACKAGE_VERSION"
 git tag "$PACKAGE_VERSION"
