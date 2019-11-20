@@ -1,17 +1,26 @@
 {-# LANGUAGE DisambiguateRecordFields, OverloadedStrings, OverloadedLists, TemplateHaskell #-}
-module Main (main) where
+module Manual.Examples (tests) where
 
 import           Control.Monad.IO.Class
-import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
-import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.List.NonEmpty
 import           GHC.Generics
 import           Hedgehog
-import           System.Exit (exitFailure, exitSuccess)
+import           Hedgehog.Internal.Property (PropertyName (..))
+import           Test.Tasty
+import           Test.Tasty.Hedgehog as Hedgehog
 import           TreeSitter.Python
 import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Token
 import           TreeSitter.Unmarshal
+
+tests :: TestTree
+tests = testGroup "(checked by Hedgehog)" props
+  where
+    props = let (Group _ xs) = $$(discover)
+            in fmap toP xs
+    toP ((PropertyName name), prop) = Hedgehog.testProperty name prop
+
 
 -- TODO: add tests that verify correctness for product, sum and leaf types
 
@@ -43,6 +52,3 @@ prop_simpleExamples = property $ do
   "hello" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 identifier] }
   "1\npass" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 one, R1 pass] }
   "from foo import a, b" `shouldParseInto` Py.Module { Py.ann = (), Py.extraChildren = [R1 fromImport] }
-
-main :: IO ()
-main = checkParallel $$discover >>= bool exitFailure exitSuccess

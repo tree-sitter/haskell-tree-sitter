@@ -1,26 +1,32 @@
-{-# LANGUAGE DeriveLift, ScopedTypeVariables, LambdaCase #-}
-module TreeSitter.Symbol
-( TSSymbol
-, fromTSSymbol
-, SymbolType(..)
-, Symbol(..)
-, symbolToName
-, escapeOperatorPunctuation
-) where
+{-# LANGUAGE DeriveLift, LambdaCase, ScopedTypeVariables #-}
 
-import Data.Char (isAlpha, toUpper, isControl)
-import Data.Function ((&))
-import Data.Ix (Ix)
-import Data.List.Split (condense, split, whenElt)
-import Data.Word (Word16)
-import Language.Haskell.TH.Syntax
+module TreeSitter.Symbol
+  ( TSSymbol
+  , fromTSSymbol
+  , SymbolType(..)
+  , Symbol(..)
+  , symbolToName
+  , toHaskellCamelCaseIdentifier
+  , toHaskellPascalCaseIdentifier
+  , escapeOperatorPunctuation
+  , camelCase
+  , capitalize
+  ) where
+
+import           Data.Char (isAlpha, isControl, toUpper)
+import           Data.Function ((&))
+import qualified Data.HashSet as HashSet
+import           Data.Ix (Ix)
+import           Data.List.Split (condense, split, whenElt)
+import           Data.Word (Word16)
+import           Language.Haskell.TH.Syntax
 
 type TSSymbol = Word16
 
 -- | Map a 'TSSymbol' to the corresponding value of a 'Symbol' datatype.
 --
 --   This should be used instead of 'toEnum' to perform this conversion, because tree-sitter represents parse errors with the unsigned short @65535@, which is generally not contiguous with the other symbols.
-fromTSSymbol :: forall symbol . Symbol symbol => TSSymbol -> symbol
+fromTSSymbol :: forall symbol. Symbol symbol => TSSymbol -> symbol
 fromTSSymbol symbol = toEnum (min (fromIntegral symbol) (fromEnum (maxBound :: symbol)))
 
 
@@ -37,59 +43,84 @@ symbolToName ty name
   & toWords
   & filter (not . all (== '_'))
   & map escapeOperatorPunctuation
-  & (>>= initUpper)
+  & (>>= capitalize)
   & (prefix ++)
-  where toWords = split (condense (whenElt (not . isAlpha)))
+  where
+    toWords = split (condense (whenElt (not . isAlpha)))
 
-        prefixHidden s@('_':_) = "Hidden" ++ s
-        prefixHidden s         = s
+    prefixHidden s@('_':_) = "Hidden" ++ s
+    prefixHidden s         = s
 
-        initUpper (c:cs) = toUpper c : cs
-        initUpper ""     = ""
+    prefix = case ty of
+      Regular   -> ""
+      Anonymous -> "Anon"
+      Auxiliary -> "Aux"
 
-        prefix = case ty of
-          Regular   -> ""
-          Anonymous -> "Anon"
-          Auxiliary -> "Aux"
+toHaskellCamelCaseIdentifier :: String -> String
+toHaskellCamelCaseIdentifier = addTickIfNecessary . escapeOperatorPunctuation . camelCase
+
+addTickIfNecessary :: String -> String
+addTickIfNecessary s
+  | HashSet.member s reservedNames = s <> "'"
+  | otherwise = s
+  where
+    reservedNames :: HashSet.HashSet String
+    reservedNames = HashSet.fromList ["type", "module", "data"]
+
+toHaskellPascalCaseIdentifier :: String -> String
+toHaskellPascalCaseIdentifier = addTickIfNecessary . capitalize . escapeOperatorPunctuation . camelCase
 
 -- Ensures that we generate valid Haskell identifiers from
 -- the literal characters used for infix operators and punctuation.
 escapeOperatorPunctuation :: String -> String
 escapeOperatorPunctuation = concatMap $ \case
-  '{'  -> "LBrace"
-  '}'  -> "RBrace"
-  '('  -> "LParen"
-  ')'  -> "RParen"
-  '.'  -> "Dot"
-  ':'  -> "Colon"
-  ','  -> "Comma"
-  '|'  -> "Pipe"
-  ';'  -> "Semicolon"
-  '*'  -> "Star"
-  '&'  -> "Ampersand"
-  '='  -> "Equal"
-  '<'  -> "LAngle"
-  '>'  -> "RAngle"
-  '['  -> "LBracket"
-  ']'  -> "RBracket"
-  '+'  -> "Plus"
-  '-'  -> "Minus"
-  '/'  -> "Slash"
+  '{' -> "LBrace"
+  '}' -> "RBrace"
+  '(' -> "LParen"
+  ')' -> "RParen"
+  '.' -> "Dot"
+  ':' -> "Colon"
+  ',' -> "Comma"
+  '|' -> "Pipe"
+  ';' -> "Semicolon"
+  '*' -> "Star"
+  '&' -> "Ampersand"
+  '=' -> "Equal"
+  '<' -> "LAngle"
+  '>' -> "RAngle"
+  '[' -> "LBracket"
+  ']' -> "RBracket"
+  '+' -> "Plus"
+  '-' -> "Minus"
+  '/' -> "Slash"
   '\\' -> "Backslash"
-  '^'  -> "Caret"
-  '!'  -> "Bang"
-  '%'  -> "Percent"
-  '@'  -> "At"
-  '~'  -> "Tilde"
-  '?'  -> "Question"
-  '`'  -> "Backtick"
-  '#'  -> "Hash"
-  '$'  -> "Dollar"
-  '"'  -> "DQuote"
+  '^' -> "Caret"
+  '!' -> "Bang"
+  '%' -> "Percent"
+  '@' -> "At"
+  '~' -> "Tilde"
+  '?' -> "Question"
+  '`' -> "Backtick"
+  '#' -> "Hash"
+  '$' -> "Dollar"
+  '"' -> "DQuote"
   '\'' -> "SQuote"
   '\t' -> "Tab"
   '\n' -> "LF"
   '\r' -> "CR"
   other
     | isControl other -> escapeOperatorPunctuation (show other)
-    | otherwise       -> [other]
+    | otherwise -> [other]
+
+-- | Convert a snake_case String to camelCase
+camelCase :: String -> String
+camelCase = foldr appender mempty
+  where
+    appender :: Char -> String -> String
+    appender '_' cs = capitalize cs
+    appender c cs   = c : cs
+
+-- | Capitalize a String
+capitalize :: String -> String
+capitalize (c:cs) = toUpper c : cs
+capitalize []     = []

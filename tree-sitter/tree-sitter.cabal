@@ -22,8 +22,6 @@ tested-with:
 
 extra-source-files:  vendor/tree-sitter/lib/src/*.c
                    , vendor/tree-sitter/lib/src/*.h
-                   , vendor/tree-sitter/lib/utf8proc/utf8proc.c
-                   , vendor/tree-sitter/lib/utf8proc/utf8proc_data.c
                    , ChangeLog.md
 
 common common
@@ -64,7 +62,6 @@ library
                      , TreeSitter.Unmarshal
                      , TreeSitter.Language
                      , TreeSitter.Node
-                     , TreeSitter.Strings
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
                      , TreeSitter.GenerateSyntax
@@ -74,10 +71,8 @@ library
   other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
-                     , vendor/tree-sitter/lib/utf8proc
   install-includes:    tree_sitter/api.h
                      , tree_sitter/parser.h
-                     , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
@@ -88,7 +83,7 @@ test-suite test
   hs-source-dirs:      test
   main-is:             Test.hs
   other-modules:       TreeSitter.Example
-  other-modules:       TreeSitter.Strings.Example
+                     , TreeSitter.Strings.Example
   build-depends:       base
                      , tree-sitter
                      , hedgehog >= 0.6 && <2
