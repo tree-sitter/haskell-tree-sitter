@@ -16,9 +16,9 @@ module TreeSitter.Unmarshal
 ) where
 
 import           Control.Applicative
-import           Control.Carrier.Reader
-import           Control.Carrier.Fail.Either
-import           Control.Carrier.Lift
+import           Control.Effect hiding ((:+:))
+import           Control.Effect.Reader
+import           Control.Effect.Fail
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -60,8 +60,9 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic1' instance.
 class Unmarshal t where
   unmarshalNode
-    :: ( Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -69,10 +70,11 @@ class Unmarshal t where
     => Node
     -> m (t a)
   default unmarshalNode
-    :: ( Generic1 t
+    :: ( Carrier sig m
+       , Generic1 t
        , GUnmarshal (Rep1 t)
-       , Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -106,8 +108,9 @@ instance Unmarshal (Token sym n) where
 --   Leaf nodes have 'Text.Text' fields, and leaves, anonymous leaves, and products all have parametric annotation fields. All of these fields are unmarshalled using the metadata of the node, e.g. its start/end bytes, without reference to any child nodes it may contain.
 class UnmarshalAnn a where
   unmarshalAnn
-    :: ( Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
        , MonadFail m
        , MonadIO m
        )
@@ -153,8 +156,9 @@ pointToPos (TSPoint line column) = Pos (fromIntegral line) (fromIntegral column)
 -- | Optional/repeated fields occurring in product datatypes are wrapped in type constructors, e.g. 'Maybe', '[]', or 'NonEmpty', and thus can unmarshal zero or more nodes for the same field name.
 class UnmarshalField t where
   unmarshalField
-    :: ( Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
        , MonadFail m
        , MonadIO m
        , Unmarshal f
@@ -209,11 +213,11 @@ sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
 
 -- | Advance the cursor to the next sibling of the current node.
-step :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Bool
+step :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Bool
 step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
-push :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m a -> m (Maybe a)
+push :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m a -> m (Maybe a)
 push m = do
   hasChildren <- ask >>= liftIO . ts_tree_cursor_goto_first_child
   if hasChildren then do
@@ -223,13 +227,13 @@ push m = do
     pure Nothing
 
 -- | Move the cursor to point at the passed 'TSNode'.
-goto :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => TSNode -> m ()
+goto :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => TSNode -> m ()
 goto node = do
   cursor <- ask
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
 -- | Return the 'Node' that the cursor is pointing at.
-peekNode :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Node
+peekNode :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Node
 peekNode = do
   cursor <- ask
   liftIO $ alloca $ \ tsNodePtr -> do
@@ -239,7 +243,7 @@ peekNode = do
       peek nodePtr
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
-peekFieldName :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m (Maybe FieldName)
+peekFieldName :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m (Maybe FieldName)
 peekFieldName = do
   cursor <- ask
   fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
@@ -252,7 +256,7 @@ peekFieldName = do
 type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Fields
+getFields :: (Carrier sig m, Member (Reader (Ptr Cursor)) sig, MonadIO m) => m Fields
 getFields = go Map.empty
   where go fs = do
           node <- peekNode
@@ -289,8 +293,9 @@ newtype FieldName = FieldName { getFieldName :: String }
 --   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
   gunmarshalNode
-    :: ( Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -337,8 +342,9 @@ instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUn
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
   gunmarshalProductNode
-    :: ( Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
+    :: ( Carrier sig m
+       , Member (Reader ByteString) sig
+       , Member (Reader (Ptr Cursor)) sig
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
