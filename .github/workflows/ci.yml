@@ -39,6 +39,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        git submodule update -i --recursive
         cabal v2-update
         cabal v2-configure --enable-benchmarks --enable-tests --write-ghc-environment-files=always -j2 -O0
         cabal v2-build --only-dependencies all
