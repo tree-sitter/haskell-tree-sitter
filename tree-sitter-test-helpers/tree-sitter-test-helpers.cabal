@@ -5,7 +5,6 @@ synopsis:            Test helpers for haskell-tree-sitter
 description:         Test helpers for haskell-tree-sitter language bindings.
 homepage:            http://github.com/tree-sitter/haskell-tree-sitter#readme
 license:             BSD-3-Clause
-license-file:        LICENSE
 author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, Ayman Nadeem, Patrick Thomson
 maintainer:          rob.rix@github.com
 copyright:           2019 GitHub
