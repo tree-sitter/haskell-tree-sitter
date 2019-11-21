@@ -61,7 +61,6 @@ test-suite test
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
   main-is:          Test.hs
-  other-modules:    Manual.Examples
   build-depends:    base
                   , tree-sitter
                   , tree-sitter-python
