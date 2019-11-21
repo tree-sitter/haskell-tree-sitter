@@ -95,10 +95,15 @@ syntaxDatatype language allSymbols datatype = skipDefined $ do
 symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec]
 symbolMatchingInstance allSymbols name named str = do
   let tsSymbols = elemIndices (str, named) allSymbols
-  let names = intercalate ", " $ fmap (fst . (!!) allSymbols) tsSymbols
+  let names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
   [d|instance TS.SymbolMatching $(conT name) where
-      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (TS.fromTSSymbol (nodeSymbol node) :: $(conT (mkName "Grammar.Grammar")))
+      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (debugPrefix (allSymbols !! fromIntegral (nodeSymbol node)))
       symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
+
+-- | Prefix symbol names for debugging to disambiguate between Named and Anonymous nodes.
+debugPrefix :: (String, Named) -> String
+debugPrefix (name, Named)     = name
+debugPrefix (name, Anonymous) = "_" <> name
 
 -- | Build Q Constructor for product types (nodes with fields)
 ctorForProductType :: String -> Name -> Maybe Children -> [(String, Field)] -> Q Con
