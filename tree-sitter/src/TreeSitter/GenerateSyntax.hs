@@ -1,10 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DeriveAnyClass, DeriveGeneric, LambdaCase, TemplateHaskell, TypeApplications #-}
 
--- {-# LANGUAGE TypeOperators #-}
 module TreeSitter.GenerateSyntax
 ( syntaxDatatype
 , astDeclarationsForLanguage
