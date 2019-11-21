@@ -8,8 +8,6 @@ import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Test.Helpers
 import           TreeSitter.Unmarshal
 
-import qualified Manual.Examples
-
 main :: IO ()
 main
   =   readCorpusFiles (Path.relDir "./vendor/tree-sitter-python/corpus")
@@ -18,7 +16,4 @@ main
   where parse = parseByteString @Py.Module @() tree_sitter_python
 
 tests :: [TestTree] -> TestTree
-tests xs = testGroup "Tests"
-  [ testGroup "tree-sitter-python corpus tests" xs
-  , Manual.Examples.tests
-  ]
+tests = testGroup "tree-sitter-python corpus tests"
