@@ -13,5 +13,6 @@ class MarshalJSON t where
   marshal :: t a -> Value
   default marshal :: ( Generic1 t, GMarshalJSON (Rep1 t)) => t a -> Value
   marshal = gmarshal . from1
+
 class GMarshalJSON f where
   gmarshal :: f a -> Value
