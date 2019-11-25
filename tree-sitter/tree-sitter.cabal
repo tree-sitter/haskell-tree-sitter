@@ -68,6 +68,7 @@ library
                      , TreeSitter.Deserialize
                      , TreeSitter.Cursor
                      , TreeSitter.Token
+                     , TreeSitter.Marshal.JSON
   other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
