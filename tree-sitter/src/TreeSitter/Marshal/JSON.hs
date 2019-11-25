@@ -1,3 +1,6 @@
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module TreeSitter.Marshal.JSON where
 
 import Data.Aeson as Aeson
