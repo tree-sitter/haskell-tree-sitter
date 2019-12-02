@@ -41,6 +41,10 @@ instance GMarshalJSON f => GMarshalJSON (M1 i c f) where
 instance GFields bod => GMarshalJSON (C1 (MetaCons ctorname x y) bod) where
   gmarshal = object . gfields [] . unM1
 
+-- Implement the product case
+instance (GFields f, GFields g) => GFields (f :*: g) where
+  gfields acc (f :*: g) = gfields (gfields acc g) f
+
 -- Define a new class to operate on product field types;
 -- Takes an accumulator, a datatype, and returns a new accumulator value.
 class GFields f where
