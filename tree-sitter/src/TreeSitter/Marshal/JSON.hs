@@ -43,8 +43,10 @@ instance (GFields f, GFields g) => GFields (f :*: g) where
   gfields acc (f :*: g) = gfields (gfields acc g) f
 
 -- Implement base case
-instance GFields (S1 ('MetaSel ('Just fieldname) upack strict lazy) p) where
-  gfields acc (M1 x) = (_name, _value) : acc
+-- Takes term-level value of the type-level string 'fieldname' by passing a Proxy specialised to 'fieldname' to the knownSymbol function.
+-- To actually get a value out of this datum, we'll need one more typeclass. Let's call its method 'gvalue'.
+instance forall nam upack strict lazy p . (GValue p, KnownSymbol nam) => GFields (S1 ('MetaSel ('Just nam) upack strict lazy) p) where
+  gfields acc (M1 x) = (Text.pack (symbolVal (Proxy @nam)), gvalue x) : acc
 
 -- Define a new class to operate on product field types;
 -- Takes an accumulator, a datatype, and returns a new accumulator value.
