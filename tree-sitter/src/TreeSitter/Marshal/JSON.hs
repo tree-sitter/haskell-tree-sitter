@@ -23,4 +23,4 @@ class GMarshalJSON f where
 
 -- Stores meta-data for datatypes
 instance GMarshalJSON f => GMarshalJSON (M1 i c f) where
-  gmarshal (M1 x) = gmarshal x
+  gmarshal = gmarshal . unM1
