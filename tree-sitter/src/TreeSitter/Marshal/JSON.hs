@@ -12,6 +12,12 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.TypeLits
 
+data Bar a = Bar
+  { ann :: a
+   , guy :: Text
+  } deriving (Eq, Show, Generic1)
+
+
 -- Serialize unmarshaled ASTs into JSON representation.
 
 -- AST nodes are expressed as products, sums, named or anonymous leaves, meaning we can generically iterate over them and pass the results to Aeson to be expressed as JSON objects.
