@@ -17,10 +17,7 @@ data Bar a = Bar
    , guy :: Text
   } deriving (Eq, Show, Generic1)
 
-
--- Serialize unmarshaled ASTs into JSON representation.
-
--- AST nodes are expressed as products, sums, named or anonymous leaves, meaning we can generically iterate over them and pass the results to Aeson to be expressed as JSON objects.
+-- Serialize unmarshaled ASTs into JSON representation by auto-deriving instances generically.
 
 -- Typeclass to generically marshal ASTs into JSON
 class MarshalJSON t where
