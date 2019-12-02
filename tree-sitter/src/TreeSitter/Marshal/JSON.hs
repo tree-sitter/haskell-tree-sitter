@@ -8,6 +8,10 @@ module TreeSitter.Marshal.JSON where
 import Data.Aeson as Aeson
 import GHC.Generics
 
+-- Serialize unmarshaled ASTs into JSON representation.
+
+-- AST nodes are expressed as products, sums, named or anonymous leaves, meaning we can generically iterate over them and pass the results to Aeson to be expressed as JSON objects.
+
 -- Typeclass to generically marshal ASTs into JSON
 class MarshalJSON t where
   marshal :: t a -> Value
