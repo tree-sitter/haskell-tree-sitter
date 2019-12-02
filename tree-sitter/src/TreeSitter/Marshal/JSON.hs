@@ -31,6 +31,8 @@ class MarshalJSON t where
 class GMarshalJSON f where
   gmarshal :: f a -> Value
 
+instance GMarshalJSON Bar
+
 -- Stores meta-data for datatypes
 instance GMarshalJSON f => GMarshalJSON (M1 i c f) where
   gmarshal = gmarshal . unM1
