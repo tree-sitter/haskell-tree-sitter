@@ -28,7 +28,7 @@ data Bar a = Bar
 
 -- Typeclass to generically marshal ASTs into JSON
 class MarshalJSON t where
-  marshal :: t a -> Value
+  marshal :: (ToJSON a) => t a -> Value
   default marshal :: ( Generic1 t, GMarshalJSON (Rep1 t), ToJSON a) => t a -> Value
   marshal = gmarshal . from1
 
