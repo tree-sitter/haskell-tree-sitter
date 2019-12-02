@@ -50,5 +50,8 @@ instance GFields (S1 ('MetaSel ('Just fieldname) upack strict lazy) p) where
 -- Takes an accumulator, a datatype, and returns a new accumulator value.
 class GFields f where
   gfields :: ToJSON a => [(Text, Value)] -> f a -> [(Text, Value)]
+
+-- gvalue is a wrapper that calls to @toJSON@ (for leaf node types such as Text) or recurses via @marshal@
+-- since it's a function on types, we need a typeclass.
 class GValue f where
   gvalue :: (ToJSON a) => f a -> Value
