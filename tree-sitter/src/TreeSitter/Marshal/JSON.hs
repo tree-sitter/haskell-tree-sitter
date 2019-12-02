@@ -36,3 +36,7 @@ instance GMarshalJSON Bar
 -- Stores meta-data for datatypes
 instance GMarshalJSON f => GMarshalJSON (M1 i c f) where
   gmarshal = gmarshal . unM1
+-- Define a new class to operate on product field types;
+-- Takes an accumulator, a datatype, and returns a new accumulator value.
+class GFields f where
+  gfields :: ToJSON a => [(Text, Value)] -> f a -> [(Text, Value)]
