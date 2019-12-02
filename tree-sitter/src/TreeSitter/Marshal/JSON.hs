@@ -7,6 +7,7 @@ module TreeSitter.Marshal.JSON where
 
 import Data.Aeson as Aeson
 import GHC.Generics
+import Data.Proxy
 
 -- Serialize unmarshaled ASTs into JSON representation.
 
