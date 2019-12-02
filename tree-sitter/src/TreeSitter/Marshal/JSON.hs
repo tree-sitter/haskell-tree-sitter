@@ -55,6 +55,14 @@ instance (GFields f, GFields g) => GFields (f :*: g) where
 instance forall nam upack strict lazy p . (GValue p, KnownSymbol nam) => GFields (S1 ('MetaSel ('Just nam) upack strict lazy) p) where
   gfields acc (M1 x) = (Text.pack (symbolVal (Proxy @nam)), gvalue x) : acc
 
+-- GValue for leaves
+instance ToJSON a => GValue (K1 i a) where
+  gvalue = toJSON . unK1
+
+-- Par1 instance
+instance GValue Par1 where
+  gvalue = toJSON . unPar1
+
 -- Define a new class to operate on product field types;
 -- Takes an accumulator, a datatype, and returns a new accumulator value.
 class GFields f where
