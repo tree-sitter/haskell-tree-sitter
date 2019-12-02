@@ -38,7 +38,7 @@ instance GMarshalJSON f => GMarshalJSON (M1 i c f) where
   gmarshal = gmarshal . unM1
 
 -- Need to fold over S1 product types and pass the result to Aeson objects
-instance GMarshalJSON (C1 (MetaCons ctorname x y) bod) where
+instance GFields bod => GMarshalJSON (C1 (MetaCons ctorname x y) bod) where
   gmarshal = object . gfields [] . unM1
 
 -- Define a new class to operate on product field types;
