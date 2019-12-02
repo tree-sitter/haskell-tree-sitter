@@ -38,7 +38,7 @@ class GMarshalJSON f where
 instance MarshalJSON Bar
 
 -- Stores meta-data for datatypes
-instance GMarshalJSON f => GMarshalJSON (M1 i c f) where
+instance GMarshalJSON f => GMarshalJSON (M1 D c f) where
   gmarshal = gmarshal . unM1
 
 -- Need to fold over S1 product types and pass the result to Aeson objects
