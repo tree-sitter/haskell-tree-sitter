@@ -10,6 +10,7 @@ import GHC.Generics
 import Data.Proxy
 import Data.Text (Text)
 import qualified Data.Text as Text
+import GHC.TypeLits
 
 -- Serialize unmarshaled ASTs into JSON representation.
 
