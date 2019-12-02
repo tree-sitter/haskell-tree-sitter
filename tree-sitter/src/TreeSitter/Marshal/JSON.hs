@@ -45,6 +45,10 @@ instance GFields bod => GMarshalJSON (C1 (MetaCons ctorname x y) bod) where
 instance (GFields f, GFields g) => GFields (f :*: g) where
   gfields acc (f :*: g) = gfields (gfields acc g) f
 
+-- Implement base case
+instance GFields (S1 ('MetaSel ('Just fieldname) upack strict lazy) p) where
+  gfields acc (M1 x) = (_name, _value) : acc
+
 -- Define a new class to operate on product field types;
 -- Takes an accumulator, a datatype, and returns a new accumulator value.
 class GFields f where
