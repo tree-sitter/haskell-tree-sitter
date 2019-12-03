@@ -19,25 +19,29 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.TypeLits
 
+-- Test datatype that will go away: this is just to get us started!
 data Bar a = Bar
   { ann :: a
    , guy :: Text
   } deriving (Eq, Show, Generic1)
 
 -- Serialize unmarshaled ASTs into JSON representation by auto-deriving instances generically.
-
--- Typeclass to generically marshal ASTs into JSON
 class MarshalJSON t where
   marshal :: (ToJSON a) => t a -> Value
   default marshal :: ( Generic1 t, GMarshalJSON (Rep1 t), ToJSON a) => t a -> Value
   marshal = gmarshal . from1
 
+-- Typeclass to generically marshal ASTs into JSON.
 class GMarshalJSON f where
   gmarshal :: (ToJSON a) => f a -> Value
 
+-- We need a marshal instance for the node datatype we wish to serialize.
 instance MarshalJSON Bar
 
+-- Generic instances
+
 -- Stores meta-data for datatypes
+-- using unM1 instead of pattern-matching on M1 to express with function composition
 instance GMarshalJSON f => GMarshalJSON (M1 D c f) where
   gmarshal = gmarshal . unM1
 
