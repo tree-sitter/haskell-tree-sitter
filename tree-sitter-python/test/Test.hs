@@ -17,10 +17,9 @@ main = do
   when (Path.takeDirName dir == Just (Path.relDir "haskell-tree-sitter")) $
     setCurrentDirectory (dir </> Path.relDir "tree-sitter-python")
   let parse = parseByteString @Py.Module @() tree_sitter_python
-  readCorpusFiles (Path.relDir "./vendor/tree-sitter-python/corpus")
+  readCorpusFiles (Path.relDir "vendor/tree-sitter-python/corpus")
     >>= traverse (testCorpus parse)
     >>= defaultMain . tests
-  where
 
 tests :: [TestTree] -> TestTree
 tests = testGroup "tree-sitter-python corpus tests"
