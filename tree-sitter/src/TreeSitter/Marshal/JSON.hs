@@ -59,8 +59,10 @@ instance (GFields f, GFields g) => GFields (f :*: g) where
 -- Implement base case
 -- Takes term-level value of the type-level string 'fieldname' by passing a Proxy specialised to 'fieldname' to the knownSymbol function.
 -- To actually get a value out of this datum, we'll need one more typeclass. Let's call its method 'gvalue'.
-instance forall nam upack strict lazy p . (GValue p, KnownSymbol nam) => GFields (S1 ('MetaSel ('Just nam) upack strict lazy) p) where
-  gfields acc (M1 x) = (Text.pack (symbolVal (Proxy @nam)), gvalue x) : acc
+instance (GValue p, Selector s) => GFields (S1 s p) where
+  gfields acc x = (Text.pack (selName x), gvalue (unM1 x)) : acc
+-- knows what the type of x is, whereas M1 has parameters that can be instantiated to anything
+
 
 -- GValue for leaves
 instance ToJSON a => GValue (K1 i a) where
