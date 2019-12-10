@@ -10,7 +10,7 @@ import           TreeSitter.Unmarshal
 
 main :: IO ()
 main
-  =   readCorpusFiles (Path.relDir "./vendor/tree-sitter-java/corpus")
+  =   readCorpusFiles (Path.relDir "vendor/tree-sitter-java")
   >>= traverse (testCorpus parse)
   >>= defaultMain . tests
   where
