@@ -24,6 +24,8 @@ data Bar a = Bar
   { ann :: a
   , foo :: Text
   } deriving (Eq, Show, Generic1)
+  -- Aeson requires that the datatypes derive Generic
+  -- we want Generic1 because we can represent types of kind * -> *
 
 -- Serialize unmarshaled ASTs into JSON representation by auto-deriving instances generically.
 class MarshalJSON t where
