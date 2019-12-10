@@ -36,12 +36,11 @@ testCorpus parse path = do
 -- we might be in a project subdirectory or not, so let's make sure we're
 -- in project subdirectories as needed.
 findCorpus :: Path.RelDir -> IO Path.RelDir
-findCorpus p = Path.doesDirectoryExist p >>= go where
-  go exists
-    | exists    = pure (p </> Path.relDir "corpus")
-    | otherwise = do
-        project <- maybe (fail "Can't deduce corpus location") pure (Path.takeDirName p)
-        pure (project </> p </> Path.relDir "corpus")
+findCorpus p = do
+  cwd <- Path.getCurrentDirectory
+  if Path.takeDirName cwd == Just (Path.relDir "haskell-tree-sitter")
+     then pure p
+     else pure (Path.relDir ".." </> p)
 
 -- The path is expected to be relative to the language project.
 readCorpusFiles :: Path.RelDir ->  IO [Path.RelFile]
