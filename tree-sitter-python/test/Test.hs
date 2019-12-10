@@ -10,7 +10,7 @@ import           TreeSitter.Unmarshal
 
 main :: IO ()
 main
-  =   readCorpusFiles (Path.relDir "vendor/tree-sitter-python")
+  =   readCorpusFiles (Path.relDir "vendor/tree-sitter-python/test")
   >>= traverse (testCorpus parse)
   >>= defaultMain . tests
   where parse = parseByteString @Py.Module @() tree_sitter_python

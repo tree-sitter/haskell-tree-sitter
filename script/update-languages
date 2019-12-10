@@ -14,6 +14,8 @@ else
   for language in $(ls . | grep tree-sitter); do
     if [ $language = "tree-sitter-tsx" ]; then
       cd $language/vendor/tree-sitter-typescript;
+    elif [ $language = "tree-sitter-test-helpers" ]; then
+      continue
     else
       cd $language/vendor/$language;
     fi

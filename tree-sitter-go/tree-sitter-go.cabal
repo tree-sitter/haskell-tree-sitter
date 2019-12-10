@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-go
-version:             0.2.0.1
+version:             0.3.0.0
 synopsis:            Tree-sitter grammar/parser for Go
 description:         This package provides a parser for Go suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
