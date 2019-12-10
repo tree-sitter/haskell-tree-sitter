@@ -22,7 +22,7 @@ import GHC.TypeLits
 -- Test datatype that will go away: this is just to get us started!
 data Bar a = Bar
   { ann :: a
-   , guy :: Text
+  , foo :: Text
   } deriving (Eq, Show, Generic1)
 
 -- Serialize unmarshaled ASTs into JSON representation by auto-deriving instances generically.
