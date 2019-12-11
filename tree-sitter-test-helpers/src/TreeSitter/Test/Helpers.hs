@@ -15,6 +15,7 @@ import           Data.Either
 import           Data.Functor
 import           Prelude hiding (takeWhile)
 import           System.Exit (exitFailure)
+import           System.Path ((</>))
 import qualified System.Path as Path
 import qualified System.Path.Directory as Path
 import           Test.Tasty
@@ -31,8 +32,21 @@ testCorpus parse path = do
     pass = const (pure ())
     errMsg code e = assertFailure (e <> "\n``` \n" <> unpack code <> "```")
 
+-- Depending on whether these tests are invoked via cabal run or cabal test,
+-- we might be in a project subdirectory or not, so let's make sure we're
+-- in project subdirectories as needed.
+findCorpus :: Path.RelDir -> IO Path.RelDir
+findCorpus p = do
+  cwd <- Path.getCurrentDirectory
+  if Path.takeDirName cwd == Just (Path.relDir "haskell-tree-sitter")
+     then pure p
+     else pure (Path.relDir ".." </> p)
+
+-- The path is expected to be relative to the language project.
 readCorpusFiles :: Path.RelDir ->  IO [Path.RelFile]
-readCorpusFiles dir = fmap (Path.combine dir) <$> Path.filesInDir dir
+readCorpusFiles parent = do
+  dir <- findCorpus parent
+  fmap (Path.combine dir) <$> Path.filesInDir dir
 
 data CorpusExample = CorpusExample { name :: String, code :: ByteString }
   deriving (Eq, Show)
