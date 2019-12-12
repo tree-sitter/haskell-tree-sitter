@@ -35,10 +35,8 @@ astDeclarationsForLanguage
   -> [Name]          -- ^ A list of 'Name's to skip. Names can be conveniently added using @TemplateHaskell@’s name quotation, e.g.: @[''SomeDatatype]@.
   -> FilePath        -- ^ The path to the @node-types.json@ file.
   -> Q [Dec]
-astDeclarationsForLanguage language excludedNames filePath = do
-  invocationRelativePath <- pathRelativeToCurrentModule filePath
-  input <- runIO (eitherDecodeFileStrict' invocationRelativePath) >>= either fail pure
-  _ <- TS.addDependentFileRelative invocationRelativePath
+astDeclarationsForLanguage language excludedNames path = do
+  input <- runIO (eitherDecodeFileStrict' path) >>= either fail pure
   allSymbols <- runIO (getAllSymbols language)
   concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
   included datatype = let name = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype)) in Set.notMember name excludes
@@ -48,7 +46,8 @@ pathRelativeToCurrentModule :: FilePath -> Q FilePath
 pathRelativeToCurrentModule filePath = do
   currentFilename <- loc_filename <$> location
   pwd             <- runIO getCurrentDirectory
-  pure $! takeDirectory (pwd </> currentFilename) </> filePath
+  let absolute = takeDirectory (pwd </> currentFilename) </> filePath
+  absolute <$ addDependentFile absolute
 
 -- Build a list of all symbols
 getAllSymbols :: Ptr TS.Language -> IO [(String, Named)]
