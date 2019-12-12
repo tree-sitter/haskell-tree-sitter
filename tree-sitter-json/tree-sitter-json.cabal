@@ -57,8 +57,7 @@ executable generate-ast
   hs-source-dirs: app
   main-is: Main.hs
   build-depends:
-      aeson
-    , base
+      base
     , template-haskell
     , tree-sitter
 
