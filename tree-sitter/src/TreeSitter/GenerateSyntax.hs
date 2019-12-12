@@ -32,10 +32,10 @@ import TreeSitter.Symbol (TSSymbol, toHaskellCamelCaseIdentifier, toHaskellPasca
 -- Any datatypes among the node types whose names are in the passed list will be skipped, allowing customization of the representation of parts of the tree. Note that this should be used sparingly, as it imposes extra maintenance burden, particularly when the grammar is changed. This may be used to e.g. parse literals into Haskell equivalents (e.g. parsing the textual contents of integer literals into 'Integer's), and may require defining 'TS.UnmarshalAnn' or 'TS.SymbolMatching' instances for (parts of) the custom datatypes, depending on where and how the datatype occurs in the generated tree, in addition to the usual 'Foldable', 'Functor', etc. instances provided for generated datatypes.
 astDeclarationsForLanguage
   :: Ptr TS.Language -- ^ The language to get symbols from.
-  -> FilePath        -- ^ The path to the @node-types.json@ file.
   -> [Name]          -- ^ A list of 'Name's to skip. Names can be conveniently added using @TemplateHaskell@’s name quotation, e.g.: @[''SomeDatatype]@.
+  -> FilePath        -- ^ The path to the @node-types.json@ file.
   -> Q [Dec]
-astDeclarationsForLanguage language filePath excludedNames = do
+astDeclarationsForLanguage language excludedNames filePath = do
   invocationRelativePath <- pathRelativeToCurrentModule filePath
   input <- runIO (eitherDecodeFileStrict' invocationRelativePath) >>= either fail pure
   _ <- TS.addDependentFileRelative invocationRelativePath

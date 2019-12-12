@@ -15,4 +15,4 @@ module TreeSitter.Java.AST
 import TreeSitter.GenerateSyntax
 import qualified TreeSitter.Java as Grammar
 
-astDeclarationsForLanguage Grammar.tree_sitter_java "../../vendor/tree-sitter-java/src/node-types.json" []
+astDeclarationsForLanguage Grammar.tree_sitter_java [] "../../vendor/tree-sitter-java/src/node-types.json"

@@ -20,4 +20,4 @@ import TreeSitter.GenerateSyntax
 import TreeSitter.JSON.AST.Internal
 import qualified TreeSitter.JSON as Grammar
 
-astDeclarationsForLanguage Grammar.tree_sitter_json "../../vendor/tree-sitter-json/src/node-types.json" [''StringContent]
+astDeclarationsForLanguage Grammar.tree_sitter_json [''StringContent] "../../vendor/tree-sitter-json/src/node-types.json"
