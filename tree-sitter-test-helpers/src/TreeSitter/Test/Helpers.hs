@@ -65,9 +65,10 @@ corpusParser = do
 exampleParser :: Parser CorpusExample
 exampleParser = do
   name <- exampleNameParser
-  code <- manyTill anyChar (string "\n---\n")
+  code <- manyTill anyChar outputSepParser
   _out <- manyTill anyChar (choice [endOfInput, char '=' $> ()])
   pure (CorpusExample name (pack code))
+  where outputSepParser = choice [string "\n---\n", string "\r\n---\r\n"]
 
 exampleNameParser :: Parser String
 exampleNameParser = do
