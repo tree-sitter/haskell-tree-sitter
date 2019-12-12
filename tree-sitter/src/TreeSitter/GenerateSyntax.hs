@@ -3,6 +3,7 @@
 module TreeSitter.GenerateSyntax
 ( syntaxDatatype
 , astDeclarationsForLanguage
+, pathRelativeToCurrentModule
 ) where
 
 import Language.Haskell.TH as TH
