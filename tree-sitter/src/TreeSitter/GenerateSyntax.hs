@@ -95,7 +95,7 @@ syntaxDatatype language allSymbols datatype = do
 symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec]
 symbolMatchingInstance allSymbols name named str = do
   let tsSymbols = elemIndices (str, named) allSymbols
-  let names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
+      names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (debugPrefix (allSymbols !! fromIntegral (nodeSymbol node)))
       symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
