@@ -44,10 +44,14 @@ library
 
 library tree-sitter-json-internal
   import: common
-  exposed-modules:     TreeSitter.JSON.Internal
+  exposed-modules:
+    TreeSitter.JSON.AST.Internal
+    TreeSitter.JSON.Internal
   hs-source-dirs:      internal
-  build-depends:       base
-                     , tree-sitter
+  build-depends:
+      base
+    , text
+    , tree-sitter
   include-dirs:        vendor/tree-sitter-json/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-json/src/parser.c
