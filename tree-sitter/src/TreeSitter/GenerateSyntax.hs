@@ -1,8 +1,7 @@
 {-# LANGUAGE DeriveAnyClass, DeriveGeneric, LambdaCase, TemplateHaskell, TypeApplications #-}
 
 module TreeSitter.GenerateSyntax
-( syntaxDatatype
-, astDeclarationsForLanguage
+( astDeclarationsForLanguage
 , pathRelativeToCurrentModule
 ) where
 
