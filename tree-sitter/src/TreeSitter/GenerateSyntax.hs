@@ -36,15 +36,19 @@ astDeclarationsForLanguage
   -> [Name]          -- ^ A list of 'Name's to skip. Names can be conveniently added using @TemplateHaskell@’s name quotation, e.g.: @[''SomeDatatype]@.
   -> Q [Dec]
 astDeclarationsForLanguage language filePath excludedNames = do
-  currentFilename <- loc_filename <$> location
-  pwd             <- runIO getCurrentDirectory
-  let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
+  invocationRelativePath <- pathRelativeToCurrentModule filePath
   input <- runIO (eitherDecodeFileStrict' invocationRelativePath) >>= either fail pure
   _ <- TS.addDependentFileRelative invocationRelativePath
   allSymbols <- runIO (getAllSymbols language)
   concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
   included datatype = let name = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype)) in Set.notMember name excludes
   excludes = Set.fromList (map (\ (TH.Name (TH.OccName s) _) -> s) excludedNames)
+
+pathRelativeToCurrentModule :: FilePath -> Q FilePath
+pathRelativeToCurrentModule filePath = do
+  currentFilename <- loc_filename <$> location
+  pwd             <- runIO getCurrentDirectory
+  pure $! takeDirectory (pwd </> currentFilename) </> filePath
 
 -- Build a list of all symbols
 getAllSymbols :: Ptr TS.Language -> IO [(String, Named)]
