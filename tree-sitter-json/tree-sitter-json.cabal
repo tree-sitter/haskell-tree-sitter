@@ -52,6 +52,16 @@ library tree-sitter-json-internal
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-json/src/parser.c
 
+executable generate-ast
+  import: common
+  hs-source-dirs: app
+  main-is: Main.hs
+  build-depends:
+      aeson
+    , base
+    , template-haskell
+    , tree-sitter
+
 source-repository head
   type:     git
   location: https://github.com/tree-sitter/haskell-tree-sitter
