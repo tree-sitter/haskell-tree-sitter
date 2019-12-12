@@ -37,11 +37,11 @@ astDeclarationsForLanguage language filePath = do
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
   input <- runIO (eitherDecodeFileStrict' invocationRelativePath) >>= either fail pure
   allSymbols <- runIO (getAllSymbols language)
-  allSymbolNames <- [d|
-    allSymbolNames :: [String]
-    allSymbolNames = $(listE (map (litE . stringL . debugPrefix) allSymbols))
+  debugSymbolNames <- [d|
+    debugSymbolNames :: [String]
+    debugSymbolNames = $(listE (map (litE . stringL . debugPrefix) allSymbols))
     |]
-  (allSymbolNames <>) . concat @[] <$> traverse (syntaxDatatype language allSymbols) input
+  (debugSymbolNames <>) . concat @[] <$> traverse (syntaxDatatype language allSymbols) input
 
 -- Build a list of all symbols
 getAllSymbols :: Ptr TS.Language -> IO [(String, Named)]
@@ -96,7 +96,7 @@ symbolMatchingInstance allSymbols name named str = do
   let tsSymbols = elemIndices (str, named) allSymbols
       names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
   [d|instance TS.SymbolMatching $(conT name) where
-      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (allSymbolNames !! fromIntegral (nodeSymbol node))
+      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (debugSymbolNames !! fromIntegral (nodeSymbol node))
       symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
 
 -- | Prefix symbol names for debugging to disambiguate between Named and Anonymous nodes.
