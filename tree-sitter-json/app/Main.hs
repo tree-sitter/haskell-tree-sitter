@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Main
 ( main
 ) where
@@ -5,9 +6,10 @@ module Main
 import Language.Haskell.TH
 import TreeSitter.GenerateSyntax
 import TreeSitter.JSON.Internal
+import TreeSitter.JSON.AST.Internal
 
 main :: IO ()
 main = do
   let jsonPath = "vendor/tree-sitter-json/src/node-types.json"
-  ast <- runQ (astDeclarationsForLanguage tree_sitter_json jsonPath [])
+  ast <- runQ (astDeclarationsForLanguage tree_sitter_json jsonPath [''StringContent])
   putStrLn (pprint ast)
