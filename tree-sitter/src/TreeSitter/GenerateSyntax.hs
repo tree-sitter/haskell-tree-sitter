@@ -11,6 +11,7 @@ import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Chi
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.List
 import Data.Foldable
+import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified TreeSitter.Unmarshal as TS
 import GHC.Generics hiding (Constructor, Datatype)
@@ -29,15 +30,17 @@ import TreeSitter.Symbol (TSSymbol, toHaskellCamelCaseIdentifier, toHaskellPasca
 -- Datatypes will be generated according to the specification in the @node-types.json@ file, with anonymous leaf types defined as synonyms for the 'Token' datatype.
 --
 -- Any datatypes among the node types which have already been defined in the module where the splice is run will be skipped, allowing customization of the representation of parts of the tree. Note that this should be used sparingly, as it imposes extra maintenance burden, particularly when the grammar is changed. This may be used to e.g. parse literals into Haskell equivalents (e.g. parsing the textual contents of integer literals into 'Integer's), and may require defining 'TS.UnmarshalAnn' or 'TS.SymbolMatching' instances for (parts of) the custom datatypes, depending on where and how the datatype occurs in the generated tree, in addition to the usual 'Foldable', 'Functor', etc. instances provided for generated datatypes.
-astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> Q [Dec]
-astDeclarationsForLanguage language filePath = do
+astDeclarationsForLanguage :: Ptr TS.Language -> FilePath -> [Name] -> Q [Dec]
+astDeclarationsForLanguage language filePath excludedNames = do
   _ <- TS.addDependentFileRelative filePath
   currentFilename <- loc_filename <$> location
   pwd             <- runIO getCurrentDirectory
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
-  input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
+  input <- runIO (eitherDecodeFileStrict' invocationRelativePath) >>= either fail pure
   allSymbols <- runIO (getAllSymbols language)
-  either fail (fmap (concat @[]) . traverse (syntaxDatatype language allSymbols)) input
+  concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
+  included datatype = let name = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype)) in Set.notMember name excludes
+  excludes = Set.fromList (map (\ (TH.Name (TH.OccName s) _) -> s) excludedNames)
 
 -- Build a list of all symbols
 getAllSymbols :: Ptr TS.Language -> IO [(String, Named)]
@@ -54,7 +57,7 @@ getAllSymbols language = do
 
 -- Auto-generate Haskell datatypes for sums, products and leaf types
 syntaxDatatype :: Ptr TS.Language -> [(String, Named)] -> Datatype -> Q [Dec]
-syntaxDatatype language allSymbols datatype = skipDefined $ do
+syntaxDatatype language allSymbols datatype = do
   typeParameterName <- newName "a"
   case datatype of
     SumType (DatatypeName _) _ subtypes -> do
@@ -74,12 +77,7 @@ syntaxDatatype language allSymbols datatype = skipDefined $ do
       result <- symbolMatchingInstance allSymbols name Named datatypeName
       pure $ generatedDatatype name [con] typeParameterName:result
   where
-    -- Skip generating datatypes that have already been defined (overridden) in the module where the splice is running.
-    skipDefined m = do
-      isLocal <- lookupTypeName nameStr >>= maybe (pure False) isLocalName
-      if isLocal then pure [] else m
-    name = mkName nameStr
-    nameStr = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
+    name = mkName $ toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype))
     deriveStockClause = DerivClause (Just StockStrategy) [ ConT ''Eq, ConT ''Ord, ConT ''Show, ConT ''Generic, ConT ''Foldable, ConT ''Functor, ConT ''Traversable, ConT ''Generic1]
     deriveAnyClassClause = DerivClause (Just AnyclassStrategy) [ConT ''TS.Unmarshal]
     deriveGN = DerivClause (Just NewtypeStrategy) [ConT ''TS.SymbolMatching]
@@ -153,11 +151,3 @@ toNameString named str = prefix named <> toHaskellPascalCaseIdentifier str
   where
     prefix Anonymous = "Anonymous"
     prefix Named     = ""
-
--- | Get the 'Module', if any, for a given 'Name'.
-moduleForName :: Name -> Maybe Module
-moduleForName n = Module . PkgName <$> namePackage n <*> (ModName <$> nameModule n)
-
--- | Test whether the name is defined in the module where the splice is executed.
-isLocalName :: Name -> Q Bool
-isLocalName n = (moduleForName n ==) . Just <$> thisModule
