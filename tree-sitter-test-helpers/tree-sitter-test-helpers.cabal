@@ -41,6 +41,7 @@ library
                     , bytestring ^>= 0.10.8.2
                     , hedgehog >= 0.6 && <2
                     , pathtype ^>= 0.8.1
+                    , Glob
                     , attoparsec
                     , text
                     , tasty

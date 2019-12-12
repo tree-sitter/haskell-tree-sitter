@@ -18,6 +18,7 @@ import           System.Exit (exitFailure)
 import           System.Path ((</>))
 import qualified System.Path as Path
 import qualified System.Path.Directory as Path
+import           System.FilePath.Glob
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
@@ -46,7 +47,8 @@ findCorpus p = do
 readCorpusFiles :: Path.RelDir ->  IO [Path.RelFile]
 readCorpusFiles parent = do
   dir <- findCorpus parent
-  fmap (Path.combine dir) <$> Path.filesInDir dir
+  files <- globDir1 (compile "**/*.txt") (Path.toString dir)
+  pure (Path.relPath <$> files)
 
 data CorpusExample = CorpusExample { name :: String, code :: ByteString }
   deriving (Eq, Show)
