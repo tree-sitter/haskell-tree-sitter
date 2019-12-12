@@ -13,7 +13,7 @@ main
   =   readCorpusFiles (Path.relDir "tree-sitter-ruby/vendor/tree-sitter-ruby/test/corpus")
   >>= traverse (testCorpus parse)
   >>= defaultMain . tests
-  where parse = parseByteString @Rb.Module @() tree_sitter_ruby
+  where parse = parseByteString @Rb.Program @() tree_sitter_ruby
 
 tests :: [TestTree] -> TestTree
 tests = testGroup "tree-sitter-ruby corpus tests"
