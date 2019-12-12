@@ -79,11 +79,12 @@ library
 
 executable generate-ast
   import: common
-  hs-source-dirs: src
+  hs-source-dirs: app
   main-is: Main.hs
   build-depends:
       aeson
     , base
+    , template-haskell
     , tree-sitter
 
 test-suite test
