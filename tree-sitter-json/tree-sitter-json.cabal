@@ -60,6 +60,7 @@ executable generate-ast
       base
     , template-haskell
     , tree-sitter
+    , tree-sitter-json-internal
 
 source-repository head
   type:     git
