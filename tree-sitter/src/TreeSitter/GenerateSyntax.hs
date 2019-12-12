@@ -96,8 +96,9 @@ symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec
 symbolMatchingInstance allSymbols name named str = do
   let tsSymbols = elemIndices (str, named) allSymbols
       names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
+      debugNames = map debugPrefix allSymbols
   [d|instance TS.SymbolMatching $(conT name) where
-      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (debugPrefix (allSymbols !! fromIntegral (nodeSymbol node)))
+      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show ($(listE (map (litE . stringL) debugNames)) !! fromIntegral (nodeSymbol node))
       symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
 
 -- | Prefix symbol names for debugging to disambiguate between Named and Anonymous nodes.
