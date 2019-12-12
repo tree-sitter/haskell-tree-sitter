@@ -36,12 +36,9 @@ library
   exposed-modules:     TreeSitter.Python
                      , TreeSitter.Python.AST
   build-depends:       base              >= 4.12 && < 5
-                     , tree-sitter      ^>= 0.7
-                     , aeson            ^>= 1.4.2.0
-                     , directory        ^>= 1.3
-                     , filepath         ^>= 1.4
                      , semantic-source  ^>= 0
                      , template-haskell  >= 2.12 && < 2.16
+                     , tree-sitter      ^>= 0.7
                      , tree-sitter-python-internal
 
 library tree-sitter-python-internal
