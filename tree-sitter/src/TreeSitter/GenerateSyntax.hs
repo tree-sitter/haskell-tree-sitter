@@ -35,9 +35,9 @@ astDeclarationsForLanguage language filePath = do
   currentFilename <- loc_filename <$> location
   pwd             <- runIO getCurrentDirectory
   let invocationRelativePath = takeDirectory (pwd </> currentFilename) </> filePath
-  input <- runIO (eitherDecodeFileStrict' invocationRelativePath)
+  input <- runIO (eitherDecodeFileStrict' invocationRelativePath) >>= either fail pure
   allSymbols <- runIO (getAllSymbols language)
-  either fail (fmap (concat @[]) . traverse (syntaxDatatype language allSymbols)) input
+  concat @[] <$> traverse (syntaxDatatype language allSymbols) input
 
 -- Build a list of all symbols
 getAllSymbols :: Ptr TS.Language -> IO [(String, Named)]
