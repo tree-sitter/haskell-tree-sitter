@@ -35,7 +35,7 @@ moduleHeader = unlines
   , ""
   , "import GHC.Generics ((:+:)(..))"
   , "import Prelude hiding (String)"
-  , "import TreeSitter.GenerateSyntax"
   , "import TreeSitter.JSON.AST.Internal"
+  , "import TreeSitter.Unmarshal"
   , ""
   ]
