@@ -73,7 +73,6 @@ test-suite test
                   , tasty-hedgehog
                   , tasty-hunit
 
-
 source-repository head
   type:     git
   location: https://github.com/tree-sitter/haskell-tree-sitter
