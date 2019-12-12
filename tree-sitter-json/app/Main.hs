@@ -33,7 +33,7 @@ moduleHeader = unlines
   , ", (:+:)(..)"
   , ") where"
   , ""
-  , "import GHC.Generics ((:+:)(..))"
+  , "import GHC.Generics ((:+:)(..), Generic, Generic1)"
   , "import Prelude hiding (String)"
   , "import TreeSitter.JSON.AST.Internal"
   , "import TreeSitter.Unmarshal"
