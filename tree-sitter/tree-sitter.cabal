@@ -77,6 +77,15 @@ library
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
 
+executable generate-ast
+  import: common
+  hs-source-dirs: src
+  main-is: Main.hs
+  build-depends:
+      aeson
+    , base
+    , tree-sitter
+
 test-suite test
   import: common
   type:                exitcode-stdio-1.0
