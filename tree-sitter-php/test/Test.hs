@@ -9,7 +9,7 @@ import           TreeSitter.Test.Helpers
 import           TreeSitter.Unmarshal
 
 main :: IO ()
-main =
+main
   =   readCorpusFiles (Path.relDir "tree-sitter-php/vendor/tree-sitter-php/corpus")
   >>= traverse (testCorpus parse)
   >>= defaultMain . tests
