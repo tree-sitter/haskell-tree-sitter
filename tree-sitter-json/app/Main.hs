@@ -3,8 +3,6 @@ module Main
 ( main
 ) where
 
-import Data.List (intersperse)
-import Language.Haskell.TH
 import Language.Haskell.TH.Cleanup
 import TreeSitter.GenerateSyntax
 import TreeSitter.JSON.Internal
@@ -13,7 +11,7 @@ import TreeSitter.JSON.AST.Internal
 main :: IO ()
 main = do
   putStrLn moduleHeader
-  putStrLn $ unlines (intersperse "" $(listE . map pure =<< traverse (simplifiedTH . pure) =<< astDeclarationsForLanguage tree_sitter_json [''StringContent] "/Users/rob/Developer/GitHub/haskell-tree-sitter/tree-sitter-json/vendor/tree-sitter-json/src/node-types.json"))
+  putStrLn $(simplifiedTH =<< astDeclarationsForLanguage tree_sitter_json [''StringContent] "/Users/rob/Developer/GitHub/haskell-tree-sitter/tree-sitter-json/vendor/tree-sitter-json/src/node-types.json")
 
 moduleHeader :: String
 moduleHeader = unlines
