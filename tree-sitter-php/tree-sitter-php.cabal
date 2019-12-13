@@ -32,7 +32,7 @@ common common
 library
   import: common
   exposed-modules:     TreeSitter.PHP
-                     , TreeSitter.PHP.AST
+                    --  , TreeSitter.PHP.AST
   build-depends:       base              >= 4.12 && < 5
                      , semantic-source  ^>= 0
                      , template-haskell  >= 2.12 && < 2.16
@@ -51,22 +51,22 @@ library tree-sitter-php-internal
                      , vendor/tree-sitter-php/src/scanner.cc
   extra-libraries:     stdc++
 
-test-suite test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    base
-                  , tree-sitter
-                  , tree-sitter-php
-                  , tree-sitter-test-helpers
-                  , bytestring ^>= 0.10.8.2
-                  , hedgehog >= 0.6 && <2
-                  , pathtype ^>= 0.8.1
-                  , text
-                  , tasty
-                  , tasty-hedgehog
-                  , tasty-hunit
+-- test-suite test
+--   import: common
+--   type:             exitcode-stdio-1.0
+--   hs-source-dirs:   test
+--   main-is:          Test.hs
+--   build-depends:    base
+--                   , tree-sitter
+--                   , tree-sitter-php
+--                   , tree-sitter-test-helpers
+--                   , bytestring ^>= 0.10.8.2
+--                   , hedgehog >= 0.6 && <2
+--                   , pathtype ^>= 0.8.1
+--                   , text
+--                   , tasty
+--                   , tasty-hedgehog
+--                   , tasty-hunit
 
 source-repository head
   type:     git
