@@ -38,7 +38,11 @@ astDeclarationsForLanguage
 astDeclarationsForLanguage language excludedNames path = do
   input <- runIO (eitherDecodeFileStrict' path) >>= either fail pure
   allSymbols <- runIO (getAllSymbols language)
-  concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
+  debugSymbolNames <- [d|
+    debugSymbolNames :: [String]
+    debugSymbolNames = $(listE (map (litE . stringL . debugPrefix) allSymbols))
+    |]
+  (debugSymbolNames <>) . concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
   included datatype = let name = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype)) in Set.notMember name excludes
   excludes = Set.fromList (map (\ (TH.Name (TH.OccName s) _) -> s) excludedNames)
 
@@ -96,9 +100,8 @@ symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec
 symbolMatchingInstance allSymbols name named str = do
   let tsSymbols = elemIndices (str, named) allSymbols
       names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
-      debugNames = map debugPrefix allSymbols
   [d|instance TS.SymbolMatching $(conT name) where
-      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show ($(listE (map (litE . stringL) debugNames)) !! fromIntegral (nodeSymbol node))
+      showFailure _ node = "expected " <> $(litE (stringL (show names))) <> " but got " <> show (debugSymbolNames !! fromIntegral (nodeSymbol node))
       symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
 
 -- | Prefix symbol names for debugging to disambiguate between Named and Anonymous nodes.
