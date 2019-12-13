@@ -63,6 +63,7 @@ executable generate-ast
   build-depends:
       base
     , template-haskell
+    , th-pprint
     , tree-sitter
     , tree-sitter-json-internal
 
