@@ -38,11 +38,9 @@ astDeclarationsForLanguage
 astDeclarationsForLanguage language excludedNames path = do
   input <- runIO (eitherDecodeFileStrict' path) >>= either fail pure
   allSymbols <- runIO (getAllSymbols language)
-  debugSymbolNames <- [d|
-    debugSymbolNames :: [String]
-    debugSymbolNames = $(listE (map (litE . stringL . debugPrefix) allSymbols))
-    |]
-  (debugSymbolNames <>) . concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
+  debugSymbolNamesT <- sigD (mkName "debugSymbolNames") (listT `appT` (conT ''String))
+  debugSymbolNamesD <- funD (mkName "debugSymbolNames") [ clause [] (normalB (listE (map (litE . stringL . debugPrefix) allSymbols))) [] ]
+  (debugSymbolNamesT :) . (debugSymbolNamesD :) . concat @[] <$> traverse (syntaxDatatype language allSymbols) (filter included input) where
   included datatype = let name = toNameString (datatypeNameStatus datatype) (getDatatypeName (TreeSitter.Deserialize.datatypeName datatype)) in Set.notMember name excludes
   excludes = Set.fromList (map (\ (TH.Name (TH.OccName s) _) -> s) excludedNames)
 
