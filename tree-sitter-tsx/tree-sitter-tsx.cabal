@@ -10,6 +10,7 @@ maintainer:          vera@github.com
 copyright:           2019 GitHub
 category:            Tree-sitter, TypeScript
 build-type:          Simple
+data-files:          vendor/tree-sitter-typescript/tsx/src/node-types.json
 
 common common
   default-language: Haskell2010
