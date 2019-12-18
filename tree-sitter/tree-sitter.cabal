@@ -12,7 +12,7 @@ license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, Ayman Nadeem, Patrick Thomson
 maintainer:          rob.rix@github.com
-copyright:           2015 GitHub
+copyright:           2019 GitHub
 category:            Parsing, Tree-sitter
 build-type:          Simple
 
