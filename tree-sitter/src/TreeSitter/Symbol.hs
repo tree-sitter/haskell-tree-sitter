@@ -114,11 +114,12 @@ escapeOperatorPunctuation = concatMap $ \case
 
 -- | Convert a snake_case String to camelCase
 camelCase :: String -> String
-camelCase = foldr appender mempty
+camelCase = go
   where
-    appender :: Char -> String -> String
-    appender '_' cs = capitalize cs
-    appender c cs   = c : cs
+    go ('_':'_':xs) = "Underscore" <> go xs
+    go ('_':xs)     = go (capitalize xs)
+    go (x:xs)       = x : go xs
+    go ""           = ""
 
 -- | Capitalize a String
 capitalize :: String -> String
