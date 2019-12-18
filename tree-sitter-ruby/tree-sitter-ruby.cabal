@@ -1,6 +1,6 @@
-cabal-version:       2.2
+cabal-version:       2.4
 name:                tree-sitter-ruby
-version:             0.3.1.0
+version:             0.3.2.0
 synopsis:            Tree-sitter grammar/parser for Ruby
 description:         This package provides a parser for Ruby suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -36,7 +36,7 @@ library
   build-depends:       base              >= 4.12 && < 5
                      , semantic-source  ^>= 0
                      , template-haskell  >= 2.12 && < 2.16
-                     , tree-sitter       >= 0.3 && < 1
+                     , tree-sitter      ^>= 0.7.1
                      , tree-sitter-ruby-internal
 
 library tree-sitter-ruby-internal
