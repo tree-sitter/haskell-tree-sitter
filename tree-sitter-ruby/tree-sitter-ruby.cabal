@@ -10,7 +10,7 @@ maintainer:          tclem@github.com
 copyright:           2019 GitHub
 category:            Tree-sitter, Ruby
 build-type:          Simple
-data-files:          vendor/tree-sitter-python/src/node-types.json
+data-files:          vendor/tree-sitter-ruby/src/node-types.json
 
 common common
   default-language: Haskell2010
