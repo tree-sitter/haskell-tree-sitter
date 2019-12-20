@@ -97,7 +97,7 @@ symbolMatchingInstance allSymbols name named str = do
       names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
   [d|instance TS.SymbolMatching $(conT name) where
       showFailure _ node = "expected " <> $(litE (stringL names))
-                        <> " but got " <> debugSymbolNames !! fromIntegral (nodeSymbol node)
+                        <> " but got " <> genericIndex debugSymbolNames (nodeSymbol node)
                         <> " [" <> show r1 <> ", " <> show c1 <> "] -"
                         <> " [" <> show r2 <> ", " <> show c2 <> "]"
         where TSPoint r1 c1 = nodeStartPoint node
