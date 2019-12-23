@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter
-version:             0.5.0.0
+version:             0.7.2.0
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
                      .
@@ -12,7 +12,7 @@ license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Rob Rix, Josh Vera, Tim Clem, Rick Winfrey, Max Brunsfeld, Ayman Nadeem, Patrick Thomson
 maintainer:          rob.rix@github.com
-copyright:           2015 GitHub
+copyright:           2019 GitHub
 category:            Parsing, Tree-sitter
 build-type:          Simple
 
@@ -20,10 +20,8 @@ tested-with:
   GHC == 8.6.5
   GHC == 8.8.1
 
-extra-source-files:  vendor/tree-sitter/lib/src/*.c
-                   , vendor/tree-sitter/lib/src/*.h
-                   , vendor/tree-sitter/lib/utf8proc/utf8proc.c
-                   , vendor/tree-sitter/lib/utf8proc/utf8proc_data.c
+extra-source-files:  vendor/tree-sitter/lib/src/**/*.c
+                   , vendor/tree-sitter/lib/src/**/*.h
                    , ChangeLog.md
 
 common common
@@ -73,10 +71,8 @@ library
   other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
-                     , vendor/tree-sitter/lib/utf8proc
   install-includes:    tree_sitter/api.h
                      , tree_sitter/parser.h
-                     , utf8proc.h
   c-sources:           src/bridge.c
                      , vendor/tree-sitter/lib/src/lib.c
   cc-options:          -std=c99
@@ -85,20 +81,13 @@ test-suite test
   import: common
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             Spec.hs
+  main-is:             Test.hs
+  other-modules:       TreeSitter.Example
+                     , TreeSitter.Strings.Example
   build-depends:       base
                      , tree-sitter
                      , hedgehog >= 0.6 && <2
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-
-test-suite codegen-test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test-codegen
-  main-is:          test-codegen.hs
-  build-depends:    base
-                  , tree-sitter
-                  , hedgehog >= 0.6 && <2
 
 source-repository head
   type:     git

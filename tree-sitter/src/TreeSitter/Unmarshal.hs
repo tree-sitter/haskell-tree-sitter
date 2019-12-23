@@ -180,7 +180,7 @@ instance UnmarshalField NonEmpty where
     head' <- unmarshalNode x
     tail' <- unmarshalField xs
     pure $ head' :| tail'
-  unmarshalField [] = fail "expected a node but didn't get one"
+  unmarshalField [] = fail "expected a node of type (NonEmpty a) but got an empty list"
 
 
 class SymbolMatching (a :: * -> *) where
@@ -246,7 +246,7 @@ peekFieldName = do
   if fieldName == nullPtr then
     pure Nothing
   else
-    Just . FieldName <$> liftIO (peekCString fieldName)
+    Just . FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString fieldName)
 
 
 type Fields = Map.Map FieldName [Node]
@@ -367,6 +367,6 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode _ fields =
     case lookupField (FieldName (selName @c undefined)) fields of
-      []  -> fail "expected a node but didn't get one"
+      []  -> fail $ "expected a node " <> selName @c undefined <> " but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
       _   -> fail "expected a node but got multiple"

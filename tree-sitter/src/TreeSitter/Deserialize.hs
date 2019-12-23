@@ -3,6 +3,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveLift #-}
+
 -- Turn off partial field warnings for Datatype.
 {-# OPTIONS_GHC -Wno-partial-fields #-}
 module TreeSitter.Deserialize
@@ -20,6 +22,7 @@ import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Data.Char
 import GHC.Generics hiding (Constructor, Datatype)
+import Language.Haskell.TH.Syntax (Lift)
 import Data.Text (Text, unpack)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.HashMap.Strict as HM
@@ -104,7 +107,7 @@ newtype DatatypeName = DatatypeName { getDatatypeName :: String }
   deriving newtype (FromJSON, ToJSON)
 
 data Named = Anonymous | Named
-  deriving (Eq, Ord, Show, Generic, ToJSON)
+  deriving (Eq, Ord, Show, Generic, ToJSON, Lift)
 
 instance FromJSON Named where
   parseJSON = withBool "Named" (\p -> pure (if p then Named else Anonymous))

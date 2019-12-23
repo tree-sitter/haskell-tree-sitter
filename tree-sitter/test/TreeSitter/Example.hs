@@ -1,15 +1,16 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Main (main) where
+module TreeSitter.Example (tests) where
 
-import Data.Bool (bool)
 import Control.Monad.IO.Class
 import Foreign
 import Foreign.C.Types
 import Hedgehog
-import System.Exit (exitFailure, exitSuccess)
 import TreeSitter.Cursor
 import TreeSitter.Node
 import TreeSitter.Parser
+
+tests :: IO Bool
+tests = checkSequential $$(discover)
 
 prop_TSNode_sizeOf = property $
   sizeOf (undefined :: TSNode) === fromIntegral sizeof_tsnode
@@ -43,9 +44,6 @@ prop_Parser_timeout = property $ do
   timeout <- liftIO (ts_parser_timeout_micros parser)
   timeout === 1000
   liftIO (ts_parser_delete parser)
-
-main :: IO ()
-main = checkSequential $$(discover) >>= bool exitFailure exitSuccess
 
 foreign import ccall unsafe "src/bridge.c sizeof_tsnode" sizeof_tsnode :: CSize
 foreign import ccall unsafe "src/bridge.c sizeof_tspoint" sizeof_tspoint :: CSize

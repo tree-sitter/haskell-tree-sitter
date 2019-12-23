@@ -1,13 +1,13 @@
 cabal-version:       2.2
 name:                tree-sitter-java
-version:             0.4.0.0
+version:             0.6.0.0
 synopsis:            Tree-sitter grammar/parser for Java
 description:         This package provides a parser for Java suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
 homepage:            https://github.com/tree-sitter/haskell-tree-sitter/tree/master/tree-sitter-java
 author:              Ayman Nadeem, Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey
 maintainer:          tclem@github.com
-copyright:           2017 GitHub
+copyright:           2019 GitHub
 category:            Tree-sitter, Java
 build-type:          Simple
 data-files:          vendor/tree-sitter-java/src/node-types.json
@@ -37,7 +37,8 @@ library
     TreeSitter.Java
     TreeSitter.Java.AST
   build-depends:       base              >= 4.12 && < 5
-                     , tree-sitter      ^>= 0.5
+                     , semantic-source  ^>= 0
+                     , tree-sitter      ^>= 0.7
                      , template-haskell  >= 2.12 && < 2.16
                      , tree-sitter-java-internal
 
@@ -51,6 +52,21 @@ library tree-sitter-java-internal
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-java/src/parser.c
   extra-libraries:     stdc++
+
+test-suite test
+  import: common
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Test.hs
+  build-depends:    base
+                  , tree-sitter
+                  , tree-sitter-java
+                  , tree-sitter-test-helpers
+                  , bytestring ^>= 0.10.8.2
+                  , pathtype ^>= 0.8.1
+                  , text
+                  , tasty
+                  , tasty-hunit
 
 source-repository head
   type:     git
