@@ -53,7 +53,7 @@ library tree-sitter-ruby-internal
   extra-libraries:     stdc++
 
 test-suite test
-  import: common
+  import:           common
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
   main-is:          Test.hs
@@ -68,6 +68,22 @@ test-suite test
                   , tasty
                   , tasty-hedgehog
                   , tasty-hunit
+
+executable benchmarks
+  import:              common
+  hs-source-dirs:      bench
+  -- type:                exitcode-stdio-1.0
+  main-is:             Main.hs
+  other-modules:       Parsing
+  ghc-options:         -static -threaded -rtsopts "-with-rtsopts=-N -A4m -n2m"
+  build-depends:       base
+                     , gauge ^>= 0.2.5
+                     , bytestring
+                     , Glob
+                     , lens >= 4.17 && < 4.19
+                     , pathtype ^>= 0.8.1
+                     , tree-sitter
+                     , tree-sitter-ruby
 
 source-repository head
   type:     git
