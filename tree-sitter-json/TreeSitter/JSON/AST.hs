@@ -29,4 +29,7 @@ data StringContent a = StringContent
   }
   deriving (Eq, Foldable, Functor, Generic, Generic1, Ord, Show, Traversable, TS.Unmarshal)
 
+instance TS.SymbolMatching StringContent where
+  showFailure _ _ = ""
+
 astDeclarationsForLanguage Grammar.tree_sitter_json "../../vendor/tree-sitter-json/src/node-types.json"

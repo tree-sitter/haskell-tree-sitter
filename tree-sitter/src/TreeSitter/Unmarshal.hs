@@ -68,6 +68,26 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
       withCursor (castPtr rootPtr) $ \ cursor ->
         runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))
 
+newtype Match t = Match
+  { runMatch :: forall m sig a . ( Has (Reader ByteString) sig m
+                                 , Has (Reader (Ptr Cursor)) sig m
+                                 , MonadFail m
+                                 , MonadIO m
+                                 , UnmarshalAnn a
+                                 )
+             => Node
+             -> m (t a)
+  }
+
+data Table a = Table (IntMap.IntMap a) (Maybe a)
+  deriving (Functor)
+
+hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
+hoist f (Match run) = Match (fmap f . run)
+
+lookupSymbol :: TSSymbol -> Table a -> Maybe a
+lookupSymbol sym (Table map fallback) = IntMap.lookup (fromIntegral sym) map <|> fallback
+
 -- | Unmarshal a node
 unmarshalNode :: forall t sig m a . ( Has (Reader ByteString) sig m
                  , Has (Reader (Ptr Cursor)) sig m
@@ -86,32 +106,8 @@ unmarshalNode node = {-# SCC "unmarshalNode" #-} do
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
---   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic1' instance.
+--   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'matchers' providing that they have a suitable 'Generic1' instance.
 class SymbolMatching t => Unmarshal t where
-  -- unmarshalNode
-  --   :: ( Has (Reader ByteString) sig m
-  --      , Has (Reader (Ptr Cursor)) sig m
-  --      , MonadFail m
-  --      , MonadIO m
-  --      , UnmarshalAnn a
-  --      )
-  --   => Node
-  --   -> m (t a)
-  -- default unmarshalNode
-  --   :: ( Generic1 t
-  --      , GUnmarshal (Rep1 t)
-  --      , Has (Reader ByteString) sig m
-  --      , Has (Reader (Ptr Cursor)) sig m
-  --      , MonadFail m
-  --      , MonadIO m
-  --      , UnmarshalAnn a
-  --      )
-  --   => Node
-  --   -> m (t a)
-  -- unmarshalNode x = {-# SCC "defaultUnmarshalNode" #-} do
-  --   goto (nodeTSNode x)
-  --   to1 <$> gunmarshalNode x
-
   matchers :: Table (Match t)
   default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => Table (Match t)
   matchers = fmap go gMatchers
@@ -318,14 +314,6 @@ slice (Range start end) = take . drop
 newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
 
-newtype Match t = Match { runMatch :: forall m sig a . (Has (Reader ByteString) sig m, Has (Reader (Ptr Cursor)) sig m, MonadFail m, MonadIO m, UnmarshalAnn a) => Node -> m (t a) }
-
-data Table a = Table (IntMap.IntMap a) (Maybe a)
-  deriving (Functor)
-
-hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
-hoist f (Match run) = Match (fmap f . run)
-
 -- | Generic construction of ASTs from a 'Map.Map' of named fields.
 --
 --   Product types (specifically, record types) are constructed by looking up the node for each corresponding field name in the map, moving the cursor to it, and then invoking 'unmarshalNode' to construct the value for that field. Leaf types are constructed as a special case of product types.
@@ -371,9 +359,6 @@ instance Unmarshal t => GUnmarshal (Rec1 t) where
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
   gunmarshalNode node = {-# SCC "GUnmarshalProduct" #-} push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
   gMatchers = Table mempty (Just (Match gunmarshalNode))
-
-lookupSymbol :: TSSymbol -> Table a -> Maybe a
-lookupSymbol sym (Table map fallback) = IntMap.lookup (fromIntegral sym) map <|> fallback
 
 -- For sum datatypes:
 instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
