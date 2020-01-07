@@ -1,5 +1,13 @@
-{-# LANGUAGE DefaultSignatures, FlexibleContexts, FlexibleInstances, PolyKinds,
-             ScopedTypeVariables, TypeApplications, TypeOperators #-}
+{-# LANGUAGE DefaultSignatures   #-}
+{-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE PolyKinds           #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeOperators       #-}
+
 module TreeSitter.Unmarshal
 ( parseByteString
 , FieldName(..)
@@ -7,6 +15,10 @@ module TreeSitter.Unmarshal
 , UnmarshalAnn(..)
 , UnmarshalField(..)
 , SymbolMatching(..)
+, Match(..)
+, hoist
+, lookupSymbol
+, unmarshalNode
 , step
 , push
 , goto
@@ -18,13 +30,14 @@ module TreeSitter.Unmarshal
 import           Control.Applicative
 import           Control.Carrier.Reader
 import           Control.Carrier.Fail.Either
-import           Control.Carrier.Lift
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.Map as Map
+import qualified Data.IntMap as IntMap
 import qualified Data.Text as Text
 import           Data.Text.Encoding
+import           Data.Text.Encoding.Error (lenientDecode)
 import           Foreign.C.String
 import           Foreign.Marshal.Alloc
 import           Foreign.Marshal.Utils
@@ -53,52 +66,77 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runM (runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
+        runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))
+
+-- | Unmarshal a node
+unmarshalNode :: forall t sig m a . ( Has (Reader ByteString) sig m
+                 , Has (Reader (Ptr Cursor)) sig m
+                 , MonadFail m
+                 , MonadIO m
+                 , UnmarshalAnn a
+                 , Unmarshal t
+                 )
+  => Node
+  -> m (t a)
+unmarshalNode node = {-# SCC "unmarshalNode" #-} do
+  let maybeT = lookupSymbol (nodeSymbol node) matchers
+  case maybeT of
+    Just t -> runMatch t node
+    Nothing -> fail $ showFailure (Proxy @t) node
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'unmarshalNode' providing that they have a suitable 'Generic1' instance.
-class Unmarshal t where
-  unmarshalNode
-    :: ( Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
-       , MonadFail m
-       , MonadIO m
-       , UnmarshalAnn a
-       )
-    => Node
-    -> m (t a)
-  default unmarshalNode
-    :: ( Generic1 t
-       , GUnmarshal (Rep1 t)
-       , Has (Reader ByteString) sig m
-       , Has (Reader (Ptr Cursor)) sig m
-       , MonadFail m
-       , MonadIO m
-       , UnmarshalAnn a
-       )
-    => Node
-    -> m (t a)
-  unmarshalNode x = do
-    goto (nodeTSNode x)
-    to1 <$> gunmarshalNode x
+class SymbolMatching t => Unmarshal t where
+  -- unmarshalNode
+  --   :: ( Has (Reader ByteString) sig m
+  --      , Has (Reader (Ptr Cursor)) sig m
+  --      , MonadFail m
+  --      , MonadIO m
+  --      , UnmarshalAnn a
+  --      )
+  --   => Node
+  --   -> m (t a)
+  -- default unmarshalNode
+  --   :: ( Generic1 t
+  --      , GUnmarshal (Rep1 t)
+  --      , Has (Reader ByteString) sig m
+  --      , Has (Reader (Ptr Cursor)) sig m
+  --      , MonadFail m
+  --      , MonadIO m
+  --      , UnmarshalAnn a
+  --      )
+  --   => Node
+  --   -> m (t a)
+  -- unmarshalNode x = {-# SCC "defaultUnmarshalNode" #-} do
+  --   goto (nodeTSNode x)
+  --   to1 <$> gunmarshalNode x
 
-instance (Unmarshal f, Unmarshal g, SymbolMatching f, SymbolMatching g) => Unmarshal (f :+: g) where
-  unmarshalNode node = do
-    let lhsSymbolMatch = symbolMatch (Proxy @f) node
-        rhsSymbolMatch = symbolMatch (Proxy @g) node
-    if lhsSymbolMatch then
-      L1 <$> unmarshalNode @f node
-    else if rhsSymbolMatch then
-      R1 <$> unmarshalNode @g node
-    else
-      fail $ showFailure (Proxy @(f :+: g)) node
+  matchers :: Table (Match t)
+  default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => Table (Match t)
+  matchers = fmap go gMatchers
+    where go (Match run) = Match $ \ node -> do
+            goto (nodeTSNode node)
+            fmap to1 (run node)
+
+instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
+  -- unmarshalNode node = {-# SCC "UnmarshalSums" #-} do
+  --   let maybeT = lookupSymbol (nodeSymbol node) matchers
+  --   case maybeT of
+  --     Just t -> runMatch t node
+  --     Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
+  matchers = fmap (hoist L1) matchers `union` fmap (hoist R1) matchers
+    where
+      union (Table mapF fallbackF) (Table mapG fallbackG) = Table (mapF <> mapG) (fallbackF <|> fallbackG)
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
-  unmarshalNode = fmap Rec1 . unmarshalNode
+  -- unmarshalNode = fmap Rec1 . unmarshalNode
+  matchers = fmap (hoist Rec1) matchers
 
-instance Unmarshal (Token sym n) where
-  unmarshalNode = fmap Token . unmarshalAnn
+instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
+  -- unmarshalNode = fmap Token . unmarshalAnn
+  matchers = Table (IntMap.singleton (fromIntegral (natVal (Proxy @n))) (Match (fmap Token . unmarshalAnn))) Nothing
+    -- where unmarshalNode = fmap Token . unmarshalAnn
 
 
 -- | Unmarshal an annotation field.
@@ -120,8 +158,7 @@ instance UnmarshalAnn () where
 instance UnmarshalAnn Text.Text where
   unmarshalAnn node = do
     range <- unmarshalAnn node
-    bytestring <- ask
-    pure (decodeUtf8 (slice range bytestring))
+    asks (decodeUtf8With lenientDecode . slice range)
 
 -- | Instance for pairs of annotations
 instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
@@ -182,27 +219,27 @@ instance UnmarshalField NonEmpty where
     pure $ head' :| tail'
   unmarshalField [] = fail "expected a node of type (NonEmpty a) but got an empty list"
 
-
 class SymbolMatching (a :: * -> *) where
-  symbolMatch :: Proxy a -> Node -> Bool
+  -- TODO: Can remove this
+  -- symbolMatch :: Proxy a -> Node -> Bool
 
   -- | Provide error message describing the node symbol vs. the symbols this can match
   showFailure :: Proxy a -> Node -> String
 
 instance SymbolMatching f => SymbolMatching (M1 i c f) where
-  symbolMatch _ = symbolMatch (Proxy @f)
+  -- symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
 
 instance SymbolMatching f => SymbolMatching (Rec1 f) where
-  symbolMatch _ = symbolMatch (Proxy @f)
+  -- symbolMatch _ = symbolMatch (Proxy @f)
   showFailure _ = showFailure (Proxy @f)
 
-instance (KnownNat n, KnownSymbol sym) => SymbolMatching (Token sym n) where
-  symbolMatch _ node = nodeSymbol node == fromIntegral (natVal (Proxy @n))
+instance (KnownSymbol sym) => SymbolMatching (Token sym n) where
+  -- symbolMatch _ node = nodeSymbol node == fromIntegral (natVal (Proxy @n))
   showFailure _ _ = "expected " ++ symbolVal (Proxy @sym)
 
 instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
-  symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
+  -- symbolMatch _ = (||) <$> symbolMatch (Proxy @f) <*> symbolMatch (Proxy @g)
   showFailure _ = sep <$> showFailure (Proxy @f) <*> showFailure (Proxy @g)
 
 sep :: String -> String -> String
@@ -281,6 +318,13 @@ slice (Range start end) = take . drop
 newtype FieldName = FieldName { getFieldName :: String }
   deriving (Eq, Ord, Show)
 
+newtype Match t = Match { runMatch :: forall m sig a . (Has (Reader ByteString) sig m, Has (Reader (Ptr Cursor)) sig m, MonadFail m, MonadIO m, UnmarshalAnn a) => Node -> m (t a) }
+
+data Table a = Table (IntMap.IntMap a) (Maybe a)
+  deriving (Functor)
+
+hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
+hoist f (Match run) = Match (fmap f . run)
 
 -- | Generic construction of ASTs from a 'Map.Map' of named fields.
 --
@@ -298,40 +342,49 @@ class GUnmarshal f where
     => Node
     -> m (f a)
 
+  gMatchers :: Table (Match f)
+
 instance GUnmarshal f => GUnmarshal (M1 i c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
+  gMatchers = fmap (hoist M1) gMatchers
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
   gunmarshalNode _ = pure U1
-
+  gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 -- For unary products:
 instance UnmarshalAnn k => GUnmarshal (K1 c k) where
   gunmarshalNode node = K1 <$> unmarshalAnn node
+  gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 -- For anonymous leaf nodes
 instance GUnmarshal Par1 where
   gunmarshalNode node = Par1 <$> unmarshalAnn node
+  gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 instance Unmarshal t => GUnmarshal (Rec1 t) where
   gunmarshalNode node = Rec1 <$> unmarshalNode node
+  gMatchers = fmap (hoist Rec1) matchers
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
+  gunmarshalNode node = {-# SCC "GUnmarshalProduct" #-} push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
+  gMatchers = Table mempty (Just (Match gunmarshalNode))
+
+lookupSymbol :: TSSymbol -> Table a -> Maybe a
+lookupSymbol sym (Table map fallback) = IntMap.lookup (fromIntegral sym) map <|> fallback
 
 -- For sum datatypes:
 instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
-  gunmarshalNode node = do
-    let lhsSymbolMatch = symbolMatch (Proxy @f) node
-        rhsSymbolMatch = symbolMatch (Proxy @g) node
-    if lhsSymbolMatch then
-      L1 <$> gunmarshalNode @f node
-    else if rhsSymbolMatch then
-      R1 <$> gunmarshalNode @g node
-    else
-      fail $ showFailure (Proxy @f) node `sep` showFailure (Proxy @g) node
+  gunmarshalNode node = {-# SCC "GUnmarshalSums" #-} do
+    let maybeT = lookupSymbol (nodeSymbol node) gMatchers
+    case maybeT of
+      Just t -> runMatch t node
+      Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
+  gMatchers = fmap (hoist L1) gMatchers `union` fmap (hoist R1) gMatchers
+    where
+      union (Table mapF fallbackF) (Table mapG fallbackG) = Table (mapF <> mapG) (fallbackF <|> fallbackG)
 
 
 -- | Generically unmarshal products

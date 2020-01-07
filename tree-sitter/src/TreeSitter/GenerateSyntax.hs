@@ -101,8 +101,8 @@ symbolMatchingInstance allSymbols name named str = do
                         <> " [" <> show r1 <> ", " <> show c1 <> "] -"
                         <> " [" <> show r2 <> ", " <> show c2 <> "]"
         where TSPoint r1 c1 = nodeStartPoint node
-              TSPoint r2 c2 = nodeEndPoint node
-      symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
+              TSPoint r2 c2 = nodeEndPoint node|]
+      -- symbolMatch _ node = elem (nodeSymbol node) tsSymbols|]
 
 -- | Prefix symbol names for debugging to disambiguate between Named and Anonymous nodes.
 debugPrefix :: (String, Named) -> String
