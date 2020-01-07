@@ -2,6 +2,7 @@
 
 module Parsing (benchmarks) where
 
+import           Control.Monad
 import qualified Data.ByteString as B
 import           Data.Foldable
 import           Gauge
@@ -23,6 +24,7 @@ parseAllFiles :: Path.RelDir -> String -> Benchmarkable
 parseAllFiles dir glob = nfIO $ do
   files <- globDir1 (compile glob) (Path.toString dir)
   let paths = Path.relFile <$> files
+  when (null paths) (die $ "No files found in " <> (Path.toString dir))
   for_ paths $ \ file -> do
     -- print (Path.toString file)
     contents <- B.readFile (Path.toString file)
