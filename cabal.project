@@ -1,1 +1,1 @@
-packages: tree-sitter tree-sitter-*
+packages: tree-sitter tree-sitter-* ../fused-effects-profile

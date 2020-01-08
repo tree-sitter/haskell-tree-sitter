@@ -52,6 +52,7 @@ library
                      , directory            ^>= 1.3
                      , filepath             ^>= 1.4.1
                      , fused-effects        ^>= 1
+                     , fused-effects-profile
                      , split                ^>= 0.2.3
                      , template-haskell      >= 2.12 && < 2.16
                      , text                 ^>= 1.2.3.1

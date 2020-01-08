@@ -1,16 +1,19 @@
-{-# LANGUAGE DefaultSignatures   #-}
-{-# LANGUAGE DeriveFunctor       #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE PolyKinds           #-}
-{-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeOperators       #-}
-{-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE DefaultSignatures          #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE PolyKinds                  #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeOperators              #-}
 
 module TreeSitter.Unmarshal
 ( parseByteString
+, parseByteString'
 , FieldName(..)
 , Unmarshal(..)
 , UnmarshalAnn(..)
@@ -30,11 +33,15 @@ module TreeSitter.Unmarshal
 
 import           Control.Applicative
 import           Control.Carrier.Reader
+import           Control.Carrier.Profile.Time
 import           Control.Carrier.Fail.Either
 import           Control.Monad.IO.Class
+import           Control.Effect.Lift
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.Foldable
 import qualified Data.Map as Map
+import           Data.Monoid
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as Text
 import           Data.Text.Encoding
@@ -67,12 +74,22 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runFail (runReader "" (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
+        reportProfile (runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))))
+
+parseByteString' :: (Unmarshal t, UnmarshalAnn a, Effect sig, MonadIO m, Has (Lift IO) sig m, Has Profile sig m) => Ptr TS.Language -> ByteString -> m (Either String (t a))
+parseByteString' language bytestring = liftWith $ \ ctx run -> withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
+  -- if treePtr == nullPtr then
+  --   pure (Left "error: didn't get a root node")
+  -- else
+    withRootNode treePtr $ \ rootPtr ->
+      withCursor (castPtr rootPtr) $ \ cursor ->
+        run $ runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))) <$ ctx
 
 newtype Match t = Match
   { runMatch :: forall m sig a . ( Has (Reader ByteString) sig m
                                  , Has (Reader (Ptr Cursor)) sig m
                                  , Has (Reader String) sig m
+                                 , Has Profile sig m
                                  , MonadFail m
                                  , MonadIO m
                                  , UnmarshalAnn a
@@ -81,13 +98,33 @@ newtype Match t = Match
              -> m (t a)
   }
 
-data Table a = Table (IntMap.IntMap a) (Maybe a)
+data Table f a = Table (f a) (Maybe a)
   deriving (Functor)
+
+newtype DList a = DList (B (Int, a))
+  deriving (Functor, Semigroup, Monoid)
+
+newtype B a = B (forall r . (r -> r -> r) -> (a -> r) -> r -> r)
+  deriving (Functor)
+
+instance Semigroup (B a) where
+  B l <> B r = B (\ fork leaf nil -> fork (l fork leaf nil) (r fork leaf nil))
+
+instance Monoid (B a) where
+  mempty = B (\ _ _ -> id)
+
+instance Foldable B where
+  foldMap f (B run) = run (<>) f mempty
+
+singleton :: a -> B a
+singleton a = B (\ _ leaf _ -> leaf a)
+
 
 hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
 hoist f (Match run) = Match (fmap f . run)
+{-# INLINE hoist #-}
 
-lookupSymbol :: TSSymbol -> Table a -> Maybe a
+lookupSymbol :: TSSymbol -> Table IntMap.IntMap a -> Maybe a
 lookupSymbol sym (Table map fallback) = IntMap.lookup (fromIntegral sym) map <|> fallback
 
 -- | Unmarshal a node
@@ -95,6 +132,7 @@ unmarshalNode :: forall t sig m a .
                  ( Has (Reader ByteString) sig m
                  , Has (Reader (Ptr Cursor)) sig m
                  , Has (Reader String) sig m
+                 , Has Profile sig m
                  , MonadFail m
                  , MonadIO m
                  , UnmarshalAnn a
@@ -102,8 +140,8 @@ unmarshalNode :: forall t sig m a .
                  )
   => Node
   -> m (t a)
-unmarshalNode node = {-# SCC "unmarshalNode" #-} do
-  let maybeT = lookupSymbol (nodeSymbol node) matchers
+unmarshalNode node = measure "unmarshalNode" $ do
+  let maybeT = lookupSymbol (nodeSymbol node) matchers'
   case maybeT of
     Just t -> runMatch t node
     Nothing -> fail $ showFailure (Proxy @t) node
@@ -112,31 +150,29 @@ unmarshalNode node = {-# SCC "unmarshalNode" #-} do
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'matchers' providing that they have a suitable 'Generic1' instance.
 class SymbolMatching t => Unmarshal t where
-  matchers :: Table (Match t)
-  default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => Table (Match t)
-  matchers = Table (IntMap.fromList (fmap (, match) (matchedSymbols (Proxy @t)))) Nothing
-    where match = Match $ \ node -> do
+  matchers' :: Table IntMap.IntMap (Match t)
+  matchers' = Table (IntMap.fromList (toList xs)) fallback
+    where (Table (DList xs) fallback) = matchers
+
+  matchers :: Table DList (Match t)
+  default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => Table DList (Match t)
+  matchers = Table (DList (foldMap (singleton . (, match)) (matchedSymbols (Proxy @t)))) Nothing
+    where match = Match $ \ node -> measure "default matchers" $ do
             goto (nodeTSNode node)
             fmap to1 (gunmarshalNode node)
 
 instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
-  -- unmarshalNode node = {-# SCC "UnmarshalSums" #-} do
-  --   let maybeT = lookupSymbol (nodeSymbol node) matchers
-  --   case maybeT of
-  --     Just t -> runMatch t node
-  --     Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
   matchers = fmap (hoist L1) matchers `union` fmap (hoist R1) matchers
     where
       union (Table mapF _) (Table mapG _) = Table (mapF <> mapG) Nothing
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
-  -- unmarshalNode = fmap Rec1 . unmarshalNode
   matchers = fmap (hoist Rec1) matchers
 
 instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
-  -- unmarshalNode = fmap Token . unmarshalAnn
-  matchers = Table (IntMap.singleton (fromIntegral (natVal (Proxy @n))) (Match (fmap Token . unmarshalAnn))) Nothing
-    -- where unmarshalNode = fmap Token . unmarshalAnn
+  matchers = Table (DList (singleton (k, v))) Nothing
+    where k = fromIntegral (natVal (Proxy @n))
+          v = Match (fmap Token . unmarshalAnn)
 
 
 -- | Unmarshal an annotation field.
@@ -193,6 +229,7 @@ class UnmarshalField t where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
+       , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , Unmarshal f
@@ -250,8 +287,8 @@ step :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Bool
 step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
-push :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m a -> m (Maybe a)
-push m = do
+push :: (Has Profile sig m, Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m a -> m (Maybe a)
+push m = measure "push" $ do
   hasChildren <- ask >>= liftIO . ts_tree_cursor_goto_first_child
   if hasChildren then do
     a <- m
@@ -289,8 +326,8 @@ peekFieldName = do
 type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Fields
-getFields = go Map.empty
+getFields :: (Has Profile sig m, Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Fields
+getFields = measure "getFields" $ go Map.empty
   where go fs = do
           node <- peekNode
           fieldName <- peekFieldName
@@ -328,6 +365,7 @@ class GUnmarshal f where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
+       , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -335,56 +373,35 @@ class GUnmarshal f where
     => Node
     -> m (f a)
 
-  -- gMatchers :: Table (Match f)
 
 instance (Datatype c, GUnmarshal f) => GUnmarshal (M1 D c f) where
-  gunmarshalNode node = local (const (datatypeName @c undefined)) (M1 <$> gunmarshalNode node)
-  -- gMatchers = fmap go gMatchers
-  --   where go (Match run) = Match (\ node -> local (const (datatypeName @c undefined)) (fmap M1 (run node)))
+  -- gunmarshalNode node = local (const (datatypeName @c undefined)) (M1 <$> gunmarshalNode node)
+  gunmarshalNode node = M1 <$> gunmarshalNode node
 
 instance GUnmarshal f => GUnmarshal (M1 C c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
-  -- gMatchers = fmap (hoist M1) gMatchers
 
 instance GUnmarshal f => GUnmarshal (M1 S c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
-  -- gMatchers = fmap (hoist M1) gMatchers
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
   gunmarshalNode _ = pure U1
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 -- For unary products:
 instance UnmarshalAnn k => GUnmarshal (K1 c k) where
   gunmarshalNode node = K1 <$> unmarshalAnn node
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 -- For anonymous leaf nodes
 instance GUnmarshal Par1 where
   gunmarshalNode node = Par1 <$> unmarshalAnn node
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 instance Unmarshal t => GUnmarshal (Rec1 t) where
   gunmarshalNode node = Rec1 <$> unmarshalNode node
-  -- gMatchers = fmap (hoist Rec1) matchers
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = {-# SCC "GUnmarshalProduct" #-} push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
-
--- For sum datatypes:
--- instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
---   gunmarshalNode node = {-# SCC "GUnmarshalSums" #-} do
---     let maybeT = lookupSymbol (nodeSymbol node) gMatchers
---     case maybeT of
---       Just t -> runMatch t node
---       Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
---   gMatchers = fmap (hoist L1) gMatchers `union` fmap (hoist R1) gMatchers
---     where
---       union (Table mapF _) (Table mapG _) = Table (mapF <> mapG) Nothing
-
+  gunmarshalNode node = measure "gunmarshalNode Product" $ push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
@@ -392,6 +409,7 @@ class GUnmarshalProduct f where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
+       , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
