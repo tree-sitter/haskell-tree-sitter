@@ -96,6 +96,7 @@ symbolMatchingInstance allSymbols name named str = do
   let tsSymbols = elemIndices (str, named) allSymbols
       names = intercalate ", " $ fmap (debugPrefix . (!!) allSymbols) tsSymbols
   [d|instance TS.SymbolMatching $(conT name) where
+      matchedSymbols _   = tsSymbols
       showFailure _ node = "expected " <> $(litE (stringL names))
                         <> " but got " <> genericIndex debugSymbolNames (nodeSymbol node)
                         <> " [" <> show r1 <> ", " <> show c1 <> "] -"
