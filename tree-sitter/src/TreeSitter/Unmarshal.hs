@@ -13,7 +13,7 @@
 
 module TreeSitter.Unmarshal
 ( parseByteString
-, parseByteString'
+-- , parseByteString'
 , FieldName(..)
 , Unmarshal(..)
 , UnmarshalAnn(..)
@@ -33,7 +33,7 @@ module TreeSitter.Unmarshal
 
 import           Control.Applicative
 import           Control.Carrier.Reader
-import           Control.Carrier.Profile.Time
+-- import           Control.Carrier.Profile.Tree hiding (singleton)
 import           Control.Carrier.Fail.Either
 import           Control.Monad.IO.Class
 import           Control.Effect.Lift
@@ -74,22 +74,22 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        reportProfile (runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))))
+        runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
 
-parseByteString' :: (Unmarshal t, UnmarshalAnn a, Effect sig, MonadIO m, Has (Lift IO) sig m, Has Profile sig m) => Ptr TS.Language -> ByteString -> m (Either String (t a))
-parseByteString' language bytestring = liftWith $ \ ctx run -> withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
-  -- if treePtr == nullPtr then
-  --   pure (Left "error: didn't get a root node")
-  -- else
-    withRootNode treePtr $ \ rootPtr ->
-      withCursor (castPtr rootPtr) $ \ cursor ->
-        run $ runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))) <$ ctx
+-- parseByteString' :: (Unmarshal t, UnmarshalAnn a, Effect sig, MonadIO m, Has (Lift IO) sig m, Has Profile sig m) => Ptr TS.Language -> ByteString -> m (Either String (t a))
+-- parseByteString' language bytestring = liftWith $ \ ctx run -> withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
+--   -- if treePtr == nullPtr then
+--   --   pure (Left "error: didn't get a root node")
+--   -- else
+--     withRootNode treePtr $ \ rootPtr ->
+--       withCursor (castPtr rootPtr) $ \ cursor ->
+--         run $ runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))) <$ ctx
 
 newtype Match t = Match
   { runMatch :: forall m sig a . ( Has (Reader ByteString) sig m
                                  , Has (Reader (Ptr Cursor)) sig m
                                  , Has (Reader String) sig m
-                                 , Has Profile sig m
+                                --  , Has Profile sig m
                                  , MonadFail m
                                  , MonadIO m
                                  , UnmarshalAnn a
@@ -132,7 +132,7 @@ unmarshalNode :: forall t sig m a .
                  ( Has (Reader ByteString) sig m
                  , Has (Reader (Ptr Cursor)) sig m
                  , Has (Reader String) sig m
-                 , Has Profile sig m
+                --  , Has Profile sig m
                  , MonadFail m
                  , MonadIO m
                  , UnmarshalAnn a
@@ -140,7 +140,7 @@ unmarshalNode :: forall t sig m a .
                  )
   => Node
   -> m (t a)
-unmarshalNode node = measure "unmarshalNode" $ do
+unmarshalNode node = do
   let maybeT = lookupSymbol (nodeSymbol node) matchers'
   case maybeT of
     Just t -> runMatch t node
@@ -157,7 +157,7 @@ class SymbolMatching t => Unmarshal t where
   matchers :: Table DList (Match t)
   default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => Table DList (Match t)
   matchers = Table (DList (foldMap (singleton . (, match)) (matchedSymbols (Proxy @t)))) Nothing
-    where match = Match $ \ node -> measure "default matchers" $ do
+    where match = Match $ \ node -> do
             goto (nodeTSNode node)
             fmap to1 (gunmarshalNode node)
 
@@ -229,7 +229,7 @@ class UnmarshalField t where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
-       , Has Profile sig m
+      --  , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , Unmarshal f
@@ -287,8 +287,8 @@ step :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Bool
 step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
-push :: (Has Profile sig m, Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m a -> m (Maybe a)
-push m = measure "push" $ do
+push :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m a -> m (Maybe a)
+push m = do
   hasChildren <- ask >>= liftIO . ts_tree_cursor_goto_first_child
   if hasChildren then do
     a <- m
@@ -326,8 +326,8 @@ peekFieldName = do
 type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: (Has Profile sig m, Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Fields
-getFields = measure "getFields" $ go Map.empty
+getFields :: (Has (Reader (Ptr Cursor)) sig m, MonadIO m) => m Fields
+getFields = go Map.empty
   where go fs = do
           node <- peekNode
           fieldName <- peekFieldName
@@ -365,7 +365,7 @@ class GUnmarshal f where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
-       , Has Profile sig m
+      --  , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -401,7 +401,7 @@ instance Unmarshal t => GUnmarshal (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = measure "gunmarshalNode Product" $ push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
+  gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
@@ -409,7 +409,7 @@ class GUnmarshalProduct f where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
-       , Has Profile sig m
+      --  , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
