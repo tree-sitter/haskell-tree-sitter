@@ -273,9 +273,7 @@ push m = do
 
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: TSNode -> MatchM ()
-goto node = do
-  cursor <- asks cursor
-  liftIO (with node (ts_tree_cursor_reset_p cursor))
+goto node = asks cursor >>= liftIO . with node . ts_tree_cursor_reset_p
 {-# INLINE goto #-}
 
 -- | Return the 'Node' that the cursor is pointing at.
