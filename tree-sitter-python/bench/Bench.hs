@@ -16,5 +16,4 @@ main :: IO ()
 main = args >>= defaultMain . map (bench <*> nfIO . parseFile)
 
 parseFile :: FilePath -> IO ()
-parseFile file = do
-  B.readFile (Path.toString file) >>= parseByteString @Py.Module @() tree_sitter_python >>= either die pure
+parseFile = either die pure <=< parseByteString @Py.Module @() tree_sitter_python <=< B.readFile . Path.toString
