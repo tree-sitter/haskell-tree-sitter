@@ -4,6 +4,7 @@ module Main
 
 import           Control.Monad
 import qualified Data.ByteString as B
+import           Data.Foldable (traverse_)
 import           Gauge
 import           System.Exit (die)
 import           System.Environment (getArgs)
@@ -12,7 +13,7 @@ import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Unmarshal
 
 main :: IO ()
-main = getArgs >>= defaultMain . map (bench <*> nfIO . (() <$) . parseFile)
+main = getArgs >>= traverse_ (print <=< parseFile)
 
 parseFile :: FilePath -> IO (Py.Module ())
 parseFile = either die pure <=< parseByteString @Py.Module @() tree_sitter_python <=< B.readFile
