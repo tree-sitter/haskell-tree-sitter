@@ -327,55 +327,33 @@ class GUnmarshal f where
     => Node
     -> MatchC IO (f a)
 
-  -- gMatchers :: Table (Match f)
-
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
-  -- gMatchers = fmap go gMatchers
-  --   where go (Match run) = Match (\ node -> local (const (datatypeName @c undefined)) (fmap M1 (run node)))
 
 instance GUnmarshal f => GUnmarshal (M1 C c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
-  -- gMatchers = fmap (hoist M1) gMatchers
 
 instance GUnmarshal f => GUnmarshal (M1 S c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
-  -- gMatchers = fmap (hoist M1) gMatchers
 
 -- For anonymous leaf nodes:
 instance GUnmarshal U1 where
   gunmarshalNode _ = pure U1
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 -- For unary products:
 instance UnmarshalAnn k => GUnmarshal (K1 c k) where
   gunmarshalNode node = K1 <$> unmarshalAnn node
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 -- For anonymous leaf nodes
 instance GUnmarshal Par1 where
   gunmarshalNode node = Par1 <$> unmarshalAnn node
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
 
 instance Unmarshal t => GUnmarshal (Rec1 t) where
   gunmarshalNode node = Rec1 <$> unmarshalNode node
-  -- gMatchers = fmap (hoist Rec1) matchers
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
   gunmarshalNode node = {-# SCC "GUnmarshalProduct" #-} push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
-  -- gMatchers = Table mempty (Just (Match gunmarshalNode))
-
--- For sum datatypes:
--- instance (GUnmarshal f, GUnmarshal g, SymbolMatching f, SymbolMatching g) => GUnmarshal (f :+: g) where
---   gunmarshalNode node = {-# SCC "GUnmarshalSums" #-} do
---     let maybeT = lookupSymbol (nodeSymbol node) gMatchers
---     case maybeT of
---       Just t -> runMatch t node
---       Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
---   gMatchers = fmap (hoist L1) gMatchers `union` fmap (hoist R1) gMatchers
---     where
---       union (Table mapF _) (Table mapG _) = Table (mapF <> mapG) Nothing
 
 
 -- | Generically unmarshal products
