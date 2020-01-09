@@ -8,8 +8,8 @@ import           Data.Foldable
 import           Gauge
 import           System.Exit (die)
 import           System.Environment (die)
-import           TreeSitter.Ruby
-import qualified TreeSitter.Ruby.AST as Rb
+import           TreeSitter.Python
+import qualified TreeSitter.Python.AST as Py
 import           TreeSitter.Unmarshal
 
 main :: IO ()
