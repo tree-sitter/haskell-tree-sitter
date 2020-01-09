@@ -259,16 +259,6 @@ step :: MatchM Bool
 step = asks cursor >>= liftIO . ts_tree_cursor_goto_next_sibling
 {-# INLINE step #-}
 
--- | Run an action over the children of the current node.
-push :: MatchM a -> MatchM (Maybe a)
-push m = do
-  hasChildren <- asks cursor >>= liftIO . ts_tree_cursor_goto_first_child
-  if hasChildren then do
-    a <- m
-    Just a <$ (asks cursor >>= liftIO . ts_tree_cursor_goto_parent)
-  else
-    pure Nothing
-
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: TSNode -> MatchM ()
 goto node = asks cursor >>= liftIO . with node . ts_tree_cursor_reset_p
@@ -299,7 +289,12 @@ type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: MatchM Fields
-getFields = go Map.empty
+getFields = do
+  hasChildren <- asks cursor >>= liftIO . ts_tree_cursor_goto_first_child
+  if hasChildren then
+    go Map.empty <* (asks cursor >>= liftIO . ts_tree_cursor_goto_parent)
+  else
+    pure Map.empty
   where go fs = do
           node <- peekNode
           fieldName <- peekFieldName
@@ -364,7 +359,7 @@ instance Unmarshal t => GUnmarshal (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
+  gunmarshalNode node = getFields >>= gunmarshalProductNode @(f :*: g) node
 
 
 -- | Generically unmarshal products
