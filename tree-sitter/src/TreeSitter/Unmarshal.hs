@@ -23,11 +23,9 @@ module TreeSitter.Unmarshal
 , lookupSymbol
 , unmarshalNode
 , step
-, push
 , goto
 , peekNode
 , peekFieldName
-, getFields
 ) where
 
 import           Control.Algebra (send)
