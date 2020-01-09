@@ -16,10 +16,9 @@ module TreeSitter.Unmarshal
 , SymbolMatching(..)
 ) where
 
-import           Control.Applicative
 import           Control.Algebra (send)
 import           Control.Carrier.Reader hiding (asks)
-import           Control.Carrier.Fail.Either
+import           Control.Exception
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -45,7 +44,6 @@ import           TreeSitter.Token as TS
 import           Source.Loc
 import           Source.Span
 import           Data.Proxy
-import           Prelude hiding (fail)
 import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
@@ -61,14 +59,20 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runFail (runReader (State bytestring cursor) (peekNode >>= unmarshalNode))
+        (Right <$> runReader (State bytestring cursor) (peekNode >>= unmarshalNode))
+          `catch` (pure . Left . getUnmarshalError)
+
+newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
+  deriving (Show)
+
+instance Exception UnmarshalError
 
 data State = State
   { source :: {-# UNPACK #-} !ByteString
   , cursor :: {-# UNPACK #-} !(Ptr Cursor)
   }
 
-type MatchM = ReaderC State (FailC IO)
+type MatchM = ReaderC State IO
 
 newtype Match t = Match
   { runMatch :: forall a . UnmarshalAnn a => Node -> MatchM (t a)
@@ -115,7 +119,7 @@ unmarshalNode :: forall t a .
   -> MatchM (t a)
 unmarshalNode node = case lookupSymbol (nodeSymbol node) matchers' of
   Just t -> runMatch t node
-  Nothing -> fail $ showFailure (Proxy @t) node
+  Nothing -> liftIO . throwIO . UnmarshalError $ showFailure (Proxy @t) node
 {-# INLINE unmarshalNode #-}
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
@@ -197,7 +201,7 @@ class UnmarshalField t where
 instance UnmarshalField Maybe where
   unmarshalField []  = pure Nothing
   unmarshalField [x] = Just <$> unmarshalNode x
-  unmarshalField _   = fail "expected a node of type (Maybe a) but got multiple"
+  unmarshalField _   = liftIO . throwIO $ UnmarshalError "expected a node of type (Maybe a) but got multiple"
 
 instance UnmarshalField [] where
   unmarshalField (x:xs) = do
@@ -211,7 +215,7 @@ instance UnmarshalField NonEmpty where
     head' <- unmarshalNode x
     tail' <- unmarshalField xs
     pure $ head' :| tail'
-  unmarshalField [] = fail "expected a node of type (NonEmpty a) but got an empty list"
+  unmarshalField [] = liftIO . throwIO $ UnmarshalError "expected a node of type (NonEmpty a) but got an empty list"
 
 class SymbolMatching (a :: * -> *) where
   matchedSymbols :: Proxy a -> [Int]
@@ -379,6 +383,6 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode _ fields =
     case lookupField (FieldName (selName @c undefined)) fields of
-      []  -> fail $ "expected a node '" <> selName @c undefined <> "' but didn't get one"
+      []  -> liftIO . throwIO . UnmarshalError $ "expected a node '" <> selName @c undefined <> "' but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
-      _   -> fail $ "expected a node but got multiple"
+      _   -> liftIO . throwIO . UnmarshalError $ "expected a node but got multiple"
