@@ -69,7 +69,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        (Right <$> runReader (UnmarshalState bytestring cursor) unmarshal)
+        (Right <$> runReader (UnmarshalState bytestring cursor) (unmarshal cursor))
           `catch` (pure . Left . getUnmarshalError)
 
 newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
@@ -120,8 +120,8 @@ lookupSymbol :: TSSymbol -> IntMap.IntMap a -> Maybe a
 lookupSymbol sym map = IntMap.lookup (fromIntegral sym) map
 {-# INLINE lookupSymbol #-}
 
-unmarshal :: (UnmarshalAnn a, Unmarshal t) => MatchM (t a)
-unmarshal = asks cursor >>= peekNode >>= unmarshalNode
+unmarshal :: (UnmarshalAnn a, Unmarshal t) => Ptr Cursor -> MatchM (t a)
+unmarshal = unmarshalNode <=< peekNode
 {-# INLINE unmarshal #-}
 
 -- | Unmarshal a node
