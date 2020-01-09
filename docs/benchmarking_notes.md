@@ -19,7 +19,6 @@ mean                 76.93 ms   (74.29 ms .. 79.79 ms)
 std dev              5.228 ms   (3.679 ms .. 7.447 ms)
 variance introduced by outliers: 17% (moderately inflated)
 
-
 ## Optimization: Using a table of matchers
 
 Using an IntMap of matchers instead of chain `if then` for symbol matching.
@@ -57,14 +56,12 @@ variance introduced by outliers: 18% (moderately inflated)
 
 *About the same :(*
 
-## From semantic
-
-With the
-
 
 ## Alternative baseline(s)
 
 Including baselines with and without profiling enabled.
+
+Compiled with optimization and profiling
 
 ```
 benchmarks: True
@@ -81,8 +78,27 @@ time                 199.8 ms   (194.6 ms .. 205.1 ms)
 mean                 191.0 ms   (186.1 ms .. 194.4 ms)
 std dev              7.579 ms   (4.293 ms .. 11.86 ms)
 
+---
+
+Compiled with optimization but no profiling
+
+```
+benchmarks: True
+optimization: True
+tests: True
+profiling: False
+```
+
+Up to date
+benchmarked parsing/ruby
+time                 71.99 ms   (69.16 ms .. 75.91 ms)
+                     0.995 R²   (0.989 R² .. 0.999 R²)
+mean                 70.11 ms   (68.69 ms .. 71.66 ms)
+std dev              2.806 ms   (1.965 ms .. 4.370 ms)
+
 ## With b tree matchers
 
+Compiled with optimization and profiling
 
 ```
 benchmarks: True
@@ -102,6 +118,8 @@ variance introduced by outliers: 28% (moderately inflated)
 
 ---
 
+Compiled with optimization but no profiling
+
 ```
 benchmarks: True
 optimization: True
@@ -114,3 +132,43 @@ time                 51.67 ms   (51.01 ms .. 52.32 ms)
                      0.999 R²   (0.999 R² .. 1.000 R²)
 mean                 50.58 ms   (49.77 ms .. 51.15 ms)
 std dev              1.329 ms   (927.3 μs .. 1.685 ms)
+
+NOTES: slightly faster here.
+
+## With IntMap matchers
+
+Compiled with optimization and profiling
+
+```
+benchmarks: True
+optimization: True
+tests: True
+profiling: True
+profiling-detail: all-functions
+```
+
+benchmarking parsing/ruby ... took 13.38 s, total 56 iterations
+benchmarked parsing/ruby
+time                 228.4 ms   (200.3 ms .. 243.7 ms)
+                     0.984 R²   (0.958 R² .. 0.999 R²)
+mean                 245.5 ms   (233.0 ms .. 272.6 ms)
+std dev              27.34 ms   (16.01 ms .. 40.56 ms)
+variance introduced by outliers: 38% (moderately inflated)
+
+---
+
+Compiled with optimization but no profiling
+
+```
+benchmarks: True
+optimization: True
+tests: True
+profiling: False
+```
+
+benchmarked parsing/ruby
+time                 64.81 ms   (58.99 ms .. 70.49 ms)
+                     0.981 R²   (0.943 R² .. 0.998 R²)
+mean                 65.60 ms   (63.48 ms .. 69.94 ms)
+std dev              5.054 ms   (2.421 ms .. 7.985 ms)
+variance introduced by outliers: 24% (moderately inflated)
