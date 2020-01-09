@@ -11,9 +11,21 @@
 
 module TreeSitter.Unmarshal
 ( parseByteString
-, Unmarshal
-, UnmarshalAnn
+, FieldName(..)
+, Unmarshal(..)
+, UnmarshalAnn(..)
+, UnmarshalField(..)
 , SymbolMatching(..)
+, Match(..)
+, hoist
+, lookupSymbol
+, unmarshalNode
+, step
+, push
+, goto
+, peekNode
+, peekFieldName
+, getFields
 ) where
 
 import           Control.Algebra (send)
