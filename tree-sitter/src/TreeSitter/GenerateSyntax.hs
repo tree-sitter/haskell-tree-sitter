@@ -98,7 +98,7 @@ symbolMatchingInstance allSymbols name named str = do
   [d|instance TS.SymbolMatching $(conT name) where
       matchedSymbols _   = tsSymbols
       showFailure _ node = "expected " <> $(litE (stringL names))
-                        <> " but got " <> genericIndex debugSymbolNames (nodeSymbol node)
+                        <> " but got " <> if nodeSymbol node == 65535 then "ERROR" else genericIndex debugSymbolNames (nodeSymbol node)
                         <> " [" <> show r1 <> ", " <> show c1 <> "] -"
                         <> " [" <> show r2 <> ", " <> show c2 <> "]"
         where TSPoint r1 c1 = nodeStartPoint node
