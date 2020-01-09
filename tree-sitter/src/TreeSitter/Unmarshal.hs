@@ -59,7 +59,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        (Right <$> runReader (State bytestring cursor) (peekNode >>= unmarshalNode))
+        (Right <$> runReader (UnmarshalState bytestring cursor) (peekNode >>= unmarshalNode))
           `catch` (pure . Left . getUnmarshalError)
 
 newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
@@ -67,12 +67,12 @@ newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
 
 instance Exception UnmarshalError
 
-data State = State
+data UnmarshalState = UnmarshalState
   { source :: {-# UNPACK #-} !ByteString
   , cursor :: {-# UNPACK #-} !(Ptr Cursor)
   }
 
-type MatchM = ReaderC State IO
+type MatchM = ReaderC UnmarshalState IO
 
 newtype Match t = Match
   { runMatch :: forall a . UnmarshalAnn a => Node -> MatchM (t a)
