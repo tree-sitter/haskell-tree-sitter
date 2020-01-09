@@ -81,14 +81,14 @@ newtype Match t = Match
              -> m (t a)
   }
 
-data Table a = Table (IntMap.IntMap a) (Maybe a)
+data Table a = Table (IntMap.IntMap a)
   deriving (Functor)
 
 hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
 hoist f (Match run) = Match (fmap f . run)
 
 lookupSymbol :: TSSymbol -> Table a -> Maybe a
-lookupSymbol sym (Table map fallback) = IntMap.lookup (fromIntegral sym) map <|> fallback
+lookupSymbol sym (Table map) = IntMap.lookup (fromIntegral sym) map
 
 -- | Unmarshal a node
 unmarshalNode :: forall t sig m a .
@@ -114,7 +114,7 @@ unmarshalNode node = {-# SCC "unmarshalNode" #-} do
 class SymbolMatching t => Unmarshal t where
   matchers :: Table (Match t)
   default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => Table (Match t)
-  matchers = Table (IntMap.fromList (fmap (, match) (matchedSymbols (Proxy @t)))) Nothing
+  matchers = Table (IntMap.fromList (fmap (, match) (matchedSymbols (Proxy @t))))
     where match = Match $ \ node -> do
             goto (nodeTSNode node)
             fmap to1 (gunmarshalNode node)
@@ -127,7 +127,7 @@ instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
   --     Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
   matchers = fmap (hoist L1) matchers `union` fmap (hoist R1) matchers
     where
-      union (Table mapF _) (Table mapG _) = Table (mapF <> mapG) Nothing
+      union (Table mapF) (Table mapG) = Table (mapF <> mapG)
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
   -- unmarshalNode = fmap Rec1 . unmarshalNode
@@ -135,7 +135,7 @@ instance Unmarshal t => Unmarshal (Rec1 t) where
 
 instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
   -- unmarshalNode = fmap Token . unmarshalAnn
-  matchers = Table (IntMap.singleton (fromIntegral (natVal (Proxy @n))) (Match (fmap Token . unmarshalAnn))) Nothing
+  matchers = Table (IntMap.singleton (fromIntegral (natVal (Proxy @n))) (Match (fmap Token . unmarshalAnn)))
     -- where unmarshalNode = fmap Token . unmarshalAnn
 
 
