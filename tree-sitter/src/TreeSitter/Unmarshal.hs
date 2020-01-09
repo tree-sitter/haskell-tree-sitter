@@ -130,21 +130,13 @@ class SymbolMatching t => Unmarshal t where
             fmap to1 (gunmarshalNode node)
 
 instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
-  -- unmarshalNode node = {-# SCC "UnmarshalSums" #-} do
-  --   let maybeT = lookupSymbol (nodeSymbol node) matchers
-  --   case maybeT of
-  --     Just t -> runMatch t node
-  --     Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
   matchers = fmap (fmap (hoist L1)) matchers <> fmap (fmap (hoist R1)) matchers
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
-  -- unmarshalNode = fmap Rec1 . unmarshalNode
   matchers = fmap (fmap (hoist Rec1)) matchers
 
 instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
-  -- unmarshalNode = fmap Token . unmarshalAnn
   matchers = singleton (fromIntegral (natVal (Proxy @n)), Match (fmap Token . unmarshalAnn))
-    -- where unmarshalNode = fmap Token . unmarshalAnn
 
 
 -- | Unmarshal an annotation field.
