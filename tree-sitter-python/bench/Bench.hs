@@ -14,5 +14,5 @@ import           TreeSitter.Unmarshal
 main :: IO ()
 main = getArgs >>= defaultMain . map (bench <*> nfIO . parseFile)
 
-parseFile :: FilePath -> IO ()
+parseFile :: FilePath -> IO (Py.Module ())
 parseFile = either die pure <=< parseByteString @Py.Module @() tree_sitter_python <=< B.readFile
