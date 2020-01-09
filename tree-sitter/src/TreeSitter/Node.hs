@@ -2,6 +2,8 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Node
 ( Node(..)
+, nodeStartPoint
+, nodeStartByte
 , TSPoint(..)
 , TSNode(..)
 , FieldId(..)
@@ -18,9 +20,7 @@ data Node = Node
   { nodeTSNode     :: !TSNode
   , nodeType       :: !CString
   , nodeSymbol     :: !TSSymbol
-  , nodeStartPoint :: !TSPoint
   , nodeEndPoint   :: !TSPoint
-  , nodeStartByte  :: !Word32
   , nodeEndByte    :: !Word32
   , nodeChildCount :: !Word32
   , nodeIsNamed    :: !CBool
@@ -28,10 +28,16 @@ data Node = Node
   }
   deriving (Show, Eq, Generic)
 
+nodeStartPoint :: Node -> TSPoint
+nodeStartPoint node = let TSNode _ p _ _ _ = nodeTSNode node in p
+
+nodeStartByte :: Node -> Word32
+nodeStartByte node = let TSNode b _ _ _ _ = nodeTSNode node in b
+
 data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }
   deriving (Show, Eq, Generic)
 
-data TSNode = TSNode !Word32 !Word32 !Word32 !Word32 !(Ptr ()) !(Ptr ())
+data TSNode = TSNode !Word32 !TSPoint !Word32 !(Ptr ()) !(Ptr ())
   deriving (Show, Eq, Generic)
 
 newtype FieldId = FieldId { getFieldId :: Word16 }
@@ -61,7 +67,7 @@ pokeStruct a = Struct (\ p -> do
 
 
 instance Storable Node where
-  alignment _ = alignment (TSNode 0 0 0 0 nullPtr nullPtr :: TSNode)
+  alignment _ = alignment (undefined :: TSNode)
   {-# INLINE alignment #-}
   sizeOf _ = 80
   {-# INLINE sizeOf #-}
@@ -73,16 +79,12 @@ instance Storable Node where
                            <*> peekStruct
                            <*> peekStruct
                            <*> peekStruct
-                           <*> peekStruct
-                           <*> peekStruct
   {-# INLINE peek #-}
-  poke ptr (Node n t s sp ep sb eb c nn ne) = flip evalStruct ptr $ do
+  poke ptr (Node n t s ep eb c nn ne) = flip evalStruct ptr $ do
     pokeStruct n
     pokeStruct t
     pokeStruct s
-    pokeStruct sp
     pokeStruct ep
-    pokeStruct sb
     pokeStruct eb
     pokeStruct c
     pokeStruct nn
@@ -112,12 +114,10 @@ instance Storable TSNode where
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
-                             <*> peekStruct
   {-# INLINE peek #-}
-  poke ptr (TSNode o1 o2 o3 o4 p1 p2) = flip evalStruct ptr $ do
-    pokeStruct o1
-    pokeStruct o2
-    pokeStruct o3
+  poke ptr (TSNode sb sp o4 p1 p2) = flip evalStruct ptr $ do
+    pokeStruct sb
+    pokeStruct sp
     pokeStruct o4
     pokeStruct p1
     pokeStruct p2

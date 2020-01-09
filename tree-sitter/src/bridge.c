@@ -7,9 +7,7 @@ typedef struct Node {
   TSNode node;
   const char *type;
   TSSymbol symbol;
-  TSPoint startPoint;
   TSPoint endPoint;
-  uint32_t startByte;
   uint32_t endByte;
   uint32_t childCount;
   bool     isNamed;
@@ -28,9 +26,7 @@ static inline void ts_node_poke(TSNode node, Node *out) {
   out->node = node;
   out->symbol = ts_node_symbol(node);
   out->type = ts_node_type(node);
-  out->startPoint = ts_node_start_point(node);
   out->endPoint = ts_node_end_point(node);
-  out->startByte = ts_node_start_byte(node);
   out->endByte = ts_node_end_byte(node);
   out->childCount = ts_node_child_count(node);
   out->isNamed = ts_node_is_named(node);

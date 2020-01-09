@@ -29,6 +29,7 @@ module TreeSitter.Unmarshal
 import           Control.Algebra (send)
 import           Control.Carrier.Reader hiding (asks)
 import           Control.Exception
+import           Control.Monad ((<=<))
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
