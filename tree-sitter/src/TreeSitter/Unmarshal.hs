@@ -21,6 +21,7 @@ module TreeSitter.Unmarshal
 , Match(..)
 , hoist
 , lookupSymbol
+, unmarshal
 , unmarshalNode
 , peekNode
 ) where
@@ -68,7 +69,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        (Right <$> runReader (UnmarshalState bytestring cursor) (peekNode cursor >>= unmarshalNode))
+        (Right <$> runReader (UnmarshalState bytestring cursor) unmarshal)
           `catch` (pure . Left . getUnmarshalError)
 
 newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
@@ -118,6 +119,10 @@ hoist f (Match run) = Match (fmap f . run)
 lookupSymbol :: TSSymbol -> IntMap.IntMap a -> Maybe a
 lookupSymbol sym map = IntMap.lookup (fromIntegral sym) map
 {-# INLINE lookupSymbol #-}
+
+unmarshal :: (UnmarshalAnn a, Unmarshal t) => MatchM (t a)
+unmarshal = asks cursor >>= peekNode >>= unmarshalNode
+{-# INLINE unmarshal #-}
 
 -- | Unmarshal a node
 unmarshalNode :: forall t a .
