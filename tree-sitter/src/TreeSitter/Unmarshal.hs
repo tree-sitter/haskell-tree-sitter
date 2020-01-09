@@ -68,7 +68,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        (Right <$> runReader (UnmarshalState bytestring cursor) (peekNode >>= unmarshalNode))
+        (Right <$> runReader (UnmarshalState bytestring cursor) (peekNode cursor >>= unmarshalNode))
           `catch` (pure . Left . getUnmarshalError)
 
 newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
@@ -142,7 +142,8 @@ class SymbolMatching t => Unmarshal t where
   default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => B (Int, Match t)
   matchers = foldMap (singleton . (, match)) (matchedSymbols (Proxy @t))
     where match = Match $ \ node -> do
-            goto (nodeTSNode node)
+            cursor <- asks cursor
+            goto cursor (nodeTSNode node)
             fmap to1 (gunmarshalNode node)
 
 instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
@@ -252,17 +253,16 @@ sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
 
 -- | Advance the cursor to the next sibling of the current node.
-step :: MatchM Bool
-step = asks cursor >>= liftIO . ts_tree_cursor_goto_next_sibling
+step :: Ptr Cursor -> MatchM Bool
+step = liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Move the cursor to point at the passed 'TSNode'.
-goto :: TSNode -> MatchM ()
-goto node = asks cursor >>= liftIO . with node . ts_tree_cursor_reset_p
+goto :: Ptr Cursor -> TSNode -> MatchM ()
+goto cursor node = liftIO (with node (ts_tree_cursor_reset_p cursor))
 
 -- | Return the 'Node' that the cursor is pointing at.
-peekNode :: MatchM Node
-peekNode = do
-  cursor <- asks cursor
+peekNode :: Ptr Cursor -> MatchM Node
+peekNode cursor =
   liftIO $ alloca $ \ tsNodePtr -> do
     _ <- ts_tree_cursor_current_node_p cursor tsNodePtr
     alloca $ \ nodePtr -> do
@@ -270,9 +270,8 @@ peekNode = do
       peek nodePtr
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
-peekFieldName :: MatchM (Maybe FieldName)
-peekFieldName = do
-  cursor <- asks cursor
+peekFieldName :: Ptr Cursor -> MatchM (Maybe FieldName)
+peekFieldName cursor = do
   fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
   if fieldName == nullPtr then
     pure Nothing
@@ -291,9 +290,10 @@ getFields = do
   else
     pure Map.empty
   where go fs = do
-          node <- peekNode
-          fieldName <- peekFieldName
-          keepGoing <- step
+          cursor <- asks cursor
+          node <- peekNode cursor
+          fieldName <- peekFieldName cursor
+          keepGoing <- step cursor
           let fs' = case fieldName of
                 Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node] fs
                 -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
