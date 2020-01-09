@@ -70,9 +70,11 @@ newtype Match t = Match
 
 hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
 hoist f (Match run) = Match (fmap f . run)
+{-# INLINE hoist #-}
 
 lookupSymbol :: TSSymbol -> IntMap.IntMap a -> Maybe a
 lookupSymbol sym map = IntMap.lookup (fromIntegral sym) map
+{-# INLINE lookupSymbol #-}
 
 -- | Unmarshal a node
 unmarshalNode :: forall t a .
@@ -86,6 +88,7 @@ unmarshalNode node = {-# SCC "unmarshalNode" #-} do
   case maybeT of
     Just t -> runMatch t node
     Nothing -> fail $ showFailure (Proxy @t) node
+{-# INLINE unmarshalNode #-}
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
 --
