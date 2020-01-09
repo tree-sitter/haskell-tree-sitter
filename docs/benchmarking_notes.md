@@ -179,7 +179,7 @@ std dev              5.054 ms   (2.421 ms .. 7.985 ms)
 variance introduced by outliers: 24% (moderately inflated)
 ```
 
-## With Rob's new work
+## Specializing runMatch's monad transformer stack and some inlining
 
 ```
 benchmarks: True
