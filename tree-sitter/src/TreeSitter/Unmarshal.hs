@@ -333,13 +333,7 @@ class GUnmarshal f where
     => Node
     -> MatchM (f a)
 
-instance GUnmarshal f => GUnmarshal (M1 D c f) where
-  gunmarshalNode node = M1 <$> gunmarshalNode node
-
-instance GUnmarshal f => GUnmarshal (M1 C c f) where
-  gunmarshalNode node = M1 <$> gunmarshalNode node
-
-instance GUnmarshal f => GUnmarshal (M1 S c f) where
+instance GUnmarshal f => GUnmarshal (M1 i c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
 
 -- For anonymous leaf nodes:
