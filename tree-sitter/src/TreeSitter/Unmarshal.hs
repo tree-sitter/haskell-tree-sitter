@@ -61,9 +61,14 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))
+        runFail (runReader (State bytestring cursor) (peekNode >>= unmarshalNode))
 
-type MatchM = ReaderC ByteString (ReaderC (Ptr Cursor) (FailC IO))
+data State = State
+  { source :: {-# UNPACK #-} !ByteString
+  , cursor :: {-# UNPACK #-} !(Ptr Cursor)
+  }
+
+type MatchM = ReaderC State (FailC IO)
 
 newtype Match t = Match
   { runMatch :: forall a . UnmarshalAnn a => Node -> MatchM (t a)
@@ -151,7 +156,7 @@ instance UnmarshalAnn () where
 instance UnmarshalAnn Text.Text where
   unmarshalAnn node = do
     range <- unmarshalAnn node
-    asks (decodeUtf8With lenientDecode . slice range)
+    asks (decodeUtf8With lenientDecode . slice range . source)
 
 -- | Instance for pairs of annotations
 instance (UnmarshalAnn a, UnmarshalAnn b) => UnmarshalAnn (a,b) where
@@ -235,28 +240,28 @@ sep a b = a ++ ". " ++ b
 
 -- | Advance the cursor to the next sibling of the current node.
 step :: MatchM Bool
-step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
+step = asks cursor >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
 push :: MatchM a -> MatchM (Maybe a)
 push m = do
-  hasChildren <- ask >>= liftIO . ts_tree_cursor_goto_first_child
+  hasChildren <- asks cursor >>= liftIO . ts_tree_cursor_goto_first_child
   if hasChildren then do
     a <- m
-    Just a <$ (ask >>= liftIO . ts_tree_cursor_goto_parent)
+    Just a <$ (asks cursor >>= liftIO . ts_tree_cursor_goto_parent)
   else
     pure Nothing
 
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: TSNode -> MatchM ()
 goto node = do
-  cursor <- ask
+  cursor <- asks cursor
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
 -- | Return the 'Node' that the cursor is pointing at.
 peekNode :: MatchM Node
 peekNode = do
-  cursor <- ask
+  cursor <- asks cursor
   liftIO $ alloca $ \ tsNodePtr -> do
     _ <- ts_tree_cursor_current_node_p cursor tsNodePtr
     alloca $ \ nodePtr -> do
@@ -266,7 +271,7 @@ peekNode = do
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekFieldName :: MatchM (Maybe FieldName)
 peekFieldName = do
-  cursor <- ask
+  cursor <- asks cursor
   fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
   if fieldName == nullPtr then
     pure Nothing
