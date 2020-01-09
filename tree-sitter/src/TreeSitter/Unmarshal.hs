@@ -23,6 +23,7 @@ import           Control.Carrier.Fail.Either
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.Foldable (toList)
 import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as Text
@@ -68,6 +69,30 @@ newtype Match t = Match
   { runMatch :: forall a . UnmarshalAnn a => Node -> MatchC IO (t a)
   }
 
+newtype B a = B (forall r . (r -> r -> r) -> (a -> r) -> r -> r)
+
+instance Functor B where
+  fmap f (B run) = B (\ fork leaf -> run fork (leaf . f))
+  {-# INLINE fmap #-}
+  a <$ B run = B (\ fork leaf -> run fork (leaf . const a))
+  {-# INLINE (<$) #-}
+
+instance Semigroup (B a) where
+  B l <> B r = B (\ fork leaf nil -> fork (l fork leaf nil) (r fork leaf nil))
+  {-# INLINE (<>) #-}
+
+instance Monoid (B a) where
+  mempty = B (\ _ _ nil -> nil)
+  {-# INLINE mempty #-}
+
+instance Foldable B where
+  foldMap f (B run) = run (<>) f mempty
+  {-# INLINE foldMap #-}
+
+singleton :: a -> B a
+singleton a = B (\ _ leaf _ -> leaf a)
+{-# INLINE singleton #-}
+
 hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
 hoist f (Match run) = Match (fmap f . run)
 {-# INLINE hoist #-}
@@ -84,7 +109,7 @@ unmarshalNode :: forall t a .
   => Node
   -> MatchC IO (t a)
 unmarshalNode node = {-# SCC "unmarshalNode" #-} do
-  let maybeT = lookupSymbol (nodeSymbol node) matchers
+  let maybeT = lookupSymbol (nodeSymbol node) matchers'
   case maybeT of
     Just t -> runMatch t node
     Nothing -> fail $ showFailure (Proxy @t) node
@@ -94,9 +119,12 @@ unmarshalNode node = {-# SCC "unmarshalNode" #-} do
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'matchers' providing that they have a suitable 'Generic1' instance.
 class SymbolMatching t => Unmarshal t where
-  matchers :: IntMap.IntMap (Match t)
-  default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => IntMap.IntMap (Match t)
-  matchers = IntMap.fromList (fmap (, match) (matchedSymbols (Proxy @t)))
+  matchers' :: IntMap.IntMap (Match t)
+  matchers' = IntMap.fromList (toList matchers)
+
+  matchers :: B (Int, Match t)
+  default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => B (Int, Match t)
+  matchers = foldMap (singleton . (, match)) (matchedSymbols (Proxy @t))
     where match = Match $ \ node -> do
             goto (nodeTSNode node)
             fmap to1 (gunmarshalNode node)
@@ -107,15 +135,15 @@ instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
   --   case maybeT of
   --     Just t -> runMatch t node
   --     Nothing -> fail $ showFailure (Proxy @(f :+: g)) node
-  matchers = fmap (hoist L1) matchers <> fmap (hoist R1) matchers
+  matchers = fmap (fmap (hoist L1)) matchers <> fmap (fmap (hoist R1)) matchers
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
   -- unmarshalNode = fmap Rec1 . unmarshalNode
-  matchers = fmap (hoist Rec1) matchers
+  matchers = fmap (fmap (hoist Rec1)) matchers
 
 instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
   -- unmarshalNode = fmap Token . unmarshalAnn
-  matchers = IntMap.singleton (fromIntegral (natVal (Proxy @n))) (Match (fmap Token . unmarshalAnn))
+  matchers = singleton (fromIntegral (natVal (Proxy @n)), Match (fmap Token . unmarshalAnn))
     -- where unmarshalNode = fmap Token . unmarshalAnn
 
 
