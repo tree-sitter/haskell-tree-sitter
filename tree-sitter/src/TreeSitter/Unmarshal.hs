@@ -11,21 +11,9 @@
 
 module TreeSitter.Unmarshal
 ( parseByteString
-, FieldName(..)
-, Unmarshal(..)
-, UnmarshalAnn(..)
-, UnmarshalField(..)
+, Unmarshal
+, UnmarshalAnn
 , SymbolMatching(..)
-, Match(..)
-, hoist
-, lookupSymbol
-, unmarshalNode
-, step
-, push
-, goto
-, peekNode
-, peekFieldName
-, getFields
 ) where
 
 import           Control.Applicative
