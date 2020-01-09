@@ -108,11 +108,9 @@ unmarshalNode :: forall t a .
                  )
   => Node
   -> MatchC IO (t a)
-unmarshalNode node = do
-  let maybeT = lookupSymbol (nodeSymbol node) matchers'
-  case maybeT of
-    Just t -> runMatch t node
-    Nothing -> fail $ showFailure (Proxy @t) node
+unmarshalNode node = case lookupSymbol (nodeSymbol node) matchers' of
+  Just t -> runMatch t node
+  Nothing -> fail $ showFailure (Proxy @t) node
 {-# INLINE unmarshalNode #-}
 
 -- | Unmarshalling is the process of iterating over tree-sitter’s parse trees using its tree cursor API and producing Haskell ASTs for the relevant nodes.
