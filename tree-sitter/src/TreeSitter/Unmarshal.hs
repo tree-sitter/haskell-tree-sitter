@@ -257,12 +257,10 @@ sep a b = a ++ ". " ++ b
 -- | Advance the cursor to the next sibling of the current node.
 step :: MatchM Bool
 step = asks cursor >>= liftIO . ts_tree_cursor_goto_next_sibling
-{-# INLINE step #-}
 
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: TSNode -> MatchM ()
 goto node = asks cursor >>= liftIO . with node . ts_tree_cursor_reset_p
-{-# INLINE goto #-}
 
 -- | Return the 'Node' that the cursor is pointing at.
 peekNode :: MatchM Node
