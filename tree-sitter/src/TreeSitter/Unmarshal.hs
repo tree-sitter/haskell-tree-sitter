@@ -63,10 +63,10 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
       withCursor (castPtr rootPtr) $ \ cursor ->
         runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))
 
-type MatchC m = (ReaderC ByteString (ReaderC (Ptr Cursor) (FailC m)))
+type MatchM = (ReaderC ByteString (ReaderC (Ptr Cursor) (FailC IO)))
 
 newtype Match t = Match
-  { runMatch :: forall a . UnmarshalAnn a => Node -> MatchC IO (t a)
+  { runMatch :: forall a . UnmarshalAnn a => Node -> MatchM (t a)
   }
 
 newtype B a = B (forall r . (r -> r -> r) -> (a -> r) -> r -> r)
@@ -107,7 +107,7 @@ unmarshalNode :: forall t a .
                  , Unmarshal t
                  )
   => Node
-  -> MatchC IO (t a)
+  -> MatchM (t a)
 unmarshalNode node = case lookupSymbol (nodeSymbol node) matchers' of
   Just t -> runMatch t node
   Nothing -> fail $ showFailure (Proxy @t) node
@@ -143,7 +143,7 @@ instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
 class UnmarshalAnn a where
   unmarshalAnn
     :: Node
-    -> MatchC IO a
+    -> MatchM a
 
 instance UnmarshalAnn () where
   unmarshalAnn _ = pure ()
@@ -187,7 +187,7 @@ class UnmarshalField t where
        , UnmarshalAnn a
        )
     => [Node]
-    -> MatchC IO (t (f a))
+    -> MatchM (t (f a))
 
 instance UnmarshalField Maybe where
   unmarshalField []  = pure Nothing
@@ -234,11 +234,11 @@ sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
 
 -- | Advance the cursor to the next sibling of the current node.
-step :: MatchC IO Bool
+step :: MatchM Bool
 step = ask >>= liftIO . ts_tree_cursor_goto_next_sibling
 
 -- | Run an action over the children of the current node.
-push :: MatchC IO a -> MatchC IO (Maybe a)
+push :: MatchM a -> MatchM (Maybe a)
 push m = do
   hasChildren <- ask >>= liftIO . ts_tree_cursor_goto_first_child
   if hasChildren then do
@@ -248,13 +248,13 @@ push m = do
     pure Nothing
 
 -- | Move the cursor to point at the passed 'TSNode'.
-goto :: TSNode -> MatchC IO ()
+goto :: TSNode -> MatchM ()
 goto node = do
   cursor <- ask
   liftIO (with node (ts_tree_cursor_reset_p cursor))
 
 -- | Return the 'Node' that the cursor is pointing at.
-peekNode :: MatchC IO Node
+peekNode :: MatchM Node
 peekNode = do
   cursor <- ask
   liftIO $ alloca $ \ tsNodePtr -> do
@@ -264,7 +264,7 @@ peekNode = do
       peek nodePtr
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
-peekFieldName :: MatchC IO (Maybe FieldName)
+peekFieldName :: MatchM (Maybe FieldName)
 peekFieldName = do
   cursor <- ask
   fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
@@ -277,7 +277,7 @@ peekFieldName = do
 type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: MatchC IO Fields
+getFields :: MatchM Fields
 getFields = go Map.empty
   where go fs = do
           node <- peekNode
@@ -315,7 +315,7 @@ class GUnmarshal f where
   gunmarshalNode
     :: UnmarshalAnn a
     => Node
-    -> MatchC IO (f a)
+    -> MatchM (f a)
 
 instance GUnmarshal f => GUnmarshal (M1 D c f) where
   gunmarshalNode node = M1 <$> gunmarshalNode node
@@ -352,7 +352,7 @@ class GUnmarshalProduct f where
     :: UnmarshalAnn a
     => Node
     -> Fields
-    -> MatchC IO (f a)
+    -> MatchM (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
