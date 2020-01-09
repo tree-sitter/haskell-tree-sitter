@@ -18,7 +18,7 @@ module TreeSitter.Unmarshal
 
 import           Control.Applicative
 import           Control.Algebra (send)
-import           Control.Carrier.Reader hiding (ask)
+import           Control.Carrier.Reader hiding (asks)
 import           Control.Carrier.Fail.Either
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
@@ -49,9 +49,9 @@ import           Prelude hiding (fail)
 import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
-ask :: Has (Reader r) sig m => m r
-ask = send (Ask pure)
-{-# INLINE ask #-}
+asks :: Has (Reader r) sig m => (r -> r') -> m r'
+asks f = send (Ask (pure . f))
+{-# INLINE asks #-}
 
 -- Parse source code and produce AST
 parseByteString :: (Unmarshal t, UnmarshalAnn a) => Ptr TS.Language -> ByteString -> IO (Either String (t a))
