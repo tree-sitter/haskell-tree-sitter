@@ -4,7 +4,6 @@ module Main
 
 import           Control.Monad
 import qualified Data.ByteString as B
-import           Data.Foldable
 import           Gauge
 import           System.Exit (die)
 import           System.Environment (die)
