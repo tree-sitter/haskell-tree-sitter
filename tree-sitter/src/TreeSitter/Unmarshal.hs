@@ -13,7 +13,6 @@
 
 module TreeSitter.Unmarshal
 ( parseByteString
--- , parseByteString'
 , FieldName(..)
 , Unmarshal(..)
 , UnmarshalAnn(..)
@@ -34,7 +33,6 @@ module TreeSitter.Unmarshal
 import           Control.Applicative
 import           Control.Algebra (send)
 import           Control.Carrier.Reader hiding (ask)
--- import           Control.Carrier.Profile.Tree hiding (singleton)
 import           Control.Carrier.Fail.Either
 import           Control.Monad.IO.Class
 import           Control.Effect.Lift
@@ -81,20 +79,10 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
       withCursor (castPtr rootPtr) $ \ cursor ->
         runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
 
--- parseByteString' :: (Unmarshal t, UnmarshalAnn a, Effect sig, MonadIO m, Has (Lift IO) sig m, Has Profile sig m) => Ptr TS.Language -> ByteString -> m (Either String (t a))
--- parseByteString' language bytestring = liftWith $ \ ctx run -> withParser language $ \ parser -> withParseTree parser bytestring $ \ treePtr ->
---   -- if treePtr == nullPtr then
---   --   pure (Left "error: didn't get a root node")
---   -- else
---     withRootNode treePtr $ \ rootPtr ->
---       withCursor (castPtr rootPtr) $ \ cursor ->
---         run $ runFail (runReader ("" :: String) (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))) <$ ctx
-
 newtype Match t = Match
   { runMatch :: forall m sig a . ( Has (Reader ByteString) sig m
                                  , Has (Reader (Ptr Cursor)) sig m
                                  , Has (Reader String) sig m
-                                --  , Has Profile sig m
                                  , MonadFail m
                                  , MonadIO m
                                  , UnmarshalAnn a
@@ -137,7 +125,6 @@ unmarshalNode :: forall t sig m a .
                  ( Has (Reader ByteString) sig m
                  , Has (Reader (Ptr Cursor)) sig m
                  , Has (Reader String) sig m
-                --  , Has Profile sig m
                  , MonadFail m
                  , MonadIO m
                  , UnmarshalAnn a
@@ -234,7 +221,6 @@ class UnmarshalField t where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
-      --  , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , Unmarshal f
@@ -370,7 +356,6 @@ class GUnmarshal f where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
-      --  , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -414,7 +399,6 @@ class GUnmarshalProduct f where
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
        , Has (Reader String) sig m
-      --  , Has Profile sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a

@@ -82,7 +82,6 @@ executable benchmarks
                      , Glob
                      , lens >= 4.17 && < 4.19
                      , pathtype ^>= 0.8.1
-                     , fused-effects-profile
                      , tree-sitter
                      , tree-sitter-ruby
 
