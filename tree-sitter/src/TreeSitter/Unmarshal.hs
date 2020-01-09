@@ -108,7 +108,7 @@ unmarshalNode :: forall t a .
                  )
   => Node
   -> MatchC IO (t a)
-unmarshalNode node = {-# SCC "unmarshalNode" #-} do
+unmarshalNode node = do
   let maybeT = lookupSymbol (nodeSymbol node) matchers'
   case maybeT of
     Just t -> runMatch t node
@@ -345,7 +345,7 @@ instance Unmarshal t => GUnmarshal (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = {-# SCC "GUnmarshalProduct" #-} push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
+  gunmarshalNode node = push getFields >>= gunmarshalProductNode @(f :*: g) node . fromMaybe Map.empty
 
 
 -- | Generically unmarshal products
