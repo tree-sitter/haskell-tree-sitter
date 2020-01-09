@@ -319,7 +319,7 @@ newtype FieldName = FieldName { getFieldName :: String }
 --
 --   Product types (specifically, record types) are constructed by looking up the node for each corresponding field name in the map, moving the cursor to it, and then invoking 'unmarshalNode' to construct the value for that field. Leaf types are constructed as a special case of product types.
 --
---   Sum types are constructed by attempting to unmarshal each constructor nondeterministically. This should instead use the current node’s symbol to select the corresponding constructor deterministically.
+--   Sum types are constructed by using the current node’s symbol to select the corresponding constructor deterministically.
 class GUnmarshal f where
   gunmarshalNode
     :: ( Has (Reader ByteString) sig m
