@@ -287,15 +287,14 @@ peekFieldName cursor = do
 type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: MatchM Fields
-getFields = do
-  hasChildren <- asks cursor >>= liftIO . ts_tree_cursor_goto_first_child
+getFields :: Ptr Cursor -> MatchM Fields
+getFields cursor = do
+  hasChildren <- liftIO (ts_tree_cursor_goto_first_child cursor)
   if hasChildren then
-    go Map.empty <* (asks cursor >>= liftIO . ts_tree_cursor_goto_parent)
+    go Map.empty <* liftIO (ts_tree_cursor_goto_parent cursor)
   else
     pure Map.empty
   where go fs = do
-          cursor <- asks cursor
           node <- peekNode cursor
           fieldName <- peekFieldName cursor
           keepGoing <- step cursor
@@ -359,7 +358,7 @@ instance Unmarshal t => GUnmarshal (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = getFields >>= gunmarshalProductNode @(f :*: g) node
+  gunmarshalNode node = asks cursor >>= getFields >>= gunmarshalProductNode @(f :*: g) node
 
 
 -- | Generically unmarshal products
