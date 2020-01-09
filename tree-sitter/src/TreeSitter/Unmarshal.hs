@@ -81,7 +81,7 @@ newtype Match t = Match
              -> m (t a)
   }
 
-data Table a = Table (IntMap.IntMap a)
+newtype Table a = Table (IntMap.IntMap a)
   deriving (Functor)
 
 hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
