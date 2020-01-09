@@ -62,7 +62,9 @@ pokeStruct a = Struct (\ p -> do
 
 instance Storable Node where
   alignment _ = alignment (TSNode 0 0 0 0 nullPtr nullPtr :: TSNode)
+  {-# INLINE alignment #-}
   sizeOf _ = 80
+  {-# INLINE sizeOf #-}
   peek = evalStruct $ Node <$> peekStruct
                            <*> peekStruct
                            <*> peekStruct
@@ -73,6 +75,7 @@ instance Storable Node where
                            <*> peekStruct
                            <*> peekStruct
                            <*> peekStruct
+  {-# INLINE peek #-}
   poke ptr (Node n t s sp ep sb eb c nn ne) = flip evalStruct ptr $ do
     pokeStruct n
     pokeStruct t
@@ -84,25 +87,33 @@ instance Storable Node where
     pokeStruct c
     pokeStruct nn
     pokeStruct ne
+  {-# INLINE poke #-}
 
 instance Storable TSPoint where
   alignment _ = alignment (0 :: Int32)
+  {-# INLINE alignment #-}
   sizeOf _ = 8
+  {-# INLINE sizeOf #-}
   peek = evalStruct $ TSPoint <$> peekStruct
                               <*> peekStruct
+  {-# INLINE peek #-}
   poke ptr (TSPoint r c) = flip evalStruct ptr $ do
     pokeStruct r
     pokeStruct c
+  {-# INLINE poke #-}
 
 instance Storable TSNode where
   alignment _ = alignment (nullPtr :: Ptr ())
+  {-# INLINE alignment #-}
   sizeOf _ = 32
+  {-# INLINE sizeOf #-}
   peek = evalStruct $ TSNode <$> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
+  {-# INLINE peek #-}
   poke ptr (TSNode o1 o2 o3 o4 p1 p2) = flip evalStruct ptr $ do
     pokeStruct o1
     pokeStruct o2
@@ -110,33 +121,40 @@ instance Storable TSNode where
     pokeStruct o4
     pokeStruct p1
     pokeStruct p2
+  {-# INLINE poke #-}
 
 instance Functor Struct where
-  fmap f a = Struct (\ p -> do
-    (a', p') <- runStruct a p
-    let fa = f a'
-    fa `seq` p' `seq` pure (fa, castPtr p'))
+  fmap f a = Struct go where
+    go p = do
+      (a', p') <- runStruct a p
+      let fa = f a'
+      fa `seq` p' `seq` pure (fa, castPtr p')
+    {-# INLINE go #-}
   {-# INLINE fmap #-}
 
 instance Applicative Struct where
   pure a = Struct (\ p -> pure (a, castPtr p))
   {-# INLINE pure #-}
 
-  f <*> a = Struct (\ p -> do
-    (f', p')  <- runStruct f          p
-    (a', p'') <- p' `seq` runStruct a (castPtr p')
-    let fa = f' a'
-    fa `seq` p'' `seq` pure (fa, castPtr p''))
+  f <*> a = Struct go where
+    go p = do
+      (f', p')  <- runStruct f          p
+      (a', p'') <- p' `seq` runStruct a (castPtr p')
+      let fa = f' a'
+      fa `seq` p'' `seq` pure (fa, castPtr p'')
+    {-# INLINE go #-}
   {-# INLINE (<*>) #-}
 
 instance Monad Struct where
   return = pure
   {-# INLINE return #-}
 
-  a >>= f = Struct (\ p -> do
-    (a', p')   <- runStruct a               p
-    (fa', p'') <- p' `seq` runStruct (f a') (castPtr p')
-    fa' `seq` p'' `seq` pure (fa', p''))
+  a >>= f = Struct go where
+    go p = do
+      (a', p')   <- runStruct a               p
+      (fa', p'') <- p' `seq` runStruct (f a') (castPtr p')
+      fa' `seq` p'' `seq` pure (fa', p'')
+    {-# INLINE go #-}
   {-# INLINE (>>=) #-}
 
 
