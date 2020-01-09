@@ -15,20 +15,24 @@ PROFILE_DIR="$PROFILES_DIR/$TODAY/$NOW-$CURRENT_BRANCH-$HEAD_SHA"
 OUTFILE="$PROFILE_DIR/profile.out.log"
 ERRFILE="$PROFILE_DIR/profile.err.log"
 
-cabal v2-build --enable-profiling --enable-optimization exe:benchmark
+# cabal v2-configure --enable-profiling --profiling-detail=all-functions --enable-optimization
+cabal v2-build exe:benchmarks
 
 mkdir -p "$PROFILE_DIR"
 
 # NB: Do not try and use -N, it doesn't work and defaults to -N1.
 cores=$(sysctl -n machdep.cpu.core_count || echo 4)
-cabal v2-exec benchmark -- +RTS -sstderr -N$((cores * 2)) -A8m -n2m -p -s -h -i0.1 -L1000 -xt -RTS "$@" > "$OUTFILE" 2> "$ERRFILE"
+cabal v2-run exe:benchmarks -- +RTS -N$((cores * 2)) -p -sstderr -h -i0.1 -L1000 -xt -RTS > "$OUTFILE" 2> "$ERRFILE"
+# cabal v2-run exe:benchmarks -- +RTS -N$((cores * 2)) -A8m -n2m -p -sstderr -h -i0.1 -L1000 -xt -RTS > "$OUTFILE" 2> "$ERRFILE"
 
-profiteur benchmark.prof || true
+cat "$ERRFILE"
 
-hp2pretty benchmark.hp
+profiteur benchmarks.prof || true
 
-for f in "$PROJECT_DIR/"benchmark.*; do
-	if [ "$f" != "$PROJECT_DIR/"benchmark.cabal ]; then
+hp2pretty benchmarks.hp
+
+for f in "$PROJECT_DIR/"benchmarks.*; do
+	if [ "$f" != "$PROJECT_DIR/"benchmarks.cabal ]; then
 		mv "$f" "$PROFILE_DIR"
 	fi
 done
