@@ -19,7 +19,6 @@ mean                 76.93 ms   (74.29 ms .. 79.79 ms)
 std dev              5.228 ms   (3.679 ms .. 7.447 ms)
 variance introduced by outliers: 17% (moderately inflated)
 
-Benchmark benchmarks: FINISH
 
 ## Optimization: Using a table of matchers
 
@@ -61,3 +60,57 @@ variance introduced by outliers: 18% (moderately inflated)
 ## From semantic
 
 With the
+
+
+## Alternative baseline(s)
+
+Including baselines with and without profiling enabled.
+
+```
+benchmarks: True
+optimization: True
+tests: True
+profiling: True
+profiling-detail: all-functions
+```
+
+benchmarking parsing/ruby ... took 10.67 s, total 56 iterations
+benchmarked parsing/ruby
+time                 199.8 ms   (194.6 ms .. 205.1 ms)
+                     0.998 R²   (0.995 R² .. 1.000 R²)
+mean                 191.0 ms   (186.1 ms .. 194.4 ms)
+std dev              7.579 ms   (4.293 ms .. 11.86 ms)
+
+## With b tree matchers
+
+
+```
+benchmarks: True
+optimization: True
+tests: True
+profiling: True
+profiling-detail: all-functions
+```
+
+benchmarking parsing/ruby ... took 15.81 s, total 56 iterations
+benchmarked parsing/ruby
+time                 295.9 ms   (282.4 ms .. 332.7 ms)
+                     0.984 R²   (0.957 R² .. 0.999 R²)
+mean                 280.8 ms   (267.5 ms .. 299.5 ms)
+std dev              23.29 ms   (14.77 ms .. 31.79 ms)
+variance introduced by outliers: 28% (moderately inflated)
+
+---
+
+```
+benchmarks: True
+optimization: True
+tests: True
+profiling: False
+```
+
+benchmarked parsing/ruby
+time                 51.67 ms   (51.01 ms .. 52.32 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 50.58 ms   (49.77 ms .. 51.15 ms)
+std dev              1.329 ms   (927.3 μs .. 1.685 ms)
