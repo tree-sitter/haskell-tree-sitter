@@ -70,6 +70,17 @@ test-suite test
                   , tasty-hedgehog
                   , tasty-hunit
 
+executable benchmark
+  import: common
+  hs-source-dirs: bench
+  main-is: Bench.hs
+  build-depends:
+      base
+    , gauge ^>= 0.2.5
+    , bytestring
+    , tree-sitter
+    , tree-sitter-python
+
 source-repository head
   type:     git
   location: https://github.com/tree-sitter/haskell-tree-sitter
