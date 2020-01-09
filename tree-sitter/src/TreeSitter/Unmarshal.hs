@@ -65,6 +65,10 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
 
 type MatchC m = (ReaderC ByteString (ReaderC (Ptr Cursor) (FailC m)))
 
+newtype Match t = Match
+  { runMatch :: forall a . UnmarshalAnn a => Node -> MatchC IO (t a)
+  }
+
 newtype B a = B (forall r . (r -> r -> r) -> (a -> r) -> r -> r)
 
 instance Functor B where
@@ -89,6 +93,10 @@ singleton :: a -> B a
 singleton a = B (\ _ leaf _ -> leaf a)
 {-# INLINE singleton #-}
 
+hoist :: (forall x . t x -> t' x) -> Match t -> Match t'
+hoist f (Match run) = Match (fmap f . run)
+{-# INLINE hoist #-}
+
 lookupSymbol :: TSSymbol -> IntMap.IntMap a -> Maybe a
 lookupSymbol sym map = IntMap.lookup (fromIntegral sym) map
 {-# INLINE lookupSymbol #-}
@@ -101,7 +109,7 @@ unmarshalNode :: forall t a .
   => Node
   -> MatchC IO (t a)
 unmarshalNode node = case lookupSymbol (nodeSymbol node) matchers' of
-  Just t -> t node
+  Just t -> runMatch t node
   Nothing -> fail $ showFailure (Proxy @t) node
 {-# INLINE unmarshalNode #-}
 
@@ -109,24 +117,24 @@ unmarshalNode node = case lookupSymbol (nodeSymbol node) matchers' of
 --
 --   Datatypes which can be constructed from tree-sitter parse trees may use the default definition of 'matchers' providing that they have a suitable 'Generic1' instance.
 class SymbolMatching t => Unmarshal t where
-  matchers' :: UnmarshalAnn a => IntMap.IntMap (Node -> MatchC IO (t a))
+  matchers' :: IntMap.IntMap (Match t)
   matchers' = IntMap.fromList (toList matchers)
 
-  matchers :: UnmarshalAnn a => B (Int, Node -> MatchC IO (t a))
-  default matchers :: (UnmarshalAnn a, Generic1 t, GUnmarshal (Rep1 t)) => B (Int, Node -> MatchC IO (t a))
+  matchers :: B (Int, Match t)
+  default matchers :: (Generic1 t, GUnmarshal (Rep1 t)) => B (Int, Match t)
   matchers = foldMap (singleton . (, match)) (matchedSymbols (Proxy @t))
-    where match node = do
+    where match = Match $ \ node -> do
             goto (nodeTSNode node)
             fmap to1 (gunmarshalNode node)
 
 instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
-  matchers = fmap (fmap (fmap (fmap L1))) matchers <> fmap (fmap (fmap (fmap R1))) matchers
+  matchers = fmap (fmap (hoist L1)) matchers <> fmap (fmap (hoist R1)) matchers
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
-  matchers = fmap (fmap (fmap (fmap Rec1))) matchers
+  matchers = fmap (fmap (hoist Rec1)) matchers
 
 instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
-  matchers = singleton (fromIntegral (natVal (Proxy @n)), fmap Token . unmarshalAnn)
+  matchers = singleton (fromIntegral (natVal (Proxy @n)), Match (fmap Token . unmarshalAnn))
 
 
 -- | Unmarshal an annotation field.
