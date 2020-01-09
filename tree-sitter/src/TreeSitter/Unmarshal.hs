@@ -11,6 +11,8 @@
 
 module TreeSitter.Unmarshal
 ( parseByteString
+, UnmarshalState(..)
+, UnmarshalError(..)
 , FieldName(..)
 , Unmarshal(..)
 , UnmarshalAnn(..)
