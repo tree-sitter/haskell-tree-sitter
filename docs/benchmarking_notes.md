@@ -9,6 +9,8 @@ See `script/profile` for running benchmarks and producing profiles.
 <details>
 <summary>First baseline</summary>
 
+NOTE: These are hard to compare as some where taking with profiling enabled and others not. cabal builds binaries for libraries with and without profiling, but executable are only built with the current flags.
+
 ## Baseline
 
 Using *.rb glob in:
