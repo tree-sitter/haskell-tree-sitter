@@ -67,12 +67,11 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        runFail (runReader "" (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode))))
+        runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))
 
 newtype Match t = Match
   { runMatch :: forall m sig a . ( Has (Reader ByteString) sig m
                                  , Has (Reader (Ptr Cursor)) sig m
-                                 , Has (Reader String) sig m
                                  , MonadFail m
                                  , MonadIO m
                                  , UnmarshalAnn a
@@ -94,7 +93,6 @@ lookupSymbol sym (Table map) = IntMap.lookup (fromIntegral sym) map
 unmarshalNode :: forall t sig m a .
                  ( Has (Reader ByteString) sig m
                  , Has (Reader (Ptr Cursor)) sig m
-                 , Has (Reader String) sig m
                  , MonadFail m
                  , MonadIO m
                  , UnmarshalAnn a
@@ -192,7 +190,6 @@ class UnmarshalField t where
   unmarshalField
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
-       , Has (Reader String) sig m
        , MonadFail m
        , MonadIO m
        , Unmarshal f
@@ -327,7 +324,6 @@ class GUnmarshal f where
   gunmarshalNode
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
-       , Has (Reader String) sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -337,8 +333,8 @@ class GUnmarshal f where
 
   -- gMatchers :: Table (Match f)
 
-instance (Datatype c, GUnmarshal f) => GUnmarshal (M1 D c f) where
-  gunmarshalNode node = local (const (datatypeName @c undefined)) (M1 <$> gunmarshalNode node)
+instance GUnmarshal f => GUnmarshal (M1 D c f) where
+  gunmarshalNode node = M1 <$> gunmarshalNode node
   -- gMatchers = fmap go gMatchers
   --   where go (Match run) = Match (\ node -> local (const (datatypeName @c undefined)) (fmap M1 (run node)))
 
@@ -391,7 +387,6 @@ class GUnmarshalProduct f where
   gunmarshalProductNode
     :: ( Has (Reader ByteString) sig m
        , Has (Reader (Ptr Cursor)) sig m
-       , Has (Reader String) sig m
        , MonadFail m
        , MonadIO m
        , UnmarshalAnn a
@@ -420,10 +415,6 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode _ fields =
     case lookupField (FieldName (selName @c undefined)) fields of
-      []  -> do
-        ty <- ask
-        fail $ "type '" <> ty <> "' expected a node '" <> selName @c undefined <> "' but didn't get one"
+      []  -> fail $ "expected a node '" <> selName @c undefined <> "' but didn't get one"
       [x] -> M1 . Rec1 <$> unmarshalNode x
-      _   -> do
-        ty <- ask
-        fail $ "type '" <> ty <> "' expected a node but got multiple"
+      _   -> fail $ "expected a node but got multiple"
