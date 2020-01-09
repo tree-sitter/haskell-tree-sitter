@@ -63,7 +63,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
       withCursor (castPtr rootPtr) $ \ cursor ->
         runFail (runReader cursor (runReader bytestring (peekNode >>= unmarshalNode)))
 
-type MatchM = (ReaderC ByteString (ReaderC (Ptr Cursor) (FailC IO)))
+type MatchM = ReaderC ByteString (ReaderC (Ptr Cursor) (FailC IO))
 
 newtype Match t = Match
   { runMatch :: forall a . UnmarshalAnn a => Node -> MatchM (t a)
