@@ -406,13 +406,10 @@ instance GUnmarshalProduct (M1 S c Par1) where
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode datatypeName _ _ = do
-    cursor <- asks cursor
-    let fieldName = selName @c undefined
-    nodes <- nodesForField cursor (FieldName fieldName)
-    go (unmarshalField datatypeName fieldName) nodes where
-    go :: ([Node] -> MatchM (f (g a))) -> [Node] -> MatchM (M1 S c (f :.: g) a)
+  gunmarshalProductNode datatypeName _ = go (unmarshalField datatypeName fieldName . lookupField (FieldName fieldName)) where
+    go :: (Fields -> MatchM (f (g a))) -> Fields -> MatchM (M1 S c (f :.: g) a)
     go = coerce
+    fieldName = selName @c undefined
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode datatypeName _ _ = do
