@@ -272,11 +272,9 @@ goto cursor node = liftIO (with node (ts_tree_cursor_reset_p cursor))
 -- | Return the 'Node' that the cursor is pointing at.
 peekNode :: Ptr Cursor -> MatchM Node
 peekNode cursor =
-  liftIO $ alloca $ \ tsNodePtr -> do
-    _ <- ts_tree_cursor_current_node_p cursor tsNodePtr
-    alloca $ \ nodePtr -> do
-      ts_node_poke_p tsNodePtr nodePtr
-      peek nodePtr
+  liftIO . alloca $ \ nodePtr -> do
+    _ <- ts_tree_cursor_current_node_p cursor nodePtr
+    peek nodePtr
 
 -- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
 peekFieldName :: Ptr Cursor -> MatchM (Maybe FieldName)

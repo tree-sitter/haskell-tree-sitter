@@ -92,9 +92,12 @@ void ts_tree_cursor_reset_p(TSTreeCursor *cursor, TSNode *node) {
 }
 
 /* FIXME: copy out a Node rather than a TSNode */
-bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, TSNode *outNode) {
+bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, Node *outNode) {
   assert(cursor != NULL);
   assert(outNode != NULL);
-  *outNode = ts_tree_cursor_current_node(cursor);
-  return !ts_node_is_null(*outNode);
+  TSNode tsNode = ts_tree_cursor_current_node(cursor);
+  if (!ts_node_is_null(tsNode)) {
+    ts_node_poke(tsNode, outNode);
+  }
+  return false;
 }
