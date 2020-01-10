@@ -416,11 +416,13 @@ nodesForField cursor name = do
     node <- peekNode cursor
     fieldName <- peekFieldName cursor
     keepGoing <- step cursor
-    let nodes' = case fieldName of
-          Just fieldName' | fieldName' == name -> node:nodes
+    let nodes'
+          | fieldName == Just name = node:nodes
           -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-          Nothing | name == FieldName "extraChildren", nodeIsNamed node /= 0, nodeIsExtra node == 0 -> node:nodes
-          _ -> nodes
+          | name == FieldName "extraChildren"
+          , nodeIsNamed node /= 0
+          , nodeIsExtra node == 0  = node:nodes
+          | otherwise              = nodes
     if keepGoing then
       go nodes'
     else
