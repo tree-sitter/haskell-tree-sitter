@@ -21,15 +21,12 @@ module TreeSitter.Unmarshal
 , Match(..)
 , hoist
 , lookupSymbol
-, unmarshal
 , unmarshalNode
-, peekNode
 ) where
 
 import           Control.Algebra (send)
 import           Control.Carrier.Reader hiding (asks)
 import           Control.Exception
-import           Control.Monad ((<=<))
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -40,7 +37,6 @@ import qualified Data.Text as Text
 import           Data.Text.Encoding
 import           Data.Text.Encoding.Error (lenientDecode)
 import           Foreign.C.String
-import           Foreign.Marshal.Alloc
 import           Foreign.Marshal.Array
 import           Foreign.Marshal.Utils
 import           Foreign.Ptr
@@ -70,7 +66,7 @@ parseByteString language bytestring = withParser language $ \ parser -> withPars
   else
     withRootNode treePtr $ \ rootPtr ->
       withCursor (castPtr rootPtr) $ \ cursor ->
-        (Right <$> runReader (UnmarshalState bytestring cursor) (unmarshal cursor))
+        (Right <$> runReader (UnmarshalState bytestring cursor) (liftIO (peek rootPtr) >>= unmarshalNode))
           `catch` (pure . Left . getUnmarshalError)
 
 newtype UnmarshalError = UnmarshalError { getUnmarshalError :: String }
@@ -120,10 +116,6 @@ hoist f (Match run) = Match (fmap f . run)
 lookupSymbol :: TSSymbol -> IntMap.IntMap a -> Maybe a
 lookupSymbol sym map = IntMap.lookup (fromIntegral sym) map
 {-# INLINE lookupSymbol #-}
-
-unmarshal :: (UnmarshalAnn a, Unmarshal t) => Ptr Cursor -> MatchM (t a)
-unmarshal = unmarshalNode <=< peekNode
-{-# INLINE unmarshal #-}
 
 -- | Unmarshal a node
 unmarshalNode :: forall t a .
@@ -263,13 +255,6 @@ sep a b = a ++ ". " ++ b
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: Ptr Cursor -> TSNode -> MatchM ()
 goto cursor node = liftIO (with node (ts_tree_cursor_reset_p cursor))
-
--- | Return the 'Node' that the cursor is pointing at.
-peekNode :: Ptr Cursor -> MatchM Node
-peekNode cursor =
-  liftIO . alloca $ \ nodePtr -> do
-    _ <- ts_tree_cursor_current_node_p cursor nodePtr
-    peek nodePtr
 
 
 type Fields = [(FieldName, Node)]
