@@ -427,7 +427,7 @@ nodesForField :: Ptr Cursor -> FieldName -> MatchM [Node]
 nodesForField cursor name = do
   hasChildren <- liftIO (ts_tree_cursor_goto_first_child cursor)
   if hasChildren then
-    go id
+    go id <* liftIO (ts_tree_cursor_goto_parent cursor)
   else
     pure [] where
   go nodes = do
@@ -444,4 +444,4 @@ nodesForField cursor name = do
     if keepGoing then
       go nodes'
     else
-      nodes' [] <$ liftIO (ts_tree_cursor_goto_parent cursor)
+      pure (nodes' [])
