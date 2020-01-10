@@ -364,40 +364,49 @@ instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: 
     <$> gunmarshalProductNode @f datatypeName node
     <*> gunmarshalProductNode @g datatypeName node
 
+instance (GUnmarshalField f, Selector c) => GUnmarshalProduct (M1 S c f) where
+  gunmarshalProductNode datatypeName node = do
+    cursor <- asks cursor
+    liftIO (with (nodeTSNode node) (ts_tree_cursor_reset_p cursor))
+    let fieldName = selName @c undefined
+    nodes <- nodesForField cursor (FieldName fieldName)
+    go gunmarshalField node datatypeName fieldName nodes where
+    go :: (Node -> String -> String -> [Node] -> MatchM (f a)) -> Node -> String -> String -> [Node] -> MatchM (M1 S c f a)
+    go = coerce
+
+
+class GUnmarshalField f where
+  gunmarshalField
+    :: UnmarshalAnn a
+    => Node
+    -> String
+    -> String
+    -> [Node]
+    -> MatchM (f a)
+
 -- Contents of product types (ie., the leaves of the product tree)
-instance UnmarshalAnn k => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gunmarshalProductNode _ = go unmarshalAnn where
-    go :: (Node -> MatchM k) -> Node -> MatchM (M1 S c (K1 i k) a)
+instance UnmarshalAnn k => GUnmarshalField (K1 i k) where
+  gunmarshalField node _ _ _ = go unmarshalAnn node where
+    go :: (Node -> MatchM k) -> Node -> MatchM (K1 i k a)
     go = coerce
 
-instance GUnmarshalProduct (M1 S c Par1) where
-  gunmarshalProductNode _ = go unmarshalAnn where
-    go :: (Node -> MatchM a) -> Node -> MatchM (M1 S c Par1 a)
+instance GUnmarshalField Par1 where
+  gunmarshalField node _ _ _ = go unmarshalAnn node where
+    go :: (Node -> MatchM a) -> Node -> MatchM (Par1 a)
     go = coerce
 
-instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode datatypeName node = do
-    cursor <- asks cursor
-    liftIO (with (nodeTSNode node) (ts_tree_cursor_reset_p cursor))
-    let fieldName = selName @c undefined
-    nodes <- nodesForField cursor (FieldName fieldName)
-    go (unmarshalField datatypeName fieldName) nodes where
-    go :: ([Node] -> MatchM (f (g a))) -> [Node] -> MatchM (M1 S c (f :.: g) a)
+instance (UnmarshalField f, Unmarshal g) => GUnmarshalField (f :.: g) where
+  gunmarshalField _ = go unmarshalField where
+    go :: (String -> String -> [Node] -> MatchM (f (g a))) -> String -> String -> [Node] -> MatchM ((f :.: g) a)
     go = coerce
 
-instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode datatypeName node = do
-    cursor <- asks cursor
-    liftIO (with (nodeTSNode node) (ts_tree_cursor_reset_p cursor))
-    let fieldName = selName @c undefined
-    nodes <- nodesForField cursor (FieldName fieldName)
-    case nodes of
-      []  -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node '" <> fieldName <> "' but didn't get one"
-      [x] -> go unmarshalNode x where
-        go :: (Node -> MatchM (t a)) -> Node -> MatchM (M1 S c (Rec1 t) a)
-        go = coerce
-      _   -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node but got multiple"
-
+instance Unmarshal t => GUnmarshalField (Rec1 t) where
+  gunmarshalField _ datatypeName fieldName nodes = case nodes of
+    []  -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node '" <> fieldName <> "' but didn't get one"
+    [x] -> go unmarshalNode x where
+      go :: (Node -> MatchM (t a)) -> Node -> MatchM (Rec1 t a)
+      go = coerce
+    _   -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node but got multiple"
 
 nodesForField :: Ptr Cursor -> FieldName -> MatchM [Node]
 nodesForField cursor name = do
