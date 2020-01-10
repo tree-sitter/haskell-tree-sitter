@@ -404,7 +404,6 @@ nodesForField cursor name = do
   else
     pure [] where
   go nodes = do
-    -- FIXME: we’re copying every node, even the ones we don’t use
     node <- peekNode cursor
     fieldName <- peekFieldName cursor
     keepGoing <- step cursor
