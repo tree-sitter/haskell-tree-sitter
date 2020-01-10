@@ -101,3 +101,18 @@ bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, Node *outNode) {
   }
   return false;
 }
+
+
+void ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNodes) {
+  assert(cursor != NULL);
+  assert(outChildNodes != NULL);
+
+  if (ts_tree_cursor_goto_first_child(cursor)) {
+    do {
+      TSNode current = ts_tree_cursor_current_node(cursor);
+      ts_node_poke(current, outChildNodes);
+      outChildNodes++;
+    } while (ts_tree_cursor_goto_next_sibling(cursor));
+    ts_tree_cursor_goto_parent(cursor);
+  }
+}

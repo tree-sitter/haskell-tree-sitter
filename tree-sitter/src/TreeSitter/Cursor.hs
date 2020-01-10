@@ -1,3 +1,4 @@
+{-# LANGUAGE InterruptibleFFI #-}
 module TreeSitter.Cursor
 ( Cursor
 , withCursor
@@ -12,6 +13,7 @@ module TreeSitter.Cursor
 , ts_tree_cursor_goto_next_sibling
 , ts_tree_cursor_goto_first_child
 , ts_tree_cursor_goto_first_child_for_byte
+, ts_tree_cursor_copy_child_nodes
 ) where
 
 import Control.Exception as Exc
@@ -49,3 +51,5 @@ foreign import ccall unsafe "ts_tree_cursor_goto_parent" ts_tree_cursor_goto_par
 foreign import ccall unsafe "ts_tree_cursor_goto_next_sibling" ts_tree_cursor_goto_next_sibling :: Ptr Cursor -> IO Bool
 foreign import ccall unsafe "ts_tree_cursor_goto_first_child" ts_tree_cursor_goto_first_child :: Ptr Cursor -> IO Bool
 foreign import ccall unsafe "ts_tree_cursor_goto_first_child_for_byte" ts_tree_cursor_goto_first_child_for_byte :: Ptr Cursor -> Word32 -> IO Int64
+
+foreign import ccall interruptible "src/bridge.c ts_tree_cursor_copy_child_nodes" ts_tree_cursor_copy_child_nodes :: Ptr Cursor -> Ptr Node -> IO ()
