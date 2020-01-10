@@ -104,16 +104,21 @@ bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, Node *outNode) {
 }
 
 
-void ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNodes) {
+uint32_t ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNodes) {
   assert(cursor != NULL);
   assert(outChildNodes != NULL);
+  uint32_t count = 0;
 
   if (ts_tree_cursor_goto_first_child(cursor)) {
     do {
       TSNode current = ts_tree_cursor_current_node(cursor);
-      ts_node_poke(ts_tree_cursor_current_field_name(cursor), current, outChildNodes);
+      const char *fieldName = ts_tree_cursor_current_field_name(cursor);
+      if (!fieldName && (!ts_node_is_named(current) || ts_node_is_extra(current))) continue;
+      ts_node_poke(fieldName, current, outChildNodes);
+      count++;
       outChildNodes++;
     } while (ts_tree_cursor_goto_next_sibling(cursor));
     ts_tree_cursor_goto_parent(cursor);
   }
+  return count;
 }

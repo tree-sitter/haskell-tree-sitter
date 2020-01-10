@@ -279,14 +279,12 @@ type Fields = Map.Map FieldName [Node]
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: Ptr Cursor -> Node -> MatchM Fields
 getFields cursor node = do
-  let count = fromIntegral (nodeChildCount node)
-  nodes <- liftIO . allocaArray count $ \ ptr -> do
-    ts_tree_cursor_copy_child_nodes cursor ptr
-    peekArray count ptr
-  -- FIXME: filter out the irrelevant nodes on the C side & return how many were actually copied
-  foldM (\ map node -> Map.insertWith (flip (++)) <$> getFieldName node <*> pure [node] <*> pure map) Map.empty (filter isRelevant nodes)
+  nodes <- liftIO . allocaArray maxCount $ \ ptr -> do
+    actualCount <- ts_tree_cursor_copy_child_nodes cursor ptr
+    peekArray (fromIntegral actualCount) ptr
+  foldM (\ map node -> Map.insertWith (flip (++)) <$> getFieldName node <*> pure [node] <*> pure map) Map.empty nodes
   where
-  isRelevant node = nodeFieldName node /= nullPtr || nodeIsNamed node /= 0 && nodeIsExtra node == 0
+  maxCount = fromIntegral (nodeChildCount node)
   getFieldName node = do
     if nodeFieldName node == nullPtr then
       pure (FieldName "extraChildren")
