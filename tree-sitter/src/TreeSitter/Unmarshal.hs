@@ -396,8 +396,10 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
     go = coerce
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode _ fields =
-    case lookupField (FieldName (selName @c undefined)) fields of
+  gunmarshalProductNode _ _ = do
+    cursor <- asks cursor
+    nodes <- nodesForField cursor (FieldName (selName @c undefined))
+    case nodes of
       []  -> liftIO . throwIO . UnmarshalError $ "expected a node '" <> selName @c undefined <> "' but didn't get one"
       [x] -> go unmarshalNode x where
         go :: (Node -> MatchM (t a)) -> Node -> MatchM (M1 S c (Rec1 t) a)
