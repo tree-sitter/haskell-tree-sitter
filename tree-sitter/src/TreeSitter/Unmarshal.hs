@@ -261,11 +261,13 @@ type Fields = [(FieldName, Node)]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: Ptr Cursor -> Node -> MatchM Fields
-getFields cursor node = do
-  nodes <- liftIO . allocaArray maxCount $ \ ptr -> do
-    actualCount <- ts_tree_cursor_copy_child_nodes cursor ptr
-    peekArray (fromIntegral actualCount) ptr
-  traverse (\ node -> (, node) <$> getFieldName node) nodes
+getFields cursor node
+  | nodeChildCount node == 0 = pure []
+  | otherwise                = do
+    nodes <- liftIO . allocaArray maxCount $ \ ptr -> do
+      actualCount <- ts_tree_cursor_copy_child_nodes cursor ptr
+      peekArray (fromIntegral actualCount) ptr
+    traverse (\ node -> (, node) <$> getFieldName node) nodes
   where
   maxCount = fromIntegral (nodeChildCount node)
   getFieldName node
