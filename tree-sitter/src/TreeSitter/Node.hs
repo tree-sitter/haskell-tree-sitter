@@ -69,7 +69,7 @@ pokeStruct a = Struct (\ p -> do
 instance Storable Node where
   alignment _ = alignment (undefined :: TSNode)
   {-# INLINE alignment #-}
-  sizeOf _ = 80
+  sizeOf _ = 64
   {-# INLINE sizeOf #-}
   peek = evalStruct $ Node <$> peekStruct
                            <*> peekStruct
