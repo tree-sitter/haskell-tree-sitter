@@ -421,23 +421,3 @@ instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
       _   -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node but got multiple"
     where
     fieldName = selName @c undefined
-
-
-nodesForField :: Ptr Cursor -> FieldName -> MatchM [Node]
-nodesForField cursor name = do
-  hasChildren <- liftIO (ts_tree_cursor_goto_first_child cursor)
-  if hasChildren then
-    go [] <* liftIO (ts_tree_cursor_goto_parent cursor)
-  else
-    pure [] where
-  go nodes = do
-    node <- peekNode cursor
-    fieldName <- peekFieldName cursor
-    keepGoing <- step cursor
-    let nodes' = case fieldName of
-          Just fieldName' | fieldName' == name -> node:nodes
-          -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-          Nothing | name == FieldName "extraChildren", nodeIsNamed node /= 0, nodeIsExtra node == 0 -> node:nodes
-          _ -> nodes
-    if keepGoing then go nodes'
-    else pure nodes'
