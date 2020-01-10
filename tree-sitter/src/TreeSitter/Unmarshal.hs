@@ -29,13 +29,12 @@ module TreeSitter.Unmarshal
 import           Control.Algebra (send)
 import           Control.Carrier.Reader hiding (asks)
 import           Control.Exception
-import           Control.Monad ((<=<), foldM)
+import           Control.Monad ((<=<))
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.Coerce
 import           Data.Foldable (toList)
-import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as Text
 import           Data.Text.Encoding
@@ -273,7 +272,7 @@ peekNode cursor =
     peek nodePtr
 
 
-type Fields = Map.Map FieldName (B Node)
+type Fields = [(FieldName, Node)]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: Ptr Cursor -> Node -> MatchM Fields
@@ -281,7 +280,7 @@ getFields cursor node = do
   nodes <- liftIO . allocaArray maxCount $ \ ptr -> do
     actualCount <- ts_tree_cursor_copy_child_nodes cursor ptr
     peekArray (fromIntegral actualCount) ptr
-  foldM (\ map node -> Map.insertWith (flip (<>)) <$> getFieldName node <*> pure (singleton node) <*> pure map) Map.empty nodes
+  traverse (\ node -> (, node) <$> getFieldName node) nodes
   where
   maxCount = fromIntegral (nodeChildCount node)
   getFieldName node = do
@@ -291,7 +290,7 @@ getFields cursor node = do
       FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString (nodeFieldName node))
 
 lookupField :: FieldName -> Fields -> [Node]
-lookupField k = maybe [] toList . Map.lookup k
+lookupField k = map snd . filter ((== k) . fst)
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
