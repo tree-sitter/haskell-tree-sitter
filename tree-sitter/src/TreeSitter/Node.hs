@@ -23,6 +23,7 @@ data Node = Node
   , nodeEndPoint   :: !TSPoint
   , nodeEndByte    :: !Word32
   , nodeChildCount :: !Word32
+  , nodeFieldName  :: !CString
   , nodeIsNamed    :: !CBool
   , nodeIsExtra    :: !CBool
   }
@@ -69,7 +70,7 @@ pokeStruct a = Struct (\ p -> do
 instance Storable Node where
   alignment _ = alignment (undefined :: TSNode)
   {-# INLINE alignment #-}
-  sizeOf _ = 64
+  sizeOf _ = 80
   {-# INLINE sizeOf #-}
   peek = evalStruct $ Node <$> peekStruct
                            <*> peekStruct
@@ -79,14 +80,16 @@ instance Storable Node where
                            <*> peekStruct
                            <*> peekStruct
                            <*> peekStruct
+                           <*> peekStruct
   {-# INLINE peek #-}
-  poke ptr (Node n t s ep eb c nn ne) = flip evalStruct ptr $ do
+  poke ptr (Node n t s ep eb c fn nn ne) = flip evalStruct ptr $ do
     pokeStruct n
     pokeStruct t
     pokeStruct s
     pokeStruct ep
     pokeStruct eb
     pokeStruct c
+    pokeStruct fn
     pokeStruct nn
     pokeStruct ne
   {-# INLINE poke #-}
@@ -159,4 +162,5 @@ instance Monad Struct where
 
 
 foreign import ccall interruptible "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr TSNode -> Ptr Node -> IO ()
+-- NB: this leaves the field name as NULL.
 foreign import ccall unsafe "src/bridge.c ts_node_poke_p" ts_node_poke_p :: Ptr TSNode -> Ptr Node -> IO ()

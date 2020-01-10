@@ -10,6 +10,7 @@ typedef struct Node {
   TSPoint endPoint;
   uint32_t endByte;
   uint32_t childCount;
+  const char *fieldName;
   bool     isNamed;
   bool     isExtra;
 } Node;
@@ -22,20 +23,21 @@ void ts_parser_log_to_stderr(TSParser *parser) {
   ts_parser_set_logger(parser, (TSLogger) {.log = log_to_stdout, .payload = NULL});
 }
 
-static inline void ts_node_poke(TSNode node, Node *out) {
+static inline void ts_node_poke(const char *fieldName, TSNode node, Node *out) {
   out->node = node;
   out->symbol = ts_node_symbol(node);
   out->type = ts_node_type(node);
   out->endPoint = ts_node_end_point(node);
   out->endByte = ts_node_end_byte(node);
   out->childCount = ts_node_child_count(node);
+  out->fieldName = fieldName;
   out->isNamed = ts_node_is_named(node);
   out->isExtra = ts_node_is_extra(node);
 }
 
 void ts_node_poke_p(TSNode *node, Node *out) {
   assert(node != NULL);
-  ts_node_poke(*node, out);
+  ts_node_poke(NULL, *node, out);
 }
 
 void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
@@ -43,7 +45,7 @@ void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
   assert(outNode != NULL);
   TSNode root = ts_tree_root_node(tree);
   assert(root.id != NULL);
-  ts_node_poke(root, outNode);
+  ts_node_poke(NULL, root, outNode);
 }
 
 void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes) {
@@ -54,7 +56,7 @@ void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes) {
   if (ts_tree_cursor_goto_first_child(&curse)) {
     do {
       TSNode current = ts_tree_cursor_current_node(&curse);
-      ts_node_poke(current, outChildNodes);
+      ts_node_poke(ts_tree_cursor_current_field_name(&curse), current, outChildNodes);
       outChildNodes++;
     } while (ts_tree_cursor_goto_next_sibling(&curse));
   }
@@ -96,7 +98,7 @@ bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, Node *outNode) {
   assert(outNode != NULL);
   TSNode tsNode = ts_tree_cursor_current_node(cursor);
   if (!ts_node_is_null(tsNode)) {
-    ts_node_poke(tsNode, outNode);
+    ts_node_poke(ts_tree_cursor_current_field_name(cursor), tsNode, outNode);
   }
   return false;
 }
@@ -109,7 +111,7 @@ void ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNodes) 
   if (ts_tree_cursor_goto_first_child(cursor)) {
     do {
       TSNode current = ts_tree_cursor_current_node(cursor);
-      ts_node_poke(current, outChildNodes);
+      ts_node_poke(ts_tree_cursor_current_field_name(cursor), current, outChildNodes);
       outChildNodes++;
     } while (ts_tree_cursor_goto_next_sibling(cursor));
     ts_tree_cursor_goto_parent(cursor);
