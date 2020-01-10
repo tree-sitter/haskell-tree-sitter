@@ -85,6 +85,7 @@ newtype Match t = Match
   { runMatch :: forall a . UnmarshalAnn a => Node -> MatchM (t a)
   }
 
+-- | A church-encoded binary tree with constant-time 'singleton', 'mempty', '<>', and 'fmap', and linear-time 'foldMap'.
 newtype B a = B (forall r . (r -> r -> r) -> (a -> r) -> r -> r)
 
 instance Functor B where
