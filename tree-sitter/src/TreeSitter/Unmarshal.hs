@@ -377,7 +377,7 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
   gunmarshalProductNode datatypeName _ fields =
     case lookupField (FieldName fieldName) fields of
-      []  -> liftIO . throwIO . UnmarshalError $ "expected a node '" <> fieldName <> "' but didn't get one"
+      []  -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node '" <> fieldName <> "' but didn't get one"
       [x] -> go unmarshalNode x where
         go :: (Node -> MatchM (t a)) -> Node -> MatchM (M1 S c (Rec1 t) a)
         go = coerce
