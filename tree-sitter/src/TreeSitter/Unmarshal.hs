@@ -35,7 +35,6 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.Coerce
 import           Data.Foldable (toList)
-import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as Text
 import           Data.Text.Encoding
@@ -56,7 +55,6 @@ import           TreeSitter.Token as TS
 import           Source.Loc
 import           Source.Span
 import           Data.Proxy
-import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
 asks :: Has (Reader r) sig m => (r -> r') -> m r'
@@ -284,33 +282,6 @@ peekFieldName cursor = do
     pure Nothing
   else
     Just . FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString fieldName)
-
-
-type Fields = Map.Map FieldName [Node]
-
--- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: Ptr Cursor -> MatchM Fields
-getFields cursor = do
-  hasChildren <- liftIO (ts_tree_cursor_goto_first_child cursor)
-  if hasChildren then
-    go Map.empty <* liftIO (ts_tree_cursor_goto_parent cursor)
-  else
-    pure Map.empty
-  where go fs = do
-          node <- peekNode cursor
-          fieldName <- peekFieldName cursor
-          keepGoing <- step cursor
-          let fs' = case fieldName of
-                Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node] fs
-                -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-                _ -> if nodeIsNamed node /= 0 && nodeIsExtra node == 0
-                  then Map.insertWith (flip (++)) (FieldName "extraChildren") [node] fs
-                  else fs
-          if keepGoing then go fs'
-          else pure fs'
-
-lookupField :: FieldName -> Fields -> [Node]
-lookupField k = fromMaybe [] . Map.lookup k
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
