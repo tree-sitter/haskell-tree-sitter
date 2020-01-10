@@ -148,7 +148,7 @@ instance (Unmarshal f, Unmarshal g) => Unmarshal (f :+: g) where
   matchers = fmap (fmap (hoist L1)) matchers <> fmap (fmap (hoist R1)) matchers
 
 instance Unmarshal t => Unmarshal (Rec1 t) where
-  matchers = fmap (fmap (hoist Rec1)) matchers
+  matchers = coerce (matchers @t)
 
 instance (KnownNat n, KnownSymbol sym) => Unmarshal (Token sym n) where
   matchers = singleton (fromIntegral (natVal (Proxy @n)), Match (fmap Token . unmarshalAnn))
