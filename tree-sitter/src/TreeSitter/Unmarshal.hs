@@ -210,27 +210,29 @@ class UnmarshalField t where
     :: ( Unmarshal f
        , UnmarshalAnn a
        )
-    => [Node]
+    => String -- ^ datatype name
+    -> String -- ^ field name
+    -> [Node] -- ^ nodes
     -> MatchM (t (f a))
 
 instance UnmarshalField Maybe where
-  unmarshalField []  = pure Nothing
-  unmarshalField [x] = Just <$> unmarshalNode x
-  unmarshalField _   = liftIO . throwIO $ UnmarshalError "expected a node of type (Maybe a) but got multiple"
+  unmarshalField _ _ []  = pure Nothing
+  unmarshalField _ _ [x] = Just <$> unmarshalNode x
+  unmarshalField d f _   = liftIO . throwIO . UnmarshalError $ "expected zero or one nodes of type (Maybe (" <> d <> ")) in field '" <> f <> "' but got multiple"
 
 instance UnmarshalField [] where
-  unmarshalField (x:xs) = do
+  unmarshalField d f (x:xs) = do
     head' <- unmarshalNode x
-    tail' <- unmarshalField xs
+    tail' <- unmarshalField d f xs
     pure $ head' : tail'
-  unmarshalField [] = pure []
+  unmarshalField _ _ [] = pure []
 
 instance UnmarshalField NonEmpty where
-  unmarshalField (x:xs) = do
+  unmarshalField d f (x:xs) = do
     head' <- unmarshalNode x
-    tail' <- unmarshalField xs
+    tail' <- unmarshalField d f xs
     pure $ head' :| tail'
-  unmarshalField [] = liftIO . throwIO $ UnmarshalError "expected a node of type (NonEmpty a) but got an empty list"
+  unmarshalField d f [] = liftIO . throwIO . UnmarshalError $ "expected one or more nodes of type (NonEmpty (" <> d <> ")) in field '" <> f <> "' but got zero"
 
 class SymbolMatching (a :: * -> *) where
   matchedSymbols :: Proxy a -> [Int]
@@ -374,10 +376,11 @@ instance GUnmarshalProduct (M1 S c Par1) where
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode _ _ = do
+  gunmarshalProductNode datatypeName _ = do
     cursor <- asks cursor
-    nodes <- nodesForField cursor (FieldName (selName @c undefined))
-    go unmarshalField nodes where
+    let fieldName = selName @c undefined
+    nodes <- nodesForField cursor (FieldName fieldName)
+    go (unmarshalField datatypeName fieldName) nodes where
     go :: ([Node] -> MatchM (f (g a))) -> [Node] -> MatchM (M1 S c (f :.: g) a)
     go = coerce
 
