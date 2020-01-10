@@ -305,63 +305,76 @@ class GUnmarshal f where
     => Node
     -> MatchM (f a)
 
-instance GUnmarshal f => GUnmarshal (M1 i c f) where
-  gunmarshalNode = go gunmarshalNode where
+instance (Datatype d, GUnmarshalData f) => GUnmarshal (M1 D d f) where
+  gunmarshalNode = go (gunmarshalNode' (datatypeName @d undefined)) where
     go :: (Node -> MatchM (f a)) -> Node -> MatchM (M1 i c f a)
     go = coerce
 
+class GUnmarshalData f where
+  gunmarshalNode'
+    :: UnmarshalAnn a
+    => String
+    -> Node
+    -> MatchM (f a)
+
+instance GUnmarshalData f => GUnmarshalData (M1 i c f) where
+  gunmarshalNode' = go gunmarshalNode' where
+    go :: (String -> Node -> MatchM (f a)) -> String -> Node -> MatchM (M1 i c f a)
+    go = coerce
+
 -- For anonymous leaf nodes:
-instance GUnmarshal U1 where
-  gunmarshalNode _ = pure U1
+instance GUnmarshalData U1 where
+  gunmarshalNode' _ _ = pure U1
 
 -- For unary products:
-instance UnmarshalAnn k => GUnmarshal (K1 c k) where
-  gunmarshalNode = go unmarshalAnn where
+instance UnmarshalAnn k => GUnmarshalData (K1 c k) where
+  gunmarshalNode' _ = go unmarshalAnn where
     go :: (Node -> MatchM k) -> Node -> MatchM (K1 c k a)
     go = coerce
 
 -- For anonymous leaf nodes
-instance GUnmarshal Par1 where
-  gunmarshalNode = go unmarshalAnn where
+instance GUnmarshalData Par1 where
+  gunmarshalNode' _ = go unmarshalAnn where
     go :: (Node -> MatchM a) -> Node -> MatchM (Par1 a)
     go = coerce
 
-instance Unmarshal t => GUnmarshal (Rec1 t) where
-  gunmarshalNode = go unmarshalNode where
+instance Unmarshal t => GUnmarshalData (Rec1 t) where
+  gunmarshalNode' _ = go unmarshalNode where
     go :: (Node -> MatchM (t a)) -> Node -> MatchM (Rec1 t a)
     go = coerce
 
 -- For product datatypes:
-instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode = gunmarshalProductNode @(f :*: g)
+instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalData (f :*: g) where
+  gunmarshalNode' = gunmarshalProductNode @(f :*: g)
 
 
 -- | Generically unmarshal products
 class GUnmarshalProduct f where
   gunmarshalProductNode
     :: UnmarshalAnn a
-    => Node
+    => String
+    -> Node
     -> MatchM (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
-  gunmarshalProductNode node = (:*:)
-    <$> gunmarshalProductNode @f node
-    <*> gunmarshalProductNode @g node
+  gunmarshalProductNode datatypeName node = (:*:)
+    <$> gunmarshalProductNode @f datatypeName node
+    <*> gunmarshalProductNode @g datatypeName node
 
 -- Contents of product types (ie., the leaves of the product tree)
 instance UnmarshalAnn k => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gunmarshalProductNode = go unmarshalAnn where
+  gunmarshalProductNode _ = go unmarshalAnn where
     go :: (Node -> MatchM k) -> Node -> MatchM (M1 S c (K1 i k) a)
     go = coerce
 
 instance GUnmarshalProduct (M1 S c Par1) where
-  gunmarshalProductNode = go unmarshalAnn where
+  gunmarshalProductNode _ = go unmarshalAnn where
     go :: (Node -> MatchM a) -> Node -> MatchM (M1 S c Par1 a)
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode _ = do
+  gunmarshalProductNode _ _ = do
     cursor <- asks cursor
     nodes <- nodesForField cursor (FieldName (selName @c undefined))
     go unmarshalField nodes where
@@ -369,15 +382,15 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
     go = coerce
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode _ = do
+  gunmarshalProductNode datatypeName _ = do
     cursor <- asks cursor
     nodes <- nodesForField cursor (FieldName (selName @c undefined))
     case nodes of
-      []  -> liftIO . throwIO . UnmarshalError $ "expected a node '" <> selName @c undefined <> "' but didn't get one"
+      []  -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node '" <> selName @c undefined <> "' but didn't get one"
       [x] -> go unmarshalNode x where
         go :: (Node -> MatchM (t a)) -> Node -> MatchM (M1 S c (Rec1 t) a)
         go = coerce
-      _   -> liftIO . throwIO . UnmarshalError $ "expected a node but got multiple"
+      _   -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node but got multiple"
 
 
 nodesForField :: Ptr Cursor -> FieldName -> MatchM [Node]
