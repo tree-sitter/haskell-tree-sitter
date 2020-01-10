@@ -421,5 +421,7 @@ nodesForField cursor name = do
           -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
           Nothing | name == FieldName "extraChildren", nodeIsNamed node /= 0, nodeIsExtra node == 0 -> node:nodes
           _ -> nodes
-    if keepGoing then go nodes'
-    else pure nodes'
+    if keepGoing then
+      go nodes'
+    else
+      pure nodes'
