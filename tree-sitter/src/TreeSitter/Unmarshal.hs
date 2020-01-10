@@ -376,7 +376,7 @@ instance Unmarshal t => GUnmarshalData (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalData (f :*: g) where
-  gunmarshalNode' = gunmarshalProductNode @(f :*: g)
+  gunmarshalNode' datatypeName node = asks cursor >>= getFields >>= gunmarshalProductNode @(f :*: g) datatypeName node
 
 
 -- | Generically unmarshal products
@@ -385,27 +385,28 @@ class GUnmarshalProduct f where
     :: UnmarshalAnn a
     => String
     -> Node
+    -> Fields
     -> MatchM (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
-  gunmarshalProductNode datatypeName node = (:*:)
-    <$> gunmarshalProductNode @f datatypeName node
-    <*> gunmarshalProductNode @g datatypeName node
+  gunmarshalProductNode datatypeName node fields = (:*:)
+    <$> gunmarshalProductNode @f datatypeName node fields
+    <*> gunmarshalProductNode @g datatypeName node fields
 
 -- Contents of product types (ie., the leaves of the product tree)
 instance UnmarshalAnn k => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gunmarshalProductNode _ = go unmarshalAnn where
+  gunmarshalProductNode _ node _ = go unmarshalAnn node where
     go :: (Node -> MatchM k) -> Node -> MatchM (M1 S c (K1 i k) a)
     go = coerce
 
 instance GUnmarshalProduct (M1 S c Par1) where
-  gunmarshalProductNode _ = go unmarshalAnn where
+  gunmarshalProductNode _ node _ = go unmarshalAnn node where
     go :: (Node -> MatchM a) -> Node -> MatchM (M1 S c Par1 a)
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode datatypeName _ = do
+  gunmarshalProductNode datatypeName _ _ = do
     cursor <- asks cursor
     let fieldName = selName @c undefined
     nodes <- nodesForField cursor (FieldName fieldName)
@@ -414,7 +415,7 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
     go = coerce
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode datatypeName _ = do
+  gunmarshalProductNode datatypeName _ _ = do
     cursor <- asks cursor
     nodes <- nodesForField cursor (FieldName (selName @c undefined))
     case nodes of
