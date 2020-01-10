@@ -416,23 +416,17 @@ nodesForField cursor name = do
   else
     pure [] where
   go nodes = do
+    -- FIXME: we’re copying every node, even the ones we don’t use
+    node <- peekNode cursor
     fieldName <- peekFieldName cursor
-    nodes' <- case fieldName of
-      Just fieldName' ->
-        if fieldName' == name then do
-          node <- peekNode cursor
-          pure $! nodes . (node:)
-        else
-          pure nodes
-      -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-      _ | name == FieldName "extraChildren" -> do
-          node <- peekNode cursor
-          pure $! if nodeIsNamed node /= 0 && nodeIsExtra node == 0 then
-            nodes . (node:)
-          else
-            nodes
-        | otherwise -> pure nodes
     keepGoing <- step cursor
+    let nodes' = case fieldName of
+          Just fieldName'           -> if fieldName' == name then nodes . (node:) else nodes
+          -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
+          _ | name == FieldName "extraChildren"
+            , nodeIsNamed node /= 0
+            , nodeIsExtra node == 0 -> nodes . (node:)
+            | otherwise             -> nodes
     if keepGoing then
       go nodes'
     else
