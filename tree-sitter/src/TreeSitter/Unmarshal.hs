@@ -391,8 +391,11 @@ instance GUnmarshalProduct (M1 S c Par1) where
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode _ = go (unmarshalField . lookupField (FieldName (selName @c undefined))) where
-    go :: (Fields -> MatchM (f (g a))) -> Fields -> MatchM (M1 S c (f :.: g) a)
+  gunmarshalProductNode _ _ = do
+    cursor <- asks cursor
+    nodes <- nodesForField cursor (FieldName (selName @c undefined))
+    go unmarshalField nodes where
+    go :: ([Node] -> MatchM (f (g a))) -> [Node] -> MatchM (M1 S c (f :.: g) a)
     go = coerce
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
