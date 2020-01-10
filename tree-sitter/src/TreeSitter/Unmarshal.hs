@@ -412,15 +412,15 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
     fieldName = selName @c undefined
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode datatypeName _ _ = do
-    cursor <- asks cursor
-    nodes <- nodesForField cursor (FieldName (selName @c undefined))
-    case nodes of
-      []  -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node '" <> selName @c undefined <> "' but didn't get one"
+  gunmarshalProductNode datatypeName _ fields =
+    case lookupField (FieldName fieldName) fields of
+      []  -> liftIO . throwIO . UnmarshalError $ "expected a node '" <> fieldName <> "' but didn't get one"
       [x] -> go unmarshalNode x where
         go :: (Node -> MatchM (t a)) -> Node -> MatchM (M1 S c (Rec1 t) a)
         go = coerce
       _   -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node but got multiple"
+    where
+    fieldName = selName @c undefined
 
 
 nodesForField :: Ptr Cursor -> FieldName -> MatchM [Node]
