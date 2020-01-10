@@ -376,9 +376,8 @@ instance GUnmarshalProduct (M1 S c Par1) where
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode datatypeName node = do
+  gunmarshalProductNode datatypeName _ = do
     cursor <- asks cursor
-    liftIO (with (nodeTSNode node) (ts_tree_cursor_reset_p cursor))
     let fieldName = selName @c undefined
     nodes <- nodesForField cursor (FieldName fieldName)
     go (unmarshalField datatypeName fieldName) nodes where
@@ -386,9 +385,8 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
     go = coerce
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode datatypeName node = do
+  gunmarshalProductNode datatypeName _ = do
     cursor <- asks cursor
-    liftIO (with (nodeTSNode node) (ts_tree_cursor_reset_p cursor))
     nodes <- nodesForField cursor (FieldName (selName @c undefined))
     case nodes of
       []  -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node '" <> selName @c undefined <> "' but didn't get one"
