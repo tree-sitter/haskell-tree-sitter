@@ -362,7 +362,7 @@ instance Unmarshal t => GUnmarshal (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshal (f :*: g) where
-  gunmarshalNode node = asks cursor >>= getFields >>= gunmarshalProductNode @(f :*: g) node
+  gunmarshalNode = gunmarshalProductNode @(f :*: g)
 
 
 -- | Generically unmarshal products
@@ -370,28 +370,27 @@ class GUnmarshalProduct f where
   gunmarshalProductNode
     :: UnmarshalAnn a
     => Node
-    -> Fields
     -> MatchM (f a)
 
 -- Product structure
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalProduct (f :*: g) where
-  gunmarshalProductNode node fields = (:*:)
-    <$> gunmarshalProductNode @f node fields
-    <*> gunmarshalProductNode @g node fields
+  gunmarshalProductNode node = (:*:)
+    <$> gunmarshalProductNode @f node
+    <*> gunmarshalProductNode @g node
 
 -- Contents of product types (ie., the leaves of the product tree)
 instance UnmarshalAnn k => GUnmarshalProduct (M1 S c (K1 i k)) where
-  gunmarshalProductNode node _ = go unmarshalAnn node where
+  gunmarshalProductNode = go unmarshalAnn where
     go :: (Node -> MatchM k) -> Node -> MatchM (M1 S c (K1 i k) a)
     go = coerce
 
 instance GUnmarshalProduct (M1 S c Par1) where
-  gunmarshalProductNode node _ = go unmarshalAnn node where
+  gunmarshalProductNode = go unmarshalAnn where
     go :: (Node -> MatchM a) -> Node -> MatchM (M1 S c Par1 a)
     go = coerce
 
 instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S c (f :.: g)) where
-  gunmarshalProductNode _ _ = do
+  gunmarshalProductNode _ = do
     cursor <- asks cursor
     nodes <- nodesForField cursor (FieldName (selName @c undefined))
     go unmarshalField nodes where
@@ -399,7 +398,7 @@ instance (UnmarshalField f, Unmarshal g, Selector c) => GUnmarshalProduct (M1 S 
     go = coerce
 
 instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
-  gunmarshalProductNode _ _ = do
+  gunmarshalProductNode _ = do
     cursor <- asks cursor
     nodes <- nodesForField cursor (FieldName (selName @c undefined))
     case nodes of
