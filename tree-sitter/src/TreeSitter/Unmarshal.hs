@@ -218,7 +218,7 @@ class UnmarshalField t where
 instance UnmarshalField Maybe where
   unmarshalField _ _ []  = pure Nothing
   unmarshalField _ _ [x] = Just <$> unmarshalNode x
-  unmarshalField d f _   = liftIO . throwIO . UnmarshalError $ "expected zero or one nodes of type (Maybe (" <> d <> ")) in field '" <> f <> "' but got multiple"
+  unmarshalField d f _   = liftIO . throwIO . UnmarshalError $ "type '" <> d <> "' expected zero or one nodes in field '" <> f <> "' but got multiple"
 
 instance UnmarshalField [] where
   unmarshalField d f (x:xs) = do
@@ -232,7 +232,7 @@ instance UnmarshalField NonEmpty where
     head' <- unmarshalNode x
     tail' <- unmarshalField d f xs
     pure $ head' :| tail'
-  unmarshalField d f [] = liftIO . throwIO . UnmarshalError $ "expected one or more nodes of type (NonEmpty (" <> d <> ")) in field '" <> f <> "' but got zero"
+  unmarshalField d f [] = liftIO . throwIO . UnmarshalError $ "type '" <> d <> "' expected one or more nodes in field '" <> f <> "' but got zero"
 
 class SymbolMatching (a :: * -> *) where
   matchedSymbols :: Proxy a -> [Int]
