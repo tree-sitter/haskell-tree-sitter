@@ -283,11 +283,9 @@ getFields cursor node = do
   traverse (\ node -> (, node) <$> getFieldName node) nodes
   where
   maxCount = fromIntegral (nodeChildCount node)
-  getFieldName node = do
-    if nodeFieldName node == nullPtr then
-      pure (FieldName "extraChildren")
-    else
-      FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString (nodeFieldName node))
+  getFieldName node
+    | nodeFieldName node == nullPtr = pure (FieldName "extraChildren")
+    | otherwise                     = FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString (nodeFieldName node))
 
 lookupField :: FieldName -> Fields -> [Node]
 lookupField k = map snd . filter ((== k) . fst)
