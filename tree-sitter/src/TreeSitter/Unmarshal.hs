@@ -29,7 +29,7 @@ module TreeSitter.Unmarshal
 import           Control.Algebra (send)
 import           Control.Carrier.Reader hiding (asks)
 import           Control.Exception
-import           Control.Monad ((<=<))
+import           Control.Monad ((<=<), foldM)
 import           Control.Monad.IO.Class
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -42,6 +42,7 @@ import           Data.Text.Encoding
 import           Data.Text.Encoding.Error (lenientDecode)
 import           Foreign.C.String
 import           Foreign.Marshal.Alloc
+import           Foreign.Marshal.Array
 import           Foreign.Marshal.Utils
 import           Foreign.Ptr
 import           Foreign.Storable
@@ -261,10 +262,6 @@ instance (SymbolMatching f, SymbolMatching g) => SymbolMatching (f :+: g) where
 sep :: String -> String -> String
 sep a b = a ++ ". " ++ b
 
--- | Advance the cursor to the next sibling of the current node.
-step :: Ptr Cursor -> MatchM Bool
-step = liftIO . ts_tree_cursor_goto_next_sibling
-
 -- | Move the cursor to point at the passed 'TSNode'.
 goto :: Ptr Cursor -> TSNode -> MatchM ()
 goto cursor node = liftIO (with node (ts_tree_cursor_reset_p cursor))
@@ -276,38 +273,25 @@ peekNode cursor =
     _ <- ts_tree_cursor_current_node_p cursor nodePtr
     peek nodePtr
 
--- | Return the field name (if any) for the node that the cursor is pointing at (if any), or 'Nothing' otherwise.
-peekFieldName :: Ptr Cursor -> MatchM (Maybe FieldName)
-peekFieldName cursor = do
-  fieldName <- liftIO $ ts_tree_cursor_current_field_name cursor
-  if fieldName == nullPtr then
-    pure Nothing
-  else
-    Just . FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString fieldName)
-
 
 type Fields = Map.Map FieldName [Node]
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
-getFields :: Ptr Cursor -> MatchM Fields
-getFields cursor = do
-  hasChildren <- liftIO (ts_tree_cursor_goto_first_child cursor)
-  if hasChildren then
-    go Map.empty <* liftIO (ts_tree_cursor_goto_parent cursor)
-  else
-    pure Map.empty
-  where go fs = do
-          node <- peekNode cursor
-          fieldName <- peekFieldName cursor
-          keepGoing <- step cursor
-          let fs' = case fieldName of
-                Just fieldName' -> Map.insertWith (flip (++)) fieldName' [node] fs
-                -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
-                _ -> if nodeIsNamed node /= 0 && nodeIsExtra node == 0
-                  then Map.insertWith (flip (++)) (FieldName "extraChildren") [node] fs
-                  else fs
-          if keepGoing then go fs'
-          else pure fs'
+getFields :: Ptr Cursor -> Node -> MatchM Fields
+getFields cursor node = do
+  let count = fromIntegral (nodeChildCount node)
+  nodes <- liftIO . allocaArray count $ \ ptr -> do
+    ts_tree_cursor_copy_child_nodes cursor ptr
+    peekArray count ptr
+  -- FIXME: filter out the irrelevant nodes on the C side & return how many were actually copied
+  foldM (\ map node -> Map.insertWith (flip (++)) <$> getFieldName node <*> pure [node] <*> pure map) Map.empty (filter isRelevant nodes)
+  where
+  isRelevant node = nodeFieldName node /= nullPtr || nodeIsNamed node /= 0 && nodeIsExtra node == 0
+  getFieldName node = do
+    if nodeFieldName node == nullPtr then
+      pure (FieldName "extraChildren")
+    else
+      FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString (nodeFieldName node))
 
 lookupField :: FieldName -> Fields -> [Node]
 lookupField k = fromMaybe [] . Map.lookup k
@@ -374,7 +358,7 @@ instance Unmarshal t => GUnmarshalData (Rec1 t) where
 
 -- For product datatypes:
 instance (GUnmarshalProduct f, GUnmarshalProduct g) => GUnmarshalData (f :*: g) where
-  gunmarshalNode' datatypeName node = asks cursor >>= getFields >>= gunmarshalProductNode @(f :*: g) datatypeName node
+  gunmarshalNode' datatypeName node = asks cursor >>= flip getFields node >>= gunmarshalProductNode @(f :*: g) datatypeName node
 
 
 -- | Generically unmarshal products
