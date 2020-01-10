@@ -427,7 +427,7 @@ nodesForField :: Ptr Cursor -> FieldName -> MatchM [Node]
 nodesForField cursor name = do
   hasChildren <- liftIO (ts_tree_cursor_goto_first_child cursor)
   if hasChildren then
-    go id <* liftIO (ts_tree_cursor_goto_parent cursor)
+    go [] <* liftIO (ts_tree_cursor_goto_parent cursor)
   else
     pure [] where
   go nodes = do
@@ -435,13 +435,13 @@ nodesForField cursor name = do
     fieldName <- peekFieldName cursor
     keepGoing <- step cursor
     let nodes'
-          | fieldName == Just name = nodes . (node:)
+          | fieldName == Just name = node:nodes
           -- NB: We currently skip “extra” nodes (i.e. ones occurring in the @extras@ rule), pending a fix to https://github.com/tree-sitter/haskell-tree-sitter/issues/99
           | name == FieldName "extraChildren"
           , nodeIsNamed node /= 0
-          , nodeIsExtra node == 0  = nodes . (node:)
+          , nodeIsExtra node == 0  = node:nodes
           | otherwise              = nodes
     if keepGoing then
       go nodes'
     else
-      pure (nodes' [])
+      pure nodes'
