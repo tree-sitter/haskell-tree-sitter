@@ -57,7 +57,6 @@ import           TreeSitter.Token as TS
 import           Source.Loc
 import           Source.Span
 import           Data.Proxy
-import           Data.Maybe (fromMaybe)
 import           Data.List.NonEmpty (NonEmpty (..))
 
 asks :: Has (Reader r) sig m => (r -> r') -> m r'
@@ -274,7 +273,7 @@ peekNode cursor =
     peek nodePtr
 
 
-type Fields = Map.Map FieldName [Node]
+type Fields = Map.Map FieldName (B Node)
 
 -- | Return the fields remaining in the current branch, represented as 'Map.Map' of 'FieldName's to their corresponding 'Node's.
 getFields :: Ptr Cursor -> Node -> MatchM Fields
@@ -282,7 +281,7 @@ getFields cursor node = do
   nodes <- liftIO . allocaArray maxCount $ \ ptr -> do
     actualCount <- ts_tree_cursor_copy_child_nodes cursor ptr
     peekArray (fromIntegral actualCount) ptr
-  foldM (\ map node -> Map.insertWith (flip (++)) <$> getFieldName node <*> pure [node] <*> pure map) Map.empty nodes
+  foldM (\ map node -> Map.insertWith (flip (<>)) <$> getFieldName node <*> pure (singleton node) <*> pure map) Map.empty nodes
   where
   maxCount = fromIntegral (nodeChildCount node)
   getFieldName node = do
@@ -292,7 +291,7 @@ getFields cursor node = do
       FieldName . toHaskellCamelCaseIdentifier <$> liftIO (peekCString (nodeFieldName node))
 
 lookupField :: FieldName -> Fields -> [Node]
-lookupField k = fromMaybe [] . Map.lookup k
+lookupField k = maybe [] toList . Map.lookup k
 
 
 -- | Return a 'ByteString' that contains a slice of the given 'ByteString'.
