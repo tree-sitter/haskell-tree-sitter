@@ -146,7 +146,7 @@ fieldTypesToNestedSum xs = go (toList xs)
     combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs -- (((((a :+: b) :+: c) :+: d)) :+: e)   ((a :+: b) :+: (c :+: d))
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
     go [x] = convertToQType x
-    go xs = let (l,r) = splitAt (length xs `div` 2) xs in (combine (go l) (go r))
+    go xs = let (l,r) = splitAt (length xs `div` 2) xs in combine (go l) (go r)
 
 
 -- | Create bang required to build records
