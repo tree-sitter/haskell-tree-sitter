@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE DefaultSignatures   #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
@@ -8,6 +9,7 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module TreeSitter.Unmarshal
 ( parseByteString
@@ -43,6 +45,7 @@ import           Foreign.Marshal.Utils
 import           Foreign.Ptr
 import           Foreign.Storable
 import           GHC.Generics
+import           GHC.Records
 import           GHC.TypeLits
 import           TreeSitter.Cursor as TS
 import           TreeSitter.Language as TS
@@ -397,3 +400,6 @@ instance GHasAnn a f => GHasAnn a (M1 i c f) where
 instance (GHasAnn a l, GHasAnn a r) => GHasAnn a (l :+: r) where
   gann (L1 l) = gann l
   gann (R1 r) = gann r
+
+instance HasField "ann" (t a) a => GHasAnn a (Rec1 t) where
+  gann = getField @"ann" . unRec1
