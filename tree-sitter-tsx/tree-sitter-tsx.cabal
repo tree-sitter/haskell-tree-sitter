@@ -37,7 +37,7 @@ library
   build-depends:       base              >= 4.12 && < 5
                      , semantic-source  ^>= 0
                      , template-haskell  >= 2.12 && < 2.16
-                     , tree-sitter      ^>= 0.7
+                     , tree-sitter      ^>= 0.8
                      , tree-sitter-tsx-internal
 
 library tree-sitter-tsx-internal
