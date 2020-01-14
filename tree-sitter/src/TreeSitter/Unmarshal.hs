@@ -390,3 +390,6 @@ instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
 
 class GHasAnn a t where
   gann :: t a -> a
+
+instance GHasAnn a f => GHasAnn a (M1 i c f) where
+  gann = gann . unM1
