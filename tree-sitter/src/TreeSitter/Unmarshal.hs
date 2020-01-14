@@ -393,3 +393,7 @@ class GHasAnn a t where
 
 instance GHasAnn a f => GHasAnn a (M1 i c f) where
   gann = gann . unM1
+
+instance (GHasAnn a l, GHasAnn a r) => GHasAnn a (l :+: r) where
+  gann (L1 l) = gann l
+  gann (R1 r) = gann r
