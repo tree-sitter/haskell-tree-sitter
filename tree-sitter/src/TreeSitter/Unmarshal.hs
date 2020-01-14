@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
@@ -21,6 +22,7 @@ module TreeSitter.Unmarshal
 , hoist
 , lookupSymbol
 , unmarshalNode
+, GHasAnn(..)
 ) where
 
 import           Control.Algebra (send)
@@ -384,3 +386,7 @@ instance (Unmarshal t, Selector c) => GUnmarshalProduct (M1 S c (Rec1 t)) where
       _   -> liftIO . throwIO . UnmarshalError $ "type '" <> datatypeName <> "' expected a node but got multiple"
     where
     fieldName = selName @c undefined
+
+
+class GHasAnn a t where
+  gann :: t a -> a
