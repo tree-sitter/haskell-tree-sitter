@@ -65,8 +65,12 @@ syntaxDatatype language allSymbols datatype = skipDefined $ do
   case datatype of
     SumType (DatatypeName _) _ subtypes -> do
       types' <- fieldTypesToNestedSum subtypes
-      con <- normalC name [TH.bangType strictness (pure types' `appT` varT typeParameterName)]
-      pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
+      let fieldName = mkName ("get" <> nameStr)
+      con <- recC name [TH.varBangType fieldName (TH.bangType strictness (pure types' `appT` varT typeParameterName))]
+      hasFieldInstance <- makeHasFieldInstance (conT name) (varT typeParameterName) (varE fieldName)
+      pure
+        ( NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]
+        : hasFieldInstance)
     ProductType (DatatypeName datatypeName) named children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance allSymbols name named datatypeName
