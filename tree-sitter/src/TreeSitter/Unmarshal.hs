@@ -1,14 +1,14 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DefaultSignatures   #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeOperators       #-}
-{-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module TreeSitter.Unmarshal
@@ -36,6 +36,8 @@ import qualified Data.ByteString as B
 import           Data.Coerce
 import           Data.Foldable (toList)
 import qualified Data.IntMap as IntMap
+import           Data.List.NonEmpty (NonEmpty (..))
+import           Data.Proxy
 import qualified Data.Text as Text
 import           Data.Text.Encoding
 import           Data.Text.Encoding.Error (lenientDecode)
@@ -47,16 +49,14 @@ import           Foreign.Storable
 import           GHC.Generics
 import           GHC.Records
 import           GHC.TypeLits
+import           Source.Loc
+import           Source.Span
 import           TreeSitter.Cursor as TS
 import           TreeSitter.Language as TS
 import           TreeSitter.Node as TS
 import           TreeSitter.Parser as TS
-import           TreeSitter.Tree as TS
 import           TreeSitter.Token as TS
-import           Source.Loc
-import           Source.Span
-import           Data.Proxy
-import           Data.List.NonEmpty (NonEmpty (..))
+import           TreeSitter.Tree as TS
 
 asks :: Has (Reader r) sig m => (r -> r') -> m r'
 asks f = send (Ask (pure . f))
@@ -130,7 +130,7 @@ unmarshalNode :: forall t a .
   => Node
   -> MatchM (t a)
 unmarshalNode node = case lookupSymbol (nodeSymbol node) matchers' of
-  Just t -> runMatch t node
+  Just t  -> runMatch t node
   Nothing -> liftIO . throwIO . UnmarshalError $ showFailure (Proxy @t) node
 {-# INLINE unmarshalNode #-}
 
