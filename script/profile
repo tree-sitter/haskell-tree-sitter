@@ -1,0 +1,42 @@
+#!/bin/bash
+# Usage: script/profile
+
+set -ex
+cd "$(dirname "$0")/.."
+
+HEAD_SHA=$(git rev-parse --short HEAD)
+CURRENT_BRANCH=$(git symbolic-ref HEAD 2>/dev/null | awk -F/ {'print $NF'})
+
+PROJECT_DIR="$(dirname $0)/.."
+PROFILES_DIR="$PROJECT_DIR/profiles"
+TODAY="$(date "+%Y-%m-%d")"
+NOW=$(date "+%H_%M_%S")
+PROFILE_DIR="$PROFILES_DIR/$TODAY/$NOW-$CURRENT_BRANCH-$HEAD_SHA"
+OUTFILE="$PROFILE_DIR/profile.out.log"
+ERRFILE="$PROFILE_DIR/profile.err.log"
+
+# cabal v2-configure --enable-profiling --profiling-detail=all-functions --enable-optimization
+cabal v2-build exe:benchmarks
+
+mkdir -p "$PROFILE_DIR"
+
+# NB: Do not try and use -N, it doesn't work and defaults to -N1.
+cores=$(sysctl -n machdep.cpu.core_count || echo 4)
+cabal v2-run exe:benchmarks -- +RTS -N$((cores * 2)) -p -sstderr -h -i0.1 -L1000 -xt -RTS > "$OUTFILE" 2> "$ERRFILE"
+# cabal v2-run exe:benchmarks -- +RTS -N$((cores * 2)) -A8m -n2m -p -sstderr -h -i0.1 -L1000 -xt -RTS > "$OUTFILE" 2> "$ERRFILE"
+
+cat "$ERRFILE"
+
+profiteur benchmarks.prof || true
+
+hp2pretty benchmarks.hp
+
+for f in "$PROJECT_DIR/"benchmarks.*; do
+	if [ "$f" != "$PROJECT_DIR/"benchmarks.cabal ]; then
+		mv "$f" "$PROFILE_DIR"
+	fi
+done
+
+(>&2 echo "branch: $CURRENT_BRANCH ($HEAD_SHA)")
+
+open "$PROFILE_DIR"

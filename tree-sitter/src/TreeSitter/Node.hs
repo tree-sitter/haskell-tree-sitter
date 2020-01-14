@@ -2,6 +2,8 @@
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 module TreeSitter.Node
 ( Node(..)
+, nodeStartPoint
+, nodeStartByte
 , TSPoint(..)
 , TSNode(..)
 , FieldId(..)
@@ -18,20 +20,25 @@ data Node = Node
   { nodeTSNode     :: !TSNode
   , nodeType       :: !CString
   , nodeSymbol     :: !TSSymbol
-  , nodeStartPoint :: !TSPoint
   , nodeEndPoint   :: !TSPoint
-  , nodeStartByte  :: !Word32
   , nodeEndByte    :: !Word32
   , nodeChildCount :: !Word32
+  , nodeFieldName  :: !CString
   , nodeIsNamed    :: !CBool
   , nodeIsExtra    :: !CBool
   }
   deriving (Show, Eq, Generic)
 
+nodeStartPoint :: Node -> TSPoint
+nodeStartPoint node = let TSNode _ p _ _ _ = nodeTSNode node in p
+
+nodeStartByte :: Node -> Word32
+nodeStartByte node = let TSNode b _ _ _ _ = nodeTSNode node in b
+
 data TSPoint = TSPoint { pointRow :: !Word32, pointColumn :: !Word32 }
   deriving (Show, Eq, Generic)
 
-data TSNode = TSNode !Word32 !Word32 !Word32 !Word32 !(Ptr ()) !(Ptr ())
+data TSNode = TSNode !Word32 !TSPoint !Word32 !(Ptr ()) !(Ptr ())
   deriving (Show, Eq, Generic)
 
 newtype FieldId = FieldId { getFieldId :: Word16 }
@@ -61,8 +68,10 @@ pokeStruct a = Struct (\ p -> do
 
 
 instance Storable Node where
-  alignment _ = alignment (TSNode 0 0 0 0 nullPtr nullPtr :: TSNode)
+  alignment _ = alignment (undefined :: TSNode)
+  {-# INLINE alignment #-}
   sizeOf _ = 80
+  {-# INLINE sizeOf #-}
   peek = evalStruct $ Node <$> peekStruct
                            <*> peekStruct
                            <*> peekStruct
@@ -72,73 +81,86 @@ instance Storable Node where
                            <*> peekStruct
                            <*> peekStruct
                            <*> peekStruct
-                           <*> peekStruct
-  poke ptr (Node n t s sp ep sb eb c nn ne) = flip evalStruct ptr $ do
+  {-# INLINE peek #-}
+  poke ptr (Node n t s ep eb c fn nn ne) = flip evalStruct ptr $ do
     pokeStruct n
     pokeStruct t
     pokeStruct s
-    pokeStruct sp
     pokeStruct ep
-    pokeStruct sb
     pokeStruct eb
     pokeStruct c
+    pokeStruct fn
     pokeStruct nn
     pokeStruct ne
+  {-# INLINE poke #-}
 
 instance Storable TSPoint where
   alignment _ = alignment (0 :: Int32)
+  {-# INLINE alignment #-}
   sizeOf _ = 8
+  {-# INLINE sizeOf #-}
   peek = evalStruct $ TSPoint <$> peekStruct
                               <*> peekStruct
+  {-# INLINE peek #-}
   poke ptr (TSPoint r c) = flip evalStruct ptr $ do
     pokeStruct r
     pokeStruct c
+  {-# INLINE poke #-}
 
 instance Storable TSNode where
   alignment _ = alignment (nullPtr :: Ptr ())
+  {-# INLINE alignment #-}
   sizeOf _ = 32
+  {-# INLINE sizeOf #-}
   peek = evalStruct $ TSNode <$> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
                              <*> peekStruct
-                             <*> peekStruct
-  poke ptr (TSNode o1 o2 o3 o4 p1 p2) = flip evalStruct ptr $ do
-    pokeStruct o1
-    pokeStruct o2
-    pokeStruct o3
+  {-# INLINE peek #-}
+  poke ptr (TSNode sb sp o4 p1 p2) = flip evalStruct ptr $ do
+    pokeStruct sb
+    pokeStruct sp
     pokeStruct o4
     pokeStruct p1
     pokeStruct p2
+  {-# INLINE poke #-}
 
 instance Functor Struct where
-  fmap f a = Struct (\ p -> do
-    (a', p') <- runStruct a p
-    let fa = f a'
-    fa `seq` p' `seq` pure (fa, castPtr p'))
+  fmap f a = Struct go where
+    go p = do
+      (a', p') <- runStruct a p
+      let fa = f a'
+      fa `seq` p' `seq` pure (fa, castPtr p')
+    {-# INLINE go #-}
   {-# INLINE fmap #-}
 
 instance Applicative Struct where
   pure a = Struct (\ p -> pure (a, castPtr p))
   {-# INLINE pure #-}
 
-  f <*> a = Struct (\ p -> do
-    (f', p')  <- runStruct f          p
-    (a', p'') <- p' `seq` runStruct a (castPtr p')
-    let fa = f' a'
-    fa `seq` p'' `seq` pure (fa, castPtr p''))
+  f <*> a = Struct go where
+    go p = do
+      (f', p')  <- runStruct f          p
+      (a', p'') <- p' `seq` runStruct a (castPtr p')
+      let fa = f' a'
+      fa `seq` p'' `seq` pure (fa, castPtr p'')
+    {-# INLINE go #-}
   {-# INLINE (<*>) #-}
 
 instance Monad Struct where
   return = pure
   {-# INLINE return #-}
 
-  a >>= f = Struct (\ p -> do
-    (a', p')   <- runStruct a               p
-    (fa', p'') <- p' `seq` runStruct (f a') (castPtr p')
-    fa' `seq` p'' `seq` pure (fa', p''))
+  a >>= f = Struct go where
+    go p = do
+      (a', p')   <- runStruct a               p
+      (fa', p'') <- p' `seq` runStruct (f a') (castPtr p')
+      fa' `seq` p'' `seq` pure (fa', p'')
+    {-# INLINE go #-}
   {-# INLINE (>>=) #-}
 
 
 foreign import ccall interruptible "src/bridge.c ts_node_copy_child_nodes" ts_node_copy_child_nodes :: Ptr TSNode -> Ptr Node -> IO ()
+-- NB: this leaves the field name as NULL.
 foreign import ccall unsafe "src/bridge.c ts_node_poke_p" ts_node_poke_p :: Ptr TSNode -> Ptr Node -> IO ()
