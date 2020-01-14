@@ -1,28 +1,33 @@
-{-# LANGUAGE DeriveAnyClass, DeriveGeneric, LambdaCase, TemplateHaskell, TypeApplications #-}
-
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 module TreeSitter.GenerateSyntax
 ( syntaxDatatype
 , astDeclarationsForLanguage
 ) where
 
-import Language.Haskell.TH as TH
-import Language.Haskell.TH.Syntax as TH
-import TreeSitter.Deserialize (Datatype (..), DatatypeName (..), Field (..), Children(..), Required (..), Type (..), Named (..), Multiple (..))
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.List
-import Data.Foldable
-import Data.Text (Text)
-import qualified TreeSitter.Unmarshal as TS
-import GHC.Generics hiding (Constructor, Datatype)
-import Foreign.Ptr
+import           Data.Aeson hiding (String)
+import           Data.Foldable
+import           Data.List
+import           Data.List.NonEmpty (NonEmpty (..))
+import           Data.Text (Text)
+import           Foreign.C.String
+import           Foreign.Ptr
+import           GHC.Generics hiding (Constructor, Datatype)
+import           GHC.Records
+import           Language.Haskell.TH as TH
+import           Language.Haskell.TH.Syntax as TH
+import           System.Directory
+import           System.FilePath.Posix
+import           TreeSitter.Deserialize (Children (..), Datatype (..), DatatypeName (..), Field (..), Multiple (..), Named (..), Required (..), Type (..))
 import qualified TreeSitter.Language as TS
-import Foreign.C.String
-import Data.Aeson hiding (String)
-import System.Directory
-import System.FilePath.Posix
-import TreeSitter.Node
-import TreeSitter.Token
-import TreeSitter.Symbol (TSSymbol, toHaskellCamelCaseIdentifier, toHaskellPascalCaseIdentifier)
+import           TreeSitter.Node
+import           TreeSitter.Symbol (TSSymbol, toHaskellCamelCaseIdentifier, toHaskellPascalCaseIdentifier)
+import           TreeSitter.Token
+import qualified TreeSitter.Unmarshal as TS
 
 -- | Derive Haskell datatypes from a language and its @node-types.json@ file.
 --
@@ -63,8 +68,12 @@ syntaxDatatype language allSymbols datatype = skipDefined $ do
   case datatype of
     SumType (DatatypeName _) _ subtypes -> do
       types' <- fieldTypesToNestedSum subtypes
-      con <- normalC name [TH.bangType strictness (pure types' `appT` varT typeParameterName)]
-      pure [NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]]
+      let fieldName = mkName ("get" <> nameStr)
+      con <- recC name [TH.varBangType fieldName (TH.bangType strictness (pure types' `appT` varT typeParameterName))]
+      hasFieldInstance <- makeHasFieldInstance (conT name) (varT typeParameterName) (varE fieldName)
+      pure
+        ( NewtypeD [] name [PlainTV typeParameterName] Nothing con [deriveGN, deriveStockClause, deriveAnyClassClause]
+        : hasFieldInstance)
     ProductType (DatatypeName datatypeName) named children fields -> do
       con <- ctorForProductType datatypeName typeParameterName children fields
       result <- symbolMatchingInstance allSymbols name named datatypeName
@@ -89,6 +98,11 @@ syntaxDatatype language allSymbols datatype = skipDefined $ do
     deriveGN = DerivClause (Just NewtypeStrategy) [ConT ''TS.SymbolMatching]
     generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons [deriveStockClause, deriveAnyClassClause]
 
+
+makeHasFieldInstance :: TypeQ -> TypeQ -> ExpQ -> Q [Dec]
+makeHasFieldInstance ty param elim =
+  [d|instance HasField "ann" $(ty `appT` param) $param where
+      getField = TS.gann . $elim |]
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec]
@@ -120,9 +134,9 @@ ctorForProductType constructorName typeParameterName children fields = ctorForTy
     let ftypes = fieldTypesToNestedSum fieldTypes `appT` varT typeParameterName
     in case (required, mult) of
       (Required, Multiple) -> appT (conT ''NonEmpty) ftypes
-      (Required, Single) -> ftypes
+      (Required, Single)   -> ftypes
       (Optional, Multiple) -> appT (conT ''[]) ftypes
-      (Optional, Single) -> appT (conT ''Maybe) ftypes
+      (Optional, Single)   -> appT (conT ''Maybe) ftypes
   toTypeChild (MkChildren field) = ("extra_children", toType field)
 
 -- | Build Q Constructor for leaf types (nodes with no fields or subtypes)
@@ -146,7 +160,7 @@ fieldTypesToNestedSum xs = go (toList xs)
     combine lhs rhs = (conT ''(:+:) `appT` lhs) `appT` rhs -- (((((a :+: b) :+: c) :+: d)) :+: e)   ((a :+: b) :+: (c :+: d))
     convertToQType (MkType (DatatypeName n) named) = conT (toName named n)
     go [x] = convertToQType x
-    go xs = let (l,r) = splitAt (length xs `div` 2) xs in (combine (go l) (go r))
+    go xs  = let (l,r) = splitAt (length xs `div` 2) xs in combine (go l) (go r)
 
 
 -- | Create bang required to build records

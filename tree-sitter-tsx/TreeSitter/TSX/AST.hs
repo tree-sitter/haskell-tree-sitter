@@ -2,18 +2,20 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DerivingStrategies #-}
 
 module TreeSitter.TSX.AST
 ( module TreeSitter.TSX.AST
 ) where
 
-import TreeSitter.GenerateSyntax
-import Prelude hiding (True, False, Float, Integer, String)
+import           Prelude hiding (False, Float, Integer, String, True)
+import           TreeSitter.GenerateSyntax
 import qualified TreeSitter.TSX as Grammar
 
 astDeclarationsForLanguage Grammar.tree_sitter_tsx "../../vendor/tree-sitter-typescript/tsx/src/node-types.json"
