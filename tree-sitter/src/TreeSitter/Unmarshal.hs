@@ -403,3 +403,6 @@ instance (GHasAnn a l, GHasAnn a r) => GHasAnn a (l :+: r) where
 
 instance HasField "ann" (t a) a => GHasAnn a (Rec1 t) where
   gann = getField @"ann" . unRec1
+
+instance {-# OVERLAPPABLE #-} HasField "ann" (t a) a => GHasAnn a t where
+  gann = getField @"ann"
