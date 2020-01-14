@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass, DeriveGeneric, LambdaCase, TemplateHaskell, TypeApplications #-}
 
 module TreeSitter.GenerateSyntax
@@ -14,6 +15,7 @@ import Data.Foldable
 import Data.Text (Text)
 import qualified TreeSitter.Unmarshal as TS
 import GHC.Generics hiding (Constructor, Datatype)
+import GHC.Records
 import Foreign.Ptr
 import qualified TreeSitter.Language as TS
 import Foreign.C.String
@@ -89,6 +91,11 @@ syntaxDatatype language allSymbols datatype = skipDefined $ do
     deriveGN = DerivClause (Just NewtypeStrategy) [ConT ''TS.SymbolMatching]
     generatedDatatype name cons typeParameterName = DataD [] name [PlainTV typeParameterName] Nothing cons [deriveStockClause, deriveAnyClassClause]
 
+
+makeHasFieldInstance :: TypeQ -> TypeQ -> ExpQ -> Q [Dec]
+makeHasFieldInstance ty param elim =
+  [d|instance HasField "ann" $(ty `appT` param) $param where
+      getField = TS.gann . $elim |]
 
 -- | Create TH-generated SymbolMatching instances for sums, products, leaves
 symbolMatchingInstance :: [(String, Named)] -> Name -> Named -> String -> Q [Dec]
