@@ -1,3 +1,4 @@
+{-# LANGUAGE InterruptibleFFI #-}
 module TreeSitter.Cursor
 ( Cursor
 , withCursor
