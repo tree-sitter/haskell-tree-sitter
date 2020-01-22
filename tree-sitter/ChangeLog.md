@@ -1,3 +1,8 @@
+### v0.8.0.1
+
+* `ts_tree_cursor_copy_child_nodes` is interruptible.
+
+
 ### v0.5.0.0
 
 * Use a shared `Token` type for anonymous leaves in generated AST types.
