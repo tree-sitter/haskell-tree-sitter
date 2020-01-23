@@ -1,3 +1,9 @@
+### v0.8.0.2
+
+* Updates `tree-sitter` to fix an issue with improperly balanced subtrees leading to slowdowns when copying nodes.
+* Neither `ts_tree_cursor_copy_child_nodes` nor `ts_node_copy_child_nodes` is interruptible.
+
+
 ### v0.8.0.1
 
 * `ts_tree_cursor_copy_child_nodes` is interruptible.
