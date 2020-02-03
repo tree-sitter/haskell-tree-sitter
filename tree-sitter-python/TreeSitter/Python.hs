@@ -1,4 +1,4 @@
-module TreeSitter.Python.Internal
+module TreeSitter.Python
 ( tree_sitter_python
 ) where
 
