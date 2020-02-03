@@ -1,4 +1,4 @@
-module TreeSitter.JSON.Internal
+module TreeSitter.JSON
 ( tree_sitter_json
 ) where
 
