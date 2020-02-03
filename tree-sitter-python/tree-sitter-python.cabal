@@ -33,8 +33,7 @@ common common
 
 library
   import: common
-  exposed-modules:     TreeSitter.Python.Internal
-  hs-source-dirs:      internal
+  exposed-modules:     TreeSitter.Python
   build-depends:       base
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-python/src
