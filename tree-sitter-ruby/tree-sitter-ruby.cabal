@@ -33,17 +33,6 @@ common common
 library
   import: common
   exposed-modules:     TreeSitter.Ruby
-                     , TreeSitter.Ruby.AST
-  build-depends:       base              >= 4.12 && < 5
-                     , semantic-source  ^>= 0
-                     , template-haskell  >= 2.12 && < 2.16
-                     , tree-sitter      ^>= 0.8
-                     , tree-sitter-ruby-internal
-
-library tree-sitter-ruby-internal
-  import: common
-  exposed-modules:     TreeSitter.Ruby.Internal
-  hs-source-dirs:      internal
   build-depends:       base
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-ruby/src
