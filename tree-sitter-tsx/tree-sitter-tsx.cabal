@@ -33,17 +33,6 @@ common common
 library
   import: common
   exposed-modules:     TreeSitter.TSX
-                     , TreeSitter.TSX.AST
-  build-depends:       base              >= 4.12 && < 5
-                     , semantic-source  ^>= 0
-                     , template-haskell  >= 2.12 && < 2.16
-                     , tree-sitter      ^>= 0.8
-                     , tree-sitter-tsx-internal
-
-library tree-sitter-tsx-internal
-  import: common
-  exposed-modules:     TreeSitter.TSX.Internal
-  hs-source-dirs:      internal
   build-depends:       base
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-typescript/tsx/src
