@@ -1,4 +1,4 @@
-module TreeSitter.Ruby.Internal
+module TreeSitter.Ruby
 ( tree_sitter_ruby
 ) where
 
