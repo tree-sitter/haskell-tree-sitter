@@ -48,7 +48,6 @@ executable demo
 library
   import: common
   exposed-modules:     TreeSitter.Haskell
-  hs-source-dirs:      internal
   build-depends:       base
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-haskell/src
