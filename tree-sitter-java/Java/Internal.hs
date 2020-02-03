@@ -1,4 +1,4 @@
-module TreeSitter.Java.Internal
+module TreeSitter.Java
 ( tree_sitter_java
 ) where
 
