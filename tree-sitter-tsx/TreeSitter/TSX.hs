@@ -1,4 +1,4 @@
-module TreeSitter.TSX.Internal
+module TreeSitter.TSX
 ( tree_sitter_tsx
 ) where
 
