@@ -1,4 +1,4 @@
-module TreeSitter.Go.Internal
+module TreeSitter.Go
 ( tree_sitter_go
 ) where
 
