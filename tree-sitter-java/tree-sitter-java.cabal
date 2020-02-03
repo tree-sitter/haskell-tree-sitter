@@ -33,7 +33,7 @@ common common
 
 library
   import: common
-  exposed-modules:     TreeSitter.Java.Internal
+  exposed-modules:     TreeSitter.Java
   build-depends:       base
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-java/src
