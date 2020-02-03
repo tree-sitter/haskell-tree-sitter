@@ -59,15 +59,11 @@ library
                      , containers            >= 0.6.0.1
                      , semantic-source      ^>= 0.0.0.0
   exposed-modules:     TreeSitter.Parser
-                     , TreeSitter.Unmarshal
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
-                     , TreeSitter.GenerateSyntax
-                     , TreeSitter.Deserialize
                      , TreeSitter.Cursor
-                     , TreeSitter.Token
   other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
