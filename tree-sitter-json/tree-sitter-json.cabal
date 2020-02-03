@@ -33,19 +33,7 @@ common common
 
 library
   import: common
-  exposed-modules:
-    TreeSitter.JSON
-    TreeSitter.JSON.AST
-  build-depends:       base              >= 4.12 && < 5
-                     , template-haskell  >= 2.12 && < 2.16
-                     , text             ^>= 1.2.3.1
-                     , tree-sitter      ^>= 0.8
-                     , tree-sitter-json-internal
-
-library tree-sitter-json-internal
-  import: common
-  exposed-modules:     TreeSitter.JSON.Internal
-  hs-source-dirs:      internal
+  exposed-modules:     TreeSitter.JSON
   build-depends:       base
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-json/src
