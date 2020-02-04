@@ -42,22 +42,6 @@ library
   c-sources:           vendor/tree-sitter-typescript/tsx/src/parser.c
                      , vendor/tree-sitter-typescript/tsx/src/scanner.c
 
-test-suite test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    base
-                  , tree-sitter
-                  , tree-sitter-tsx
-                  , tree-sitter-test-helpers
-                  , bytestring ^>= 0.10.8.2
-                  , hedgehog >= 0.6 && <2
-                  , pathtype ^>= 0.8.1
-                  , text
-                  , tasty
-                  , tasty-hedgehog
-                  , tasty-hunit
 
 source-repository head
   type:     git
