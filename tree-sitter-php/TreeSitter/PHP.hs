@@ -1,4 +1,4 @@
-module TreeSitter.PHP.Internal
+module TreeSitter.PHP
 ( tree_sitter_php
 ) where
 
