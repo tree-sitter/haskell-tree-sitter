@@ -1,4 +1,4 @@
-module TreeSitter.TypeScript.Internal
+module TreeSitter.TypeScript
 ( tree_sitter_typescript
 ) where
 
