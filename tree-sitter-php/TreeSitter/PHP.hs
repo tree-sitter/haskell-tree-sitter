@@ -5,6 +5,7 @@ module TreeSitter.PHP
 
 import Foreign.Ptr
 import TreeSitter.Language
+import Paths_tree_sitter_php
 
 foreign import ccall unsafe "vendor/tree-sitter-php/src/parser.c tree_sitter_php" tree_sitter_php :: Ptr Language
 
