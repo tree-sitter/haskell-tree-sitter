@@ -41,21 +41,6 @@ library
   c-sources:           vendor/tree-sitter-java/src/parser.c
   extra-libraries:     stdc++
 
-test-suite test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    base
-                  , tree-sitter
-                  , tree-sitter-java
-                  , tree-sitter-test-helpers
-                  , bytestring ^>= 0.10.8.2
-                  , pathtype ^>= 0.8.1
-                  , text
-                  , tasty
-                  , tasty-hunit
-
 source-repository head
   type:     git
   location: https://github.com/tree-sitter/haskell-tree-sitter
