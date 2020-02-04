@@ -33,7 +33,9 @@ common common
 library
   import: common
   exposed-modules:     TreeSitter.TypeScript
-  build-depends:       base
+  autogen-modules:     Paths_tree_sitter_typescript
+  other-modules:       Paths_tree_sitter_typescript
+  build-depends:       base >= 4.5 && < 4.7
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-typescript/typescript/src
                        vendor/tree-sitter-typescript/common
