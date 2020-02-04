@@ -32,8 +32,8 @@ common common
 library
   import: common
   exposed-modules:     TreeSitter.PHP
-  autogen-modules:     Paths_php
-  other-modules:       Paths_php
+  autogen-modules:     Paths_tree_sitter_php
+  other-modules:       Paths_tree_sitter_php
   build-depends:       base >= 4.5 && < 4.7
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-php/src
