@@ -41,23 +41,6 @@ library
                      , vendor/tree-sitter-ruby/src/scanner.cc
   extra-libraries:     stdc++
 
-test-suite test
-  import:           common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    base
-                  , tree-sitter
-                  , tree-sitter-ruby
-                  , tree-sitter-test-helpers
-                  , bytestring ^>= 0.10.8.2
-                  , hedgehog >= 0.6 && <2
-                  , pathtype ^>= 0.8.1
-                  , text
-                  , tasty
-                  , tasty-hedgehog
-                  , tasty-hunit
-
 
 source-repository head
   type:     git
