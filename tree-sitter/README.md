@@ -1,6 +1,6 @@
 # haskell-tree-sitter
 
-_NOTE: this project used to define Template Haskell splices for auto-generating language-specific, strongly-typed Haskell ASTs from tree-sitter grammars. This code has moved to [`Semantic`](https://github.com/github/semantic/tree/master/semantic-codegen)._
+_NOTE: this project used to define Template Haskell splices for auto-generating language-specific, strongly-typed Haskell ASTs from tree-sitter grammars. This code has moved to [`Semantic`](https://github.com/github/semantic/tree/master/semantic-ast)._
 
 ### Haskell bindings for tree-sitter
 
