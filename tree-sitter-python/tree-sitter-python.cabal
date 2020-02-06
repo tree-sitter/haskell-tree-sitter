@@ -36,7 +36,7 @@ library
   exposed-modules:     TreeSitter.Python
   autogen-modules:     Paths_tree_sitter_python
   other-modules:       Paths_tree_sitter_python
-  build-depends:       base >= 4.5 && < 4.7
+  build-depends:       base >= 4.12 && <4.14
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-python/src
   install-includes:    tree_sitter/parser.h
