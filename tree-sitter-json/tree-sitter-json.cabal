@@ -36,7 +36,7 @@ library
   exposed-modules:     TreeSitter.JSON
   autogen-modules:     Paths_tree_sitter_json
   other-modules:       Paths_tree_sitter_json
-  build-depends:       base >= 4.5 && < 4.7
+  build-depends:       base >= 4.12 && <4.14
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-json/src
   install-includes:    tree_sitter/parser.h
