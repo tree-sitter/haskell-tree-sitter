@@ -1,3 +1,7 @@
+### v0.9.0.0
+
+* Remove CodeGen files `Deserialize`, `GenerateSyntax`, `Unmarshal`, `Token`
+
 ### v0.8.0.2
 
 * Updates `tree-sitter` to fix an issue with improperly balanced subtrees leading to slowdowns when copying nodes.
