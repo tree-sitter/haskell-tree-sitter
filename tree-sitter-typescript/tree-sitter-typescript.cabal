@@ -11,6 +11,7 @@ copyright:           2019 GitHub
 category:            Tree-sitter, TypeScript
 build-type:          Simple
 data-files:          vendor/tree-sitter-typescript/typescript/src/node-types.json
+extra-source-files:  ChangeLog.md
 
 common common
   default-language: Haskell2010
