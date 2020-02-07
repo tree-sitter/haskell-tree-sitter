@@ -1,4 +1,4 @@
-#v0.5.0.0
+# v0.5.0.0
 
 * remove CodeGen and Template Haskell splice
 * move contents of internal library into library and remove internal library
