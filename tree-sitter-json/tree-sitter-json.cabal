@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-json
-version:             0.6.0.0
+version:             0.7.0.0
 synopsis:            Tree-sitter grammar/parser for JSON
 description:         This package provides a parser for JSON suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -33,41 +33,14 @@ common common
 
 library
   import: common
-  exposed-modules:
-    TreeSitter.JSON
-    TreeSitter.JSON.AST
-  build-depends:       base              >= 4.12 && < 5
-                     , template-haskell  >= 2.12 && < 2.16
-                     , text             ^>= 1.2.3.1
-                     , tree-sitter      ^>= 0.8
-                     , tree-sitter-json-internal
-
-library tree-sitter-json-internal
-  import: common
-  exposed-modules:     TreeSitter.JSON.Internal
-  hs-source-dirs:      internal
-  build-depends:       base
+  exposed-modules:     TreeSitter.JSON
+  autogen-modules:     Paths_tree_sitter_json
+  other-modules:       Paths_tree_sitter_json
+  build-depends:       base >= 4.12 && <4.14
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-json/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-json/src/parser.c
-
-test-suite test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    base
-                  , tree-sitter
-                  , tree-sitter-json
-                  , tree-sitter-test-helpers
-                  , bytestring ^>= 0.10.8.2
-                  , hedgehog >= 0.6 && <2
-                  , pathtype ^>= 0.8.1
-                  , text
-                  , tasty
-                  , tasty-hedgehog
-                  , tasty-hunit
 
 source-repository head
   type:     git

@@ -1,15 +1,13 @@
-{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Python
 ( tree_sitter_python
-, Grammar(..)
+, getNodeTypesPath
 ) where
 
-import Language.Haskell.TH
-import TreeSitter.Python.Internal
+import Foreign.Ptr
 import TreeSitter.Language
+import Paths_tree_sitter_python
 
--- Regenerate template haskell code when these files change:
-addDependentFileRelative "../vendor/tree-sitter-python/src/parser.c"
+foreign import ccall unsafe "vendor/tree-sitter-python/src/parser.c tree_sitter_python" tree_sitter_python :: Ptr Language
 
--- | Statically-known rules corresponding to symbols in the grammar.
-mkSymbolDatatype (mkName "Grammar") tree_sitter_python
+getNodeTypesPath :: IO FilePath
+getNodeTypesPath = getDataFileName "vendor/tree-sitter-python/src/node-types.json"

@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter
-version:             0.8.0.2
+version:             0.9.0.0
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
                      .
@@ -59,16 +59,11 @@ library
                      , containers            >= 0.6.0.1
                      , semantic-source      ^>= 0.0.0.0
   exposed-modules:     TreeSitter.Parser
-                     , TreeSitter.Unmarshal
                      , TreeSitter.Language
                      , TreeSitter.Node
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
-                     , TreeSitter.GenerateSyntax
-                     , TreeSitter.Deserialize
                      , TreeSitter.Cursor
-                     , TreeSitter.Token
-  other-modules:       TreeSitter.Unmarshal.Examples
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
   install-includes:    tree_sitter/api.h

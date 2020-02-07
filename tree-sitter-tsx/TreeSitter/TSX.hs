@@ -1,15 +1,13 @@
-{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.TSX
 ( tree_sitter_tsx
-, Grammar(..)
+, getNodeTypesPath
 ) where
 
-import Language.Haskell.TH
-import TreeSitter.TSX.Internal
+import Foreign.Ptr
 import TreeSitter.Language
+import Paths_tree_sitter_tsx
 
--- Regenerate template haskell code when these files change:
-addDependentFileRelative "../vendor/tree-sitter-typescript/tsx/src/parser.c"
+foreign import ccall unsafe "vendor/tree-sitter-typescript/tsx/src/parser.c tree_sitter_tsx" tree_sitter_tsx :: Ptr Language
 
--- | Statically-known rules corresponding to symbols in the grammar.
-mkSymbolDatatype (mkName "Grammar") tree_sitter_tsx
+getNodeTypesPath :: IO FilePath
+getNodeTypesPath = getDataFileName "vendor/tree-sitter-typescript/tsx/src/node-types.json"

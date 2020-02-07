@@ -1,15 +1,13 @@
-{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Java
 ( tree_sitter_java
-, Grammar(..)
+, getNodeTypesPath
 ) where
 
-import Language.Haskell.TH
-import TreeSitter.Java.Internal
+import Foreign.Ptr
 import TreeSitter.Language
+import Paths_tree_sitter_java
 
--- Regenerate template haskell code when these files change:
-addDependentFileRelative "../vendor/tree-sitter-java/src/parser.c"
+foreign import ccall unsafe "vendor/tree-sitter-java/src/parser.c tree_sitter_java" tree_sitter_java :: Ptr Language
 
--- | Statically-known rules corresponding to symbols in the grammar.
-mkSymbolDatatype (mkName "Grammar") tree_sitter_java
+getNodeTypesPath :: IO FilePath
+getNodeTypesPath = getDataFileName "vendor/tree-sitter-java/src/node-types.json"

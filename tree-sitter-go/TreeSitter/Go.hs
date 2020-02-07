@@ -1,15 +1,13 @@
-{-# LANGUAGE TemplateHaskell #-}
 module TreeSitter.Go
 ( tree_sitter_go
-, Grammar(..)
+, getNodeTypesPath
 ) where
 
-import Language.Haskell.TH
-import TreeSitter.Go.Internal
+import Foreign.Ptr
 import TreeSitter.Language
+import Paths_tree_sitter_go
 
--- Regenerate template haskell code when these files change:
-addDependentFileRelative "../vendor/tree-sitter-go/src/parser.c"
+foreign import ccall unsafe "vendor/tree-sitter-go/src/parser.c tree_sitter_go" tree_sitter_go :: Ptr Language
 
--- | Statically-known rules corresponding to symbols in the grammar.
-mkSymbolDatatype (mkName "Grammar") tree_sitter_go
+getNodeTypesPath :: IO FilePath
+getNodeTypesPath = getDataFileName "vendor/tree-sitter-go/src/node-types.json"

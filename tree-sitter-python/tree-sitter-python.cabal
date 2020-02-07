@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter-python
-version:             0.8.1.0
+version:             0.9.0.1
 synopsis:            Tree-sitter grammar/parser for Python
 description:         This package provides a parser for Python suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -34,53 +34,15 @@ common common
 library
   import: common
   exposed-modules:     TreeSitter.Python
-                     , TreeSitter.Python.AST
-  build-depends:       base              >= 4.12 && < 5
-                     , semantic-source  ^>= 0
-                     , template-haskell  >= 2.12 && < 2.16
-                     , tree-sitter      ^>= 0.8
-                     , tree-sitter-python-internal
-
-library tree-sitter-python-internal
-  import: common
-  exposed-modules:     TreeSitter.Python.Internal
-  hs-source-dirs:      internal
-  build-depends:       base
+  autogen-modules:     Paths_tree_sitter_python
+  other-modules:       Paths_tree_sitter_python
+  build-depends:       base >= 4.12 && <4.14
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-python/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-python/src/parser.c
                      , vendor/tree-sitter-python/src/scanner.cc
   extra-libraries:     stdc++
-
-test-suite test
-  import: common
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   test
-  main-is:          Test.hs
-  build-depends:    base
-                  , tree-sitter
-                  , tree-sitter-python
-                  , tree-sitter-test-helpers
-                  , bytestring ^>= 0.10.8.2
-                  , hedgehog >= 0.6 && <2
-                  , pathtype ^>= 0.8.1
-                  , text
-                  , tasty
-                  , tasty-hedgehog
-                  , tasty-hunit
-
-executable benchmark
-  import: common
-  hs-source-dirs: bench
-  ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A4m -n2m"
-  main-is: Bench.hs
-  build-depends:
-      base
-    , gauge ^>= 0.2.5
-    , bytestring
-    , tree-sitter
-    , tree-sitter-python
 
 source-repository head
   type:     git
