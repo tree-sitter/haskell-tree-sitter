@@ -1,3 +1,7 @@
+# v0.9.0.1
+
+* fix file path for `node-types.json`
+
 # v0.9.0.0
 
 * remove CodeGen and Template Haskell splice
