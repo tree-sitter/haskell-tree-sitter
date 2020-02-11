@@ -1,3 +1,7 @@
+# v0.3.0.1
+
+* add `data-files` to tree-sitter-php.cabal
+
 # v0.3.0.0
 
 * remove CodeGen and Template Haskell splice
