@@ -1,0 +1,4 @@
+documentation: True
+
+package *
+  documentation: True
