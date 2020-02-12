@@ -1,3 +1,8 @@
+# v0.4.0.0
+
+* add `data-files` to tree-sitter-php.cabal
+* major version bump since parser and its symbols changed
+
 # v0.3.0.1
 
 * add `data-files` to tree-sitter-php.cabal
