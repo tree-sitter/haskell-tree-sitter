@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-php
-version:             0.3.0.0
+version:             0.4.0.0
 synopsis:            Tree-sitter grammar/parser for PHP
 description:         This package provides a parser for PHP suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -10,6 +10,7 @@ maintainer:          vera@github.com
 copyright:           2019 GitHub
 category:            Tree-sitter, PHP
 build-type:          Simple
+data-files:          vendor/tree-sitter-php/src/node-types.json
 extra-source-files:  ChangeLog.md
 
 common common
