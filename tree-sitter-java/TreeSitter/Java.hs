@@ -1,6 +1,7 @@
 module TreeSitter.Java
 ( tree_sitter_java
 , getNodeTypesPath
+, getTestCorpusDir
 ) where
 
 import Foreign.Ptr
@@ -11,3 +12,6 @@ foreign import ccall unsafe "vendor/tree-sitter-java/src/parser.c tree_sitter_ja
 
 getNodeTypesPath :: IO FilePath
 getNodeTypesPath = getDataFileName "vendor/tree-sitter-java/src/node-types.json"
+
+getTestCorpusDir :: IO FilePath
+getTestCorpusDir = getDataFileName "vendor/tree-sitter-java/corpus"
