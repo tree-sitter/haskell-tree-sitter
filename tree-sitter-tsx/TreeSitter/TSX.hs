@@ -1,6 +1,7 @@
 module TreeSitter.TSX
 ( tree_sitter_tsx
 , getNodeTypesPath
+, getTestCorpusDir
 ) where
 
 import Foreign.Ptr
@@ -11,3 +12,6 @@ foreign import ccall unsafe "vendor/tree-sitter-typescript/tsx/src/parser.c tree
 
 getNodeTypesPath :: IO FilePath
 getNodeTypesPath = getDataFileName "vendor/tree-sitter-typescript/tsx/src/node-types.json"
+
+getTestCorpusDir :: IO FilePath
+getTestCorpusDir = getDataFileName "vendor/tree-sitter-typescript/tsx/corpus"
