@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter-ruby
-version:             0.5.0.1
+version:             0.5.0.2
 synopsis:            Tree-sitter grammar/parser for Ruby
 description:         This package provides a parser for Ruby suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -11,6 +11,7 @@ copyright:           2019 GitHub
 category:            Tree-sitter, Ruby
 build-type:          Simple
 data-files:          vendor/tree-sitter-ruby/src/node-types.json
+                   , vendor/tree-sitter-ruby/test/corpus/*.txt
 extra-source-files:  ChangeLog.md
 
 common common

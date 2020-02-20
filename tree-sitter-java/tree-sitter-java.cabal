@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-java
-version:             0.7.0.0
+version:             0.7.0.1
 synopsis:            Tree-sitter grammar/parser for Java
 description:         This package provides a parser for Java suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -11,6 +11,7 @@ copyright:           2019 GitHub
 category:            Tree-sitter, Java
 build-type:          Simple
 data-files:          vendor/tree-sitter-java/src/node-types.json
+                   , vendor/tree-sitter-java/corpus/*.txt
 extra-source-files:  ChangeLog.md
 
 common common
