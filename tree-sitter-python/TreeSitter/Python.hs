@@ -1,6 +1,7 @@
 module TreeSitter.Python
 ( tree_sitter_python
 , getNodeTypesPath
+, getTestCorpusDir
 ) where
 
 import Foreign.Ptr
@@ -11,3 +12,6 @@ foreign import ccall unsafe "vendor/tree-sitter-python/src/parser.c tree_sitter_
 
 getNodeTypesPath :: IO FilePath
 getNodeTypesPath = getDataFileName "vendor/tree-sitter-python/src/node-types.json"
+
+getTestCorpusDir :: IO FilePath
+getTestCorpusDir = getDataFileName "vendor/tree-sitter-python/test/corpus"
