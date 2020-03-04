@@ -1,3 +1,3 @@
-# v0.9.0.2
+# v0.1.0.0
 
 * add tree-sitter-ql parser
