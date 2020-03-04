@@ -11,7 +11,7 @@ copyright:           2019 GitHub
 category:            Tree-sitter, QL
 build-type:          Simple
 data-files:          vendor/tree-sitter-ql/src/node-types.json
-                   , vendor/tree-sitter-ql/test/corpus/*.txt
+                   , vendor/tree-sitter-ql/corpus/*.txt
 extra-source-files:  ChangeLog.md
 
 common common
