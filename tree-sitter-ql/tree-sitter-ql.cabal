@@ -6,8 +6,8 @@ description:         This package provides a parser for QL suitable for use with
 license:             BSD-3-Clause
 homepage:            https://github.com/tree-sitter/haskell-tree-sitter/tree/master/tree-sitter-ql
 author:              Max Brunsfeld, Tim Clem, Rob Rix, Josh Vera, Rick Winfrey, Ayman Nadeem, Patrick Thomson
-maintainer:          tclem@github.com
-copyright:           2019 GitHub
+maintainer:          rewinfrey@github.com
+copyright:           2020 GitHub
 category:            Tree-sitter, QL
 build-type:          Simple
 data-files:          vendor/tree-sitter-ql/src/node-types.json
@@ -38,7 +38,7 @@ library
   autogen-modules:     Paths_tree_sitter_ql
   other-modules:       Paths_tree_sitter_ql
   build-depends:       base >= 4.12 && <4.14
-                     , tree-sitter
+                     , tree-sitter ^>= 0.9.0.0
   Include-dirs:        vendor/tree-sitter-ql/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-ql/src/parser.c
