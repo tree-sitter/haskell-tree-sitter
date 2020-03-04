@@ -31,3 +31,6 @@
 [submodule "languages/tsx/vendor/tree-sitter-typescript"]
 	path = tree-sitter-tsx/vendor/tree-sitter-typescript
 	url = https://github.com/tree-sitter/tree-sitter-typescript
+[submodule "tree-sitter-ql/vendor/tree-sitter-ql"]
+	path = tree-sitter-ql/vendor/tree-sitter-ql
+	url = https://github.com/tree-sitter/tree-sitter-ql
