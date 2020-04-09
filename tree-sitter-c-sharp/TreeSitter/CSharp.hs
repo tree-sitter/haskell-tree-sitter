@@ -14,4 +14,4 @@ getNodeTypesPath :: IO FilePath
 getNodeTypesPath = getDataFileName "vendor/tree-sitter-c-sharp/src/node-types.json"
 
 getTestCorpusDir :: IO FilePath
-getTestCorpusDir = getDataFileName "vendor/tree-sitter-c-sharp/test/corpus"
+getTestCorpusDir = getDataFileName "vendor/tree-sitter-c-sharp/corpus"
