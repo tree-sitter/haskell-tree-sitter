@@ -34,3 +34,6 @@
 [submodule "tree-sitter-ql/vendor/tree-sitter-ql"]
 	path = tree-sitter-ql/vendor/tree-sitter-ql
 	url = https://github.com/tree-sitter/tree-sitter-ql
+[submodule "tree-sitter-c-sharp/vendor/tree-sitter-c-sharp"]
+	path = tree-sitter-c-sharp/vendor/tree-sitter-c-sharp
+	url = https://github.com/tree-sitter/tree-sitter-c-sharp
