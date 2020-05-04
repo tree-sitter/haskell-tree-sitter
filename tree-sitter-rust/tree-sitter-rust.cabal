@@ -41,6 +41,7 @@ library
   Include-dirs:        vendor/tree-sitter-rust/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-rust/src/parser.c
+                     , vendor/tree-sitter-rust/src/scanner.c
   extra-libraries:     stdc++
 
 source-repository head
