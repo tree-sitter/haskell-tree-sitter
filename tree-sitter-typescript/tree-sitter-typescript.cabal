@@ -14,6 +14,8 @@ data-files:          vendor/tree-sitter-typescript/typescript/src/node-types.jso
                    , vendor/tree-sitter-typescript/typescript/corpus/**/*.txt
 extra-source-files:  ChangeLog.md
 
+
+
 common common
   default-language: Haskell2010
   ghc-options:
@@ -37,7 +39,7 @@ library
   exposed-modules:     TreeSitter.TypeScript
   autogen-modules:     Paths_tree_sitter_typescript
   other-modules:       Paths_tree_sitter_typescript
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && <4.15
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-typescript/typescript/src
                        vendor/tree-sitter-typescript/common

@@ -37,7 +37,7 @@ library
   exposed-modules:     TreeSitter.Ruby
   autogen-modules:     Paths_tree_sitter_ruby
   other-modules:       Paths_tree_sitter_ruby
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && <4.15
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-ruby/src
   install-includes:    tree_sitter/parser.h

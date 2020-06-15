@@ -37,7 +37,7 @@ library
   exposed-modules:     TreeSitter.TSX
   autogen-modules:     Paths_tree_sitter_tsx
   other-modules:       Paths_tree_sitter_tsx
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && <4.15
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-typescript/tsx/src
                        vendor/tree-sitter-typescript/common
