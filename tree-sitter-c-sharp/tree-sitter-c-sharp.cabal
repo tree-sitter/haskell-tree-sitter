@@ -43,6 +43,7 @@ library
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-c-sharp/src/parser.c
   extra-libraries:     stdc++
+  cc-options:          -Wno-trigraphs
 
 source-repository head
   type:     git
