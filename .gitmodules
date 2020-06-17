@@ -40,3 +40,6 @@
 [submodule "tree-sitter-c-sharp/vendor/tree-sitter-c-sharp"]
 	path = tree-sitter-c-sharp/vendor/tree-sitter-c-sharp
 	url = https://github.com/tree-sitter/tree-sitter-c-sharp
+[submodule "tree-sitter-ocaml/vendor/tree-sitter-ocaml"]
+	path = tree-sitter-ocaml/vendor/tree-sitter-ocaml
+	url = https://github.com/tree-sitter/tree-sitter-ocaml
