@@ -16,7 +16,7 @@ haskell_library(
     ],
 )
 
-exports_files("src/node-types.json")
+exports_files(["src/node-types.json"])
 
 filegroup(
     name = "corpus",
