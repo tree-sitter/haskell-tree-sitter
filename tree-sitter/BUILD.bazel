@@ -21,7 +21,6 @@ cc_library(
     name = "ts",
     srcs = glob([
         "vendor/tree-sitter/lib/src/lib.c",
-        #        "include/tree_sitter/parser.h",
     ]),
     hdrs = glob(
         include = [
@@ -35,8 +34,6 @@ cc_library(
         "vendor/tree-sitter/lib/include",
         "vendor/tree-sitter/lib/src",
     ],
-    strip_include_prefix = "vendor/tree-sitter",
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -64,7 +61,6 @@ haskell_library(
         "//:filepath",
         "//:template-haskell",
         "//:text",
-        "//tree-sitter/vendor/tree-sitter:lib",
         "@stackage//:aeson",
         "@stackage//:fused-effects",
         "@stackage//:split",
