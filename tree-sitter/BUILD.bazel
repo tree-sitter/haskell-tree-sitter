@@ -1,0 +1,84 @@
+# Set all target’s visibility in this package to "public".
+
+package(default_visibility = ["//visibility:public"])
+
+# Load rules_haskell rules.
+load(
+    "@rules_haskell//haskell:defs.bzl",
+    "haskell_library",
+    "haskell_test",
+)
+load(
+    "@rules_haskell//haskell:cabal.bzl",
+    "haskell_cabal_library",
+)
+load(
+    "//:build/common.bzl",
+    "STANDARD_GHC_WARNINGS",
+)
+
+cc_library(
+    name = "ts",
+    srcs = glob([
+        "vendor/tree-sitter/lib/src/lib.c",
+        #        "include/tree_sitter/parser.h",
+    ]),
+    hdrs = glob(
+        include = [
+            "vendor/tree-sitter/lib/src/**/*.c",
+            "vendor/tree-sitter/lib/src/**/*.h",
+            "vendor/tree-sitter/lib/include/**/*.h",
+        ],
+        exclude = ["vendor/tree-sitter/lib/src/lib.c"],
+    ),
+    includes = [
+        "vendor/tree-sitter/lib/include",
+        "vendor/tree-sitter/lib/src",
+    ],
+    strip_include_prefix = "vendor/tree-sitter",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "cbits",
+    srcs = [
+        "src/bridge.c",
+    ],
+)
+
+haskell_library(
+    name = "tree-sitter",
+    srcs = glob([
+        "src/**/*.hs",
+    ]),
+    compiler_flags = STANDARD_GHC_WARNINGS,
+    tools = ["@happy"],
+    version = "0.9.0.1",
+    deps = [
+        ":cbits",
+        ":ts",
+        "//:base",
+        "//:bytestring",
+        "//:containers",
+        "//:directory",
+        "//:filepath",
+        "//:template-haskell",
+        "//:text",
+        "//tree-sitter/vendor/tree-sitter:lib",
+        "@stackage//:aeson",
+        "@stackage//:fused-effects",
+        "@stackage//:split",
+        "@stackage//:unordered-containers",
+    ],
+)
+
+haskell_test(
+    name = "test",
+    srcs = glob(["test/**/*.hs"]),
+    compiler_flags = STANDARD_GHC_WARNINGS,
+    deps = [
+        ":tree-sitter",
+        "//:base",
+        "@stackage//:hedgehog",
+    ],
+)

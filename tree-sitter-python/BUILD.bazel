@@ -1,0 +1,17 @@
+package(default_visibility = ["//visibility:public"])
+
+load(
+    "@rules_haskell//haskell:defs.bzl",
+    "haskell_library",
+    "haskell_test",
+)
+
+haskell_library(
+    name = "tree-sitter-python",
+    srcs = glob(["TreeSitter/**/*.hs"]),
+    compiler_flags = ["-DBAZEL_BUILD=1"],
+    deps = [
+        "//:base",
+        "//tree-sitter",
+    ],
+)
