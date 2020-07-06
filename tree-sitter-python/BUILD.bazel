@@ -16,10 +16,11 @@ haskell_library(
     ],
 )
 
-exports_files(["src/node-types.json"])
-
 filegroup(
     name = "corpus",
-    srcs = glob(["**/corpus/*.txt"]),
+    srcs = glob([
+        "**/corpus/*.txt",
+        "vendor/tree-sitter-python/src/node-types.json",
+    ]),
     visibility = ["//visibility:public"],
 )
