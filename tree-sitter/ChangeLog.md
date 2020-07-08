@@ -1,3 +1,7 @@
+### v0.9.0.1
+
+* Remove `semantic-source` dependency.
+
 ### v0.9.0.0
 
 * Remove CodeGen files `Deserialize`, `GenerateSyntax`, `Unmarshal`, `Token`
