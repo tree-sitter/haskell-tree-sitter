@@ -36,7 +36,7 @@ library
   exposed-modules:     TreeSitter.PHP
   autogen-modules:     Paths_tree_sitter_php
   other-modules:       Paths_tree_sitter_php
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && < 5
                      , tree-sitter
   include-dirs:        vendor/tree-sitter-php/src
   install-includes:    tree_sitter/parser.h

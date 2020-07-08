@@ -36,7 +36,7 @@ library
   exposed-modules:     TreeSitter.Rust
   autogen-modules:     Paths_tree_sitter_rust
   other-modules:       Paths_tree_sitter_rust
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && < 5
                      , tree-sitter ^>= 0.9.0.0
   Include-dirs:        vendor/tree-sitter-rust/src
   install-includes:    tree_sitter/parser.h
