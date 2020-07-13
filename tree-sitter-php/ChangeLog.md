@@ -1,3 +1,8 @@
+# v0.5.0.1
+
+* Support ghc 8.10.
+
+
 # v0.5.0.0
 
 * Major version bump since parser and symbols changed.
