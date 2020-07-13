@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter-c-sharp
-version:             0.1.0.1
+version:             0.1.0.0
 synopsis:            Tree-sitter grammar/parser for C#
 description:         This package provides a parser for C# suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
