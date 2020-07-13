@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter
-version:             0.9.0.1
+version:             0.9.0.2
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
                      .
