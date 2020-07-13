@@ -1,3 +1,8 @@
+# v0.7.0.2
+
+* Support ghc 8.10.
+
+
 # v0.7.0.0
 
 * remove CodeGen and Template Haskell splice
