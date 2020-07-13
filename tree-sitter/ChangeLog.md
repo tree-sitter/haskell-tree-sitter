@@ -1,3 +1,9 @@
+### v0.9.0.2
+
+* Remove `fused-effects` dependency.
+* Support ghc 8.10.
+
+
 ### v0.9.0.1
 
 * Remove `semantic-source` dependency.
