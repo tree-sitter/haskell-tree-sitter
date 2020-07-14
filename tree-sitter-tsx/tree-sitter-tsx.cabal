@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter-tsx
-version:             0.5.0.1
+version:             0.5.0.2
 synopsis:            Tree-sitter grammar/parser for TSX
 description:         This package provides a parser for TSX (TypeScript + XML) suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -31,13 +31,17 @@ common common
     ghc-options: -Wno-star-is-type
   if (impl(ghc >= 8.8))
     ghc-options: -Wno-missing-deriving-strategies
+  if (impl(ghc >= 8.10))
+    ghc-options:
+      -Wno-missing-safe-haskell-mode
+      -Wno-prepositive-qualified-module
 
 library
   import: common
   exposed-modules:     TreeSitter.TSX
   autogen-modules:     Paths_tree_sitter_tsx
   other-modules:       Paths_tree_sitter_tsx
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && < 5
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-typescript/tsx/src
                        vendor/tree-sitter-typescript/common

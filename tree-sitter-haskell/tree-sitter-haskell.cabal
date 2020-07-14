@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-haskell
-version:             0.3.0.0
+version:             0.3.0.1
 synopsis:            Tree-sitter grammar/parser for Haskell (with GHC extensions)
 description:         This package provides a parser for Haskell suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -29,6 +29,10 @@ common common
     ghc-options: -Wno-star-is-type
   if (impl(ghc >= 8.8))
     ghc-options: -Wno-missing-deriving-strategies
+  if (impl(ghc >= 8.10))
+    ghc-options:
+      -Wno-missing-safe-haskell-mode
+      -Wno-prepositive-qualified-module
 
 flag build-examples
   description: Build tree-sitter-haskell examples.
@@ -51,7 +55,7 @@ library
   exposed-modules:     TreeSitter.Haskell
   autogen-modules:     Paths_tree_sitter_haskell
   other-modules:       Paths_tree_sitter_haskell
-  build-depends:       base >= 4.12 && <4.14
+  build-depends:       base >= 4.12 && < 5
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-haskell/src
   install-includes:    tree_sitter/parser.h

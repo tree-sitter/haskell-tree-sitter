@@ -1,3 +1,8 @@
+# v0.1.0.4
+
+* Support ghc 8.10.
+
+
 # v0.1.0.3
 
 * Bump tree-sitter-ql parser to use named field nodes for module expressions

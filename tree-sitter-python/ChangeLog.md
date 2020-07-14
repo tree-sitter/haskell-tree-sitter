@@ -1,3 +1,8 @@
+# v0.9.0.3
+
+* Support ghc 8.10.
+
+
 # v0.9.0.1
 
 * fix file path for `node-types.json`
