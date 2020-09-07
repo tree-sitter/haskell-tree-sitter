@@ -108,6 +108,7 @@ escapeOperatorPunctuation = concatMap $ \case
   '\t' -> "Tab"
   '\n' -> "LF"
   '\r' -> "CR"
+  ' ' -> "Space"
   other
     | isControl other -> escapeOperatorPunctuation (show other)
     | otherwise -> [other]
