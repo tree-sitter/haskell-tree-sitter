@@ -65,7 +65,12 @@ addTickIfNecessary s
   | otherwise = s
   where
     reservedNames :: HashSet.HashSet String
-    reservedNames = HashSet.fromList ["type", "module", "data"]
+    reservedNames = HashSet.fromList [
+        "as", "case", "class", "data", "default", "deriving", "do", "forall",
+        "foreign", "hiding", "if", "then", "else", "import", "infix", "infixl",
+        "infixr", "instance", "let", "in", "mdo", "module", "newtype", "proc",
+        "qualified", "rec", "type", "where"
+      ]
 
 toHaskellPascalCaseIdentifier :: String -> String
 toHaskellPascalCaseIdentifier = addTickIfNecessary . capitalize . escapeOperatorPunctuation . camelCase
@@ -108,6 +113,7 @@ escapeOperatorPunctuation = concatMap $ \case
   '\t' -> "Tab"
   '\n' -> "LF"
   '\r' -> "CR"
+  ' ' -> "Space"
   other
     | isControl other -> escapeOperatorPunctuation (show other)
     | otherwise -> [other]
