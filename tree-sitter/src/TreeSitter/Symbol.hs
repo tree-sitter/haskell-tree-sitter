@@ -122,10 +122,12 @@ escapeOperatorPunctuation = concatMap $ \case
 camelCase :: String -> String
 camelCase = go
   where
-    go ('_':'_':xs) = "Underscore" <> go xs
-    go ('_':xs)     = go (capitalize xs)
-    go (x:xs)       = x : go xs
-    go ""           = ""
+    go ('_':xs)      = "super" <> capitalize (go xs)
+    go xs            = go' xs
+    go' ('_':'_':xs) = "Underscore" <> go' (capitalize xs)
+    go' ('_':xs)     = go' (capitalize xs)
+    go' (x:xs)       = x : go' xs
+    go' ""           = ""
 
 -- | Capitalize a String
 capitalize :: String -> String
