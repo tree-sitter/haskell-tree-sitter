@@ -26,7 +26,7 @@ a more Haskell-amenable data structure.
 There are some example executables provided with this project:
 
 * An example of using this library to parse, read, and print out AST nodes
-can be found [here](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/languages/haskell/examples/Demo.hs)
+can be found [here](https://github.com/tree-sitter/haskell-tree-sitter/blob/master/tree-sitter-haskell/examples/Demo.hs)
 
 To build these executables, pass the `build-examples` flag to your build tool.
 
