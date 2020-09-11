@@ -37,7 +37,7 @@ main = do
   success      <- ts_query_cursor_next_match cursor matchPointer
   print $ "success: " ++ show success
   match   <- (peek matchPointer)
-  capture <- peek $ captures match
+  capture <- peek $ matchCaptures match
   print capture
 
   -- print the match
