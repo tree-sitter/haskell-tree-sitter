@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveGeneric, GeneralizedNewtypeDeriving, RankNTypes,
-  ScopedTypeVariables, TypeOperators, DeriveAnyClass #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module TreeSitter.Query
   ( TSQuery
@@ -15,14 +13,15 @@ module TreeSitter.Query
   , ts_query_cursor_exec_p
   , ts_query_cursor_new
   , ts_query_cursor_next_match
-  ) where
+  )
+where
 
-import Foreign
-import Foreign.C (CString)
-import GHC.Generics
-import TreeSitter.Language
-import TreeSitter.Node
-import TreeSitter.Struct
+import           Foreign
+import           Foreign.C                      ( CString )
+import           GHC.Generics
+import           TreeSitter.Language
+import           TreeSitter.Node
+import           TreeSitter.Struct
 
 -- | A tree-sitter query.
 --
@@ -58,10 +57,9 @@ instance Storable TSQueryCapture where
   {-# INLINE sizeOf #-}
   peek = evalStruct $ TSQueryCapture <$> peekStruct <*> peekStruct
   {-# INLINE peek #-}
-  poke ptr (TSQueryCapture a b) =
-    flip evalStruct ptr $ do
-      pokeStruct a
-      pokeStruct b
+  poke ptr (TSQueryCapture a b) = flip evalStruct ptr $ do
+    pokeStruct a
+    pokeStruct b
   {-# INLINE poke #-}
 
 instance Storable TSQueryMatch where
@@ -70,30 +68,23 @@ instance Storable TSQueryMatch where
   sizeOf _ = 12
   {-# INLINE sizeOf #-}
   peek =
-    evalStruct $
-    TSQueryMatch <$> peekStruct <*> peekStruct <*> peekStruct <*> peekStruct
+    evalStruct
+      $   TSQueryMatch
+      <$> peekStruct
+      <*> peekStruct
+      <*> peekStruct
+      <*> peekStruct
   {-# INLINE peek #-}
-  poke ptr (TSQueryMatch a b c d) =
-    flip evalStruct ptr $ do
-      pokeStruct a
-      pokeStruct b
-      pokeStruct c
-      pokeStruct d
+  poke ptr (TSQueryMatch a b c d) = flip evalStruct ptr $ do
+    pokeStruct a
+    pokeStruct b
+    pokeStruct c
+    pokeStruct d
   {-# INLINE poke #-}
 
 
-foreign import ccall safe "ts_query_new" ts_query_new ::
-               Ptr Language ->
-                 CString ->
-                   Int -> Ptr Word32 -> Ptr TSQueryError -> IO (Ptr TSQuery)
+foreign import ccall safe "ts_query_new" ts_query_new :: Ptr Language -> CString -> Int -> Ptr Word32 -> Ptr TSQueryError -> IO (Ptr TSQuery)
+foreign import ccall safe "ts_query_cursor_new" ts_query_cursor_new :: IO (Ptr TSQueryCursor)
+foreign import ccall safe "src/bridge.c ts_query_cursor_exec_p" ts_query_cursor_exec_p :: Ptr TSQueryCursor -> Ptr TSQuery -> Ptr Node -> IO ()
+foreign import ccall safe "ts_query_cursor_next_match" ts_query_cursor_next_match :: Ptr TSQueryCursor -> Ptr TSQueryMatch -> IO Bool
 
-foreign import ccall safe "ts_query_cursor_new" ts_query_cursor_new
-               :: IO (Ptr TSQueryCursor)
-
-foreign import ccall safe "src/bridge.c ts_query_cursor_exec_p"
-               ts_query_cursor_exec_p ::
-               Ptr TSQueryCursor -> Ptr TSQuery -> Ptr Node -> IO ()
-
-foreign import ccall safe "ts_query_cursor_next_match"
-               ts_query_cursor_next_match ::
-               Ptr TSQueryCursor -> Ptr TSQueryMatch -> IO Bool
