@@ -24,8 +24,14 @@ import TreeSitter.Language
 import TreeSitter.Node
 import TreeSitter.Struct
 
+-- | A tree-sitter query.
+--
+--   This type is uninhabited and used only for type safety within 'Ptr' values.
 data TSQuery
 
+-- | A tree-sitter query cursor.
+--
+--   This type is uninhabited and used only for type safety within 'Ptr' values.
 data TSQueryCursor
 
 -- TODO: Need help implementing storable
@@ -48,7 +54,7 @@ data TSQueryMatch = TSQueryMatch
 instance Storable TSQueryCapture where
   alignment _ = alignment (0 :: Int32)
   {-# INLINE alignment #-}
-  sizeOf _ = 8
+  sizeOf _ = 10
   {-# INLINE sizeOf #-}
   peek = evalStruct $ TSQueryCapture <$> peekStruct <*> peekStruct
   {-# INLINE peek #-}
@@ -61,7 +67,7 @@ instance Storable TSQueryCapture where
 instance Storable TSQueryMatch where
   alignment _ = alignment (0 :: Int32)
   {-# INLINE alignment #-}
-  sizeOf _ = 80
+  sizeOf _ = 12
   {-# INLINE sizeOf #-}
   peek =
     evalStruct $
