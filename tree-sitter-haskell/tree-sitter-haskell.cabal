@@ -36,7 +36,20 @@ common common
 
 flag build-examples
   description: Build tree-sitter-haskell examples.
-  default:     False
+  default:     True
+
+executable query-demo
+  import: common
+  main-is: QueryDemo.hs
+  if !flag(build-examples)
+    buildable: False
+  hs-source-dirs: examples
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , containers
+    , tree-sitter
+    , tree-sitter-haskell
 
 executable demo
   import: common
@@ -47,6 +60,7 @@ executable demo
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
+    , containers
     , tree-sitter
     , tree-sitter-haskell
 

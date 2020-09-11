@@ -1,29 +1,31 @@
-#include "tree_sitter/api.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "tree_sitter/api.h"
+
 typedef struct Node {
   TSNode node;
-  const char *type;
+  const char* type;
   TSSymbol symbol;
   TSPoint endPoint;
   uint32_t endByte;
   uint32_t childCount;
-  const char *fieldName;
-  bool     isNamed;
-  bool     isExtra;
+  const char* fieldName;
+  bool isNamed;
+  bool isExtra;
 } Node;
 
-void log_to_stdout(void *payload, TSLogType type, const char *message) {
+void log_to_stdout(void* payload, TSLogType type, const char* message) {
   printf("%s\n", message);
 }
 
-void ts_parser_log_to_stderr(TSParser *parser) {
-  ts_parser_set_logger(parser, (TSLogger) {.log = log_to_stdout, .payload = NULL});
+void ts_parser_log_to_stderr(TSParser* parser) {
+  ts_parser_set_logger(parser,
+                       (TSLogger){.log = log_to_stdout, .payload = NULL});
 }
 
-static inline void ts_node_poke(const char *fieldName, TSNode node, Node *out) {
+static inline void ts_node_poke(const char* fieldName, TSNode node, Node* out) {
   out->node = node;
   out->symbol = ts_node_symbol(node);
   out->type = ts_node_type(node);
@@ -35,12 +37,27 @@ static inline void ts_node_poke(const char *fieldName, TSNode node, Node *out) {
   out->isExtra = ts_node_is_extra(node);
 }
 
-void ts_node_poke_p(TSNode *node, Node *out) {
+char* ts_node_string_p(TSNode* node) {
   assert(node != NULL);
+  return ts_node_string(*node);
+}
+
+void ts_query_cursor_exec_p(TSQueryCursor* cursor,
+                            const TSQuery* query,
+                            Node* node) {
+  assert(cursor != NULL);
+  assert(query != NULL);
+  assert(node != NULL);
+  ts_query_cursor_exec(cursor, query, node->node);
+}
+
+void ts_node_poke_p(TSNode* node, Node* out) {
+  assert(node != NULL);
+  assert(out != NULL);
   ts_node_poke(NULL, *node, out);
 }
 
-void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
+void ts_tree_root_node_p(TSTree* tree, Node* outNode) {
   assert(tree != NULL);
   assert(outNode != NULL);
   TSNode root = ts_tree_root_node(tree);
@@ -48,7 +65,7 @@ void ts_tree_root_node_p(TSTree *tree, Node *outNode) {
   ts_node_poke(NULL, root, outNode);
 }
 
-void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes) {
+void ts_node_copy_child_nodes(const TSNode* parentNode, Node* outChildNodes) {
   assert(parentNode != NULL);
   assert(outChildNodes != NULL);
   TSTreeCursor curse = ts_tree_cursor_new(*parentNode);
@@ -56,7 +73,8 @@ void ts_node_copy_child_nodes(const TSNode *parentNode, Node *outChildNodes) {
   if (ts_tree_cursor_goto_first_child(&curse)) {
     do {
       TSNode current = ts_tree_cursor_current_node(&curse);
-      ts_node_poke(ts_tree_cursor_current_field_name(&curse), current, outChildNodes);
+      ts_node_poke(ts_tree_cursor_current_field_name(&curse), current,
+                   outChildNodes);
       outChildNodes++;
     } while (ts_tree_cursor_goto_next_sibling(&curse));
   }
@@ -80,20 +98,19 @@ size_t sizeof_tstreecursor() {
   return sizeof(TSTreeCursor);
 }
 
-
-void ts_tree_cursor_new_p(TSNode *node, TSTreeCursor *outCursor) {
+void ts_tree_cursor_new_p(TSNode* node, TSTreeCursor* outCursor) {
   assert(node != NULL);
   assert(outCursor != NULL);
   *outCursor = ts_tree_cursor_new(*node);
 }
 
-void ts_tree_cursor_reset_p(TSTreeCursor *cursor, TSNode *node) {
+void ts_tree_cursor_reset_p(TSTreeCursor* cursor, TSNode* node) {
   assert(cursor != NULL);
   assert(node != NULL);
   ts_tree_cursor_reset(cursor, *node);
 }
 
-bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, Node *outNode) {
+bool ts_tree_cursor_current_node_p(const TSTreeCursor* cursor, Node* outNode) {
   assert(cursor != NULL);
   assert(outNode != NULL);
   TSNode tsNode = ts_tree_cursor_current_node(cursor);
@@ -103,8 +120,8 @@ bool ts_tree_cursor_current_node_p(const TSTreeCursor *cursor, Node *outNode) {
   return false;
 }
 
-
-uint32_t ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNodes) {
+uint32_t ts_tree_cursor_copy_child_nodes(TSTreeCursor* cursor,
+                                         Node* outChildNodes) {
   assert(cursor != NULL);
   assert(outChildNodes != NULL);
   uint32_t count = 0;
@@ -112,8 +129,9 @@ uint32_t ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNod
   if (ts_tree_cursor_goto_first_child(cursor)) {
     do {
       TSNode current = ts_tree_cursor_current_node(cursor);
-      const char *fieldName = ts_tree_cursor_current_field_name(cursor);
-      if (fieldName || (ts_node_is_named(current) && !ts_node_is_extra(current))) {
+      const char* fieldName = ts_tree_cursor_current_field_name(cursor);
+      if (fieldName ||
+          (ts_node_is_named(current) && !ts_node_is_extra(current))) {
         ts_node_poke(fieldName, current, outChildNodes);
         count++;
         outChildNodes++;
