@@ -3,6 +3,7 @@
 module TreeSitter.Query
   ( TSQuery
   , TSQueryCursor
+  , TSQueryError(..)
   , captureTSNode
   , captureIndex
   , matchId
@@ -33,10 +34,13 @@ data TSQuery
 --   This type is uninhabited and used only for type safety within 'Ptr' values.
 data TSQueryCursor
 
--- TODO: Need help implementing storable
--- data TSQueryError = TSQueryErrorNone | TSQueryErrorSyntax | TSQueryErrorNodeType | TSQueryErrorField | TSQueryErrorCapture
---   deriving (Show, Enum)
-type TSQueryError = Int
+data TSQueryError
+  = TSQueryErrorNone
+  | TSQueryErrorSyntax
+  | TSQueryErrorNodeType
+  | TSQueryErrorField
+  | TSQueryErrorCapture
+  deriving (Show, Enum, Eq)
 
 data TSQueryCapture = TSQueryCapture
   { captureTSNode :: !TSNode
@@ -49,6 +53,16 @@ data TSQueryMatch = TSQueryMatch
   , matchCaptureCount :: !Word16
   , matchCaptures :: Ptr TSQueryCapture
   } deriving (Show, Eq, Generic)
+
+instance Storable TSQueryError where
+  alignment _ = alignment (0 :: Int8)
+  {-# INLINE alignment #-}
+  sizeOf _ = 1
+  {-# INLINE sizeOf #-}
+  peek = evalStruct $ toEnum <$> peekStruct
+  {-# INLINE peek #-}
+  poke ptr e = evalStruct (pokeStruct $ fromEnum e) ptr 
+  {-# INLINE poke #-}
 
 instance Storable TSQueryCapture where
   alignment _ = alignment (0 :: Int32)
