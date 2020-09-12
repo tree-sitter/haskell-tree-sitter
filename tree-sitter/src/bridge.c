@@ -23,6 +23,18 @@ void ts_parser_log_to_stderr(TSParser *parser) {
   ts_parser_set_logger(parser, (TSLogger) {.log = log_to_stdout, .payload = NULL});
 }
 
+char* ts_node_string_p(TSNode* node) {
+  assert(node != NULL);
+  return ts_node_string(*node);
+}
+
+void ts_query_cursor_exec_p(TSQueryCursor* cursor, const TSQuery* query, Node* node) {
+  assert(cursor != NULL);
+  assert(query != NULL);
+  assert(node != NULL);
+  ts_query_cursor_exec(cursor, query, node->node);
+}
+
 static inline void ts_node_poke(const char *fieldName, TSNode node, Node *out) {
   out->node = node;
   out->symbol = ts_node_symbol(node);
