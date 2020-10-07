@@ -43,6 +43,6 @@
 [submodule "tree-sitter-ocaml/vendor/tree-sitter-ocaml"]
 	path = tree-sitter-ocaml/vendor/tree-sitter-ocaml
 	url = https://github.com/tree-sitter/tree-sitter-ocaml
-[submodule "languages/java/vendor/tree-sitter-scala"]
-	path = tree-sitter-java/vendor/tree-sitter-scala
+[submodule "languages/scala/vendor/tree-sitter-scala"]
+	path = tree-sitter-scala/vendor/tree-sitter-scala
 	url = https://github.com/tree-sitter/tree-sitter-scala.git
