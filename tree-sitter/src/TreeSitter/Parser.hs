@@ -3,7 +3,6 @@ module TreeSitter.Parser
 , withParser
 , withParseTree
 , ts_parser_new
-, ts_parser_halt_on_error
 , ts_parser_parse_string
 , ts_parser_delete
 , ts_parser_set_language
@@ -44,7 +43,6 @@ withParseTree parser bytestring action =
           | otherwise    = ts_tree_delete t
 
 foreign import ccall safe "ts_parser_new" ts_parser_new :: IO (Ptr Parser)
-foreign import ccall safe "ts_parser_halt_on_error" ts_parser_halt_on_error :: Ptr Parser -> CBool -> IO ()
 foreign import ccall safe "ts_parser_parse_string" ts_parser_parse_string :: Ptr Parser -> Ptr Tree -> CString -> Int -> IO (Ptr Tree)
 foreign import ccall safe "ts_parser_delete" ts_parser_delete :: Ptr Parser -> IO ()
 foreign import ccall safe "ts_parser_set_language" ts_parser_set_language :: Ptr Parser -> Ptr Language -> IO Bool
