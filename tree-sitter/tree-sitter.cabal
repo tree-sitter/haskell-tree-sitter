@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter
-version:             0.9.0.2
+version:             0.9.0.3
 synopsis:            Unstable bindings for the tree-sitter parsing library.
 description:         Tree-sitter is a parser generator tool and an incremental parsing library.
                      .
@@ -17,9 +17,9 @@ category:            Parsing, Tree-sitter
 build-type:          Simple
 
 tested-with:
-  GHC == 8.6.5
-  GHC == 8.8.3
   GHC == 8.10.1
+  GHC == 9.0.1
+  GHC == 9.2.1
 
 extra-source-files:  vendor/tree-sitter/lib/src/**/*.c
                    , vendor/tree-sitter/lib/src/**/*.h
@@ -46,19 +46,23 @@ common common
     ghc-options:
       -Wno-missing-safe-haskell-mode
       -Wno-prepositive-qualified-module
+  if (impl(ghc >= 9.2))
+    ghc-options:
+      -Wno-missing-kind-signatures
+      -Wno-implicit-lift
 
 library
   import: common
   hs-source-dirs:      src
-  build-depends:       base                  >= 4.12 && < 5
-                     , bytestring           ^>= 0.10.8.2
-                     , containers           ^>= 0.6.0.1
-                     , directory            ^>= 1.3
-                     , filepath             ^>= 1.4.1
-                     , split                ^>= 0.2.3
-                     , template-haskell      >= 2.12 && < 2.17
-                     , unordered-containers ^>= 0.2.9
-                     , containers            >= 0.6.0.1
+  build-depends:
+    , base                  >= 4.12 && < 5
+    , bytestring            >= 0.10.8.2 && < 0.13
+    , containers           ^>= 0.6.0.1
+    , directory            ^>= 1.3
+    , filepath             ^>= 1.4.1
+    , split                ^>= 0.2.3
+    , template-haskell      >= 2.12 && < 3
+    , unordered-containers ^>= 0.2.9
   exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Language
                      , TreeSitter.Node
