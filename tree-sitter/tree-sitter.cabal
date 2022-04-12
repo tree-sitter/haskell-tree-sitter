@@ -59,7 +59,6 @@ library
     , split                ^>= 0.2.3
     , template-haskell      >= 2.12 && < 3
     , unordered-containers ^>= 0.2.9
-    , containers            >= 0.6.0.1
   exposed-modules:     TreeSitter.Parser
                      , TreeSitter.Language
                      , TreeSitter.Node
