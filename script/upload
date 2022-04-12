@@ -16,8 +16,8 @@ if [ -z "$package" ]; then
   usage
 fi
 
-packageFile="$(cabal sdist "$package" | tail -1 | tee /dev/stderr)"
-docsFile="$(cabal haddock --haddock-for-hackage "$package" | tail -1 | tee /dev/stderr)"
+packageFile="$(cabal sdist "$package" | tail -1)"
+docsFile="$(cabal haddock --haddock-for-hackage "$package" | tail -1)"
 
 if [ -z "$publish" ]; then
   cabal upload "$packageFile"
