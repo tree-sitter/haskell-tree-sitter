@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter-tsx
-version:             0.5.0.2
+version:             0.5.0.3
 synopsis:            Tree-sitter grammar/parser for TSX
 description:         This package provides a parser for TSX (TypeScript + XML) suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
