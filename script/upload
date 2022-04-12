@@ -16,7 +16,6 @@ if [ -z "$package" ]; then
   usage
 fi
 
-cabal build --enable-documentation "$package"
 packageFile="$(cabal sdist "$package" | tail -1 | tee /dev/stderr)"
 docsFile="$(cabal haddock --haddock-for-hackage "$package" | tail -1 | tee /dev/stderr)"
 
