@@ -17,9 +17,9 @@ category:            Parsing, Tree-sitter
 build-type:          Simple
 
 tested-with:
-  GHC == 8.6.5
-  GHC == 8.8.3
   GHC == 8.10.1
+  GHC == 9.0.1
+  GHC == 9.2.1
 
 extra-source-files:  vendor/tree-sitter/lib/src/**/*.c
                    , vendor/tree-sitter/lib/src/**/*.h
