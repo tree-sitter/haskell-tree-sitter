@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-nix
-version:             0.2.0.1
+version:             0.2.0.2
 synopsis:            tree-sitter Nix language bindings
 description:         A parser for Nix for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -33,14 +33,19 @@ common common
     ghc-options:
       -Wno-missing-safe-haskell-mode
       -Wno-prepositive-qualified-module
+  if (impl(ghc >= 9.2))
+    ghc-options:
+      -Wno-missing-kind-signatures
+      -Wno-implicit-lift
 
 library
   import: common
   exposed-modules:     TreeSitter.Nix
-  build-depends:       base              >= 4.7 && < 5
-                     , tree-sitter       >= 0.3 && < 1
-                     , template-haskell  >= 2.12 && < 2.17
-                     , tree-sitter-nix-internal
+  build-depends:
+    , base              >= 4.7 && < 5
+    , tree-sitter       >= 0.3 && < 1
+    , template-haskell  >= 2.12 && < 3
+    , tree-sitter-nix-internal
 
 library tree-sitter-nix-internal
   import: common

@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                tree-sitter-php
-version:             0.5.0.1
+version:             0.5.0.2
 synopsis:            Tree-sitter grammar/parser for PHP
 description:         This package provides a parser for PHP suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -34,6 +34,10 @@ common common
     ghc-options:
       -Wno-missing-safe-haskell-mode
       -Wno-prepositive-qualified-module
+  if (impl(ghc >= 9.2))
+    ghc-options:
+      -Wno-missing-kind-signatures
+      -Wno-implicit-lift
 
 library
   import: common

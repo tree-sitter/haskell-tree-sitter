@@ -1,6 +1,6 @@
 cabal-version:       2.4
 name:                tree-sitter-rust
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            Tree-sitter grammar/parser for Rust
 description:         This package provides a parser for Rust suitable for use with the tree-sitter package.
 license:             BSD-3-Clause
@@ -34,6 +34,10 @@ common common
     ghc-options:
       -Wno-missing-safe-haskell-mode
       -Wno-prepositive-qualified-module
+  if (impl(ghc >= 9.2))
+    ghc-options:
+      -Wno-missing-kind-signatures
+      -Wno-implicit-lift
 
 library
   import: common

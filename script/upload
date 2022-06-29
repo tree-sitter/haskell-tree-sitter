@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+package="$1"
+publish="$2"
+
+usage() {
+  echo "Usage: script/upload PACKAGE [--publish]"
+  exit 1
+}
+
+if [ -z "$package" ]; then
+  usage
+fi
+
+packageFile="$(cabal sdist "$package" | tail -1)"
+docsFile="$(cabal haddock --haddock-for-hackage "$package" | tail -1)"
+
+if [ -z "$publish" ]; then
+  cabal upload "$packageFile"
+  cabal upload --documentation "$docsFile"
+elif [ "$publish" = "--publish" ]; then
+  cabal upload "$packageFile" --publish
+  cabal upload --documentation "$docsFile" --publish
+else
+  usage
+fi
