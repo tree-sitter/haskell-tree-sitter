@@ -1,3 +1,8 @@
+### v0.9.0.3
+
+* Support `base-4.14` at least (GHC 8.10.7)
+* Support latest minor versions of 8.10, 9.0, 9.2 and 9.4
+
 ### v0.9.0.2
 
 * Remove `fused-effects` dependency.
