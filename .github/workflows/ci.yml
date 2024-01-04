@@ -9,49 +9,56 @@ on:
       - "master"
 
 jobs:
-  build:
-    name: ghc ${{ matrix.ghc }}
+  generateMatrix:
+    name: "Generate matrix from cabal"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ghc: ["8.10", "9.0", "9.2"]
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout base repo
+        uses: actions/checkout@v2
+      - name: Extract the tested GHC versions
+        id: set-matrix
+        run: |
+          wget https://github.com/Kleidukos/get-tested/releases/download/v0.1.5.0/get-tested-0.1.5.0-linux-amd64 -O get-tested
+          chmod +x get-tested
+          ./get-tested --ubuntu tree-sitter/tree-sitter.cabal >> $GITHUB_OUTPUT
+  build:
+    name: ${{ matrix.ghc }} on ${{ matrix.os }}                                                                         
+    needs: generateMatrix                                                                                               
+    runs-on: ${{ matrix.os }}                                                                                           
+    strategy:                                                                                                           
+      matrix: ${{ fromJSON(needs.generateMatrix.outputs.matrix) }}
 
     steps:
     - uses: actions/checkout@v2
       if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/main'
-
     - uses: haskell/actions/setup@v1
       name: Setup Haskell
       with:
         ghc-version: ${{ matrix.ghc }}
-
-    - uses: actions/cache@v2
-      name: Cache ~/.cabal/packages
+    - name: Cache
+      uses: actions/cache@v3.3.2
       with:
-        path: ~/.cabal/packages
-        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal-packages
-    - uses: actions/cache@v2
-      name: Cache ~/.cabal/store
-      with:
-        path: ~/.cabal/store
-        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal-store
+        path: ${{ steps.setup-haskell.outputs.cabal-store }}
+        key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
+        restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
     - uses: actions/cache@v2
       name: Cache dist-newstyle
       with:
         path: dist-newstyle
         key: ${{ runner.os }}-${{ matrix.ghc }}-repo-dist
-
     - name: Install dependencies
       run: |
         git submodule update -i --recursive
-        cabal v2-update
-        cabal v2-configure --enable-benchmarks --enable-tests --write-ghc-environment-files=always -j2 -O0
-        cabal v2-build --only-dependencies all
+        cabal update
+        cabal configure --enable-benchmarks --enable-tests --write-ghc-environment-files=always -j2 -O0
+        cabal build --only-dependencies all
 
     - name: Build & test
       run: |
-        cabal v2-build all
-        cabal v2-test all
-        cabal v2-haddock all
-        cabal v2-sdist all
+        cabal build all
+        cabal test all
+        cabal haddock all
+        cabal sdist all
         for p in tree-sitter* ; do echo "$p" ; cd "$p" ; cabal check ; cd ..; done
