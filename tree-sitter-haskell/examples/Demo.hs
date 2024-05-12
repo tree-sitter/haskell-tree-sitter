@@ -72,9 +72,9 @@ printChildren children count = forM_
   )
 
 printNode :: Node -> IO ()
-printNode Node {..} = do
+printNode n@(Node {..}) = do
   theType <- peekCString nodeType
-  let TSPoint {..} = nodeStartPoint
+  let TSPoint {..} = nodeStartPoint n
       start        = "(" ++ show pointRow ++ "," ++ show pointColumn ++ ")"
   let TSPoint {..} = nodeEndPoint
       end          = "(" ++ show pointRow ++ "," ++ show pointColumn ++ ")"
