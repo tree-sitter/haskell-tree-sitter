@@ -11,39 +11,43 @@ on:
 jobs:
   generateMatrix:
     name: "Generate matrix from cabal"
-    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout base repo
         uses: actions/checkout@v4
       - name: Extract the tested GHC versions
         id: set-matrix
-        run: |
-          wget https://github.com/Kleidukos/get-tested/releases/download/v0.1.5.0/get-tested-0.1.5.0-linux-amd64 -O get-tested
-          chmod +x get-tested
-          ./get-tested --ubuntu tree-sitter/tree-sitter.cabal >> $GITHUB_OUTPUT
+        uses: kleidukos/get-tested@v0.1.7.0
+        with:
+          cabal-file: tree-sitter/tree-sitter.cabal
+          ubuntu-version: "latest"
+          version: 0.1.7.0
   build:
     name: ${{ matrix.ghc }} on ${{ matrix.os }}                                                                         
     needs: generateMatrix                                                                                               
     runs-on: ${{ matrix.os }}                                                                                           
     strategy:                                                                                                           
       matrix: ${{ fromJSON(needs.generateMatrix.outputs.matrix) }}
-
     steps:
-    - uses: actions/checkout@v4
-      if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/main'
-    - uses: haskell/actions/setup@v2
+    - name: Checkout base repo
+      uses: actions/checkout@v4
+    - uses: haskell-actions/setup@v2
       name: Setup Haskell
+      id: setup-haskell
       with:
         ghc-version: ${{ matrix.ghc }}
+        cabal-version: "latest"
+    - name: Freeze
+      run: cabal freeze
     - name: Cache
-      uses: actions/cache@v3.3.2
+      uses: actions/cache@v4
       with:
         path: ${{ steps.setup-haskell.outputs.cabal-store }}
         key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
         restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       name: Cache dist-newstyle
       with:
         path: dist-newstyle
