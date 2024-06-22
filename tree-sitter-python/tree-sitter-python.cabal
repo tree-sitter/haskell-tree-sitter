@@ -50,7 +50,7 @@ library
   Include-dirs:        vendor/tree-sitter-python/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-python/src/parser.c
-                     , vendor/tree-sitter-python/src/scanner.cc
+                     , vendor/tree-sitter-python/src/scanner.c
   extra-libraries:     stdc++
 
 source-repository head

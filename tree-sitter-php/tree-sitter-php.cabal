@@ -46,10 +46,10 @@ library
   other-modules:       Paths_tree_sitter_php
   build-depends:       base >= 4.12 && < 5
                      , tree-sitter
-  include-dirs:        vendor/tree-sitter-php/src
+  include-dirs:        vendor/tree-sitter-php/php/src
   install-includes:    tree_sitter/parser.h
-  c-sources:           vendor/tree-sitter-php/src/parser.c
-                     , vendor/tree-sitter-php/src/scanner.cc
+  c-sources:           vendor/tree-sitter-php/php/src/parser.c
+                     , vendor/tree-sitter-php/php/src/scanner.c
   extra-libraries:     stdc++
 
 source-repository head
