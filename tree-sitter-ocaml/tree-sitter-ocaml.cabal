@@ -9,8 +9,8 @@ maintainer:          rewinfrey@github.com
 copyright:           2020 GitHub, Anton Kochkov
 category:            Tree-sitter, OCaml
 build-type:          Simple
-data-files:          vendor/tree-sitter-ocaml/src/node-types.json
-                   , vendor/tree-sitter-ocaml/corpus/*.txt
+data-files:          vendor/tree-sitter-ocaml/grammars/ocaml/src/node-types.json
+                   , vendor/tree-sitter-ocaml/grammars/ocaml/test/corpus/*.txt
 extra-source-files:  ChangeLog.md
 
 common common
