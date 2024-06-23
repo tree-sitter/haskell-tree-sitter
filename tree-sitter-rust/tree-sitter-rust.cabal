@@ -10,7 +10,7 @@ copyright:           2020 GitHub
 category:            Tree-sitter, Rust
 build-type:          Simple
 data-files:          vendor/tree-sitter-rust/src/node-types.json
-                   , vendor/tree-sitter-rust/corpus/*.txt
+                   , vendor/tree-sitter-rust/test/corpus/*.txt
 extra-source-files:  ChangeLog.md
 
 common common
