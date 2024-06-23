@@ -64,7 +64,8 @@ library
   Include-dirs:        vendor/tree-sitter-haskell/src
   install-includes:    tree_sitter/parser.h
   c-sources:           vendor/tree-sitter-haskell/src/parser.c
-                     , vendor/tree-sitter-haskell/src/scanner.cc
+                     , vendor/tree-sitter-haskell/src/scanner.c
+  cxx-sources:
   extra-libraries:     stdc++
 
 source-repository head

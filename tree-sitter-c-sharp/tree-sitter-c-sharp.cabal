@@ -11,7 +11,7 @@ copyright:           2020 GitHub
 category:            Tree-sitter, CSharp, C#
 build-type:          Simple
 data-files:          vendor/tree-sitter-c-sharp/src/node-types.json
-                   , vendor/tree-sitter-c-sharp/corpus/*.txt
+                   , vendor/tree-sitter-c-sharp/test/corpus/*.txt
 extra-source-files:  ChangeLog.md
 
 common common

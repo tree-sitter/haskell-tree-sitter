@@ -55,7 +55,7 @@ library tree-sitter-nix-internal
                      , tree-sitter
   Include-dirs:        vendor/tree-sitter-nix/src
   c-sources:           vendor/tree-sitter-nix/src/parser.c
-                       vendor/tree-sitter-nix/src/scanner.cc
+                       vendor/tree-sitter-nix/src/scanner.c
   extra-libraries:     stdc++
 
 source-repository head

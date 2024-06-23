@@ -34,9 +34,9 @@ withCursor rootPtr action = allocaBytes sizeOfCursor $ \ cursor -> Exc.bracket
   ts_tree_cursor_delete
   action
 
--- | THe size of a 'Cursor' in bytes. The tests verify that this value is the same as @sizeof(TSTreeCursor)@.
+-- | The size of a 'Cursor' in bytes. The tests verify that this value is the same as @sizeof(TSTreeCursor)@.
 sizeOfCursor :: Int
-sizeOfCursor = 24
+sizeOfCursor = 32
 
 foreign import ccall unsafe "src/bridge.c ts_tree_cursor_new_p" ts_tree_cursor_new_p :: Ptr TSNode -> Ptr Cursor -> IO ()
 foreign import ccall unsafe "ts_tree_cursor_delete" ts_tree_cursor_delete :: Ptr Cursor -> IO ()
