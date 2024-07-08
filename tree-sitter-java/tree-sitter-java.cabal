@@ -12,7 +12,7 @@ category:            Tree-sitter, Java
 build-type:          Simple
 data-files:          vendor/tree-sitter-java/src/node-types.json
                    , vendor/tree-sitter-java/test/corpus/*.txt
-extra-source-files:  ChangeLog.md
+extra-doc-files:     ChangeLog.md
 
 common common
   default-language: Haskell2010
