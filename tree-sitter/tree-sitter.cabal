@@ -67,6 +67,8 @@ library
                      , TreeSitter.Symbol
                      , TreeSitter.Tree
                      , TreeSitter.Cursor
+                     , TreeSitter.Query
+  other-modules:       TreeSitter.Struct
   include-dirs:        vendor/tree-sitter/lib/include
                      , vendor/tree-sitter/lib/src
   install-includes:    tree_sitter/api.h
