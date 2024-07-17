@@ -43,3 +43,6 @@
 [submodule "tree-sitter-ocaml/vendor/tree-sitter-ocaml"]
 	path = tree-sitter-ocaml/vendor/tree-sitter-ocaml
 	url = https://github.com/tree-sitter/tree-sitter-ocaml
+[submodule "tree-sitter-r/vendor/tree-sitter-r"]
+	path = tree-sitter-r/vendor/tree-sitter-r
+	url = https://github.com/r-lib/tree-sitter-r
