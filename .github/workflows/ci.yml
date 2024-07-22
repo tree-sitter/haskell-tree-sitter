@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Extract the tested GHC versions
         id: set-matrix
-        uses: kleidukos/get-tested@v0.1.7.0
+        uses: kleidukos/get-tested@0.1.7.1
         with:
           cabal-file: tree-sitter/tree-sitter.cabal
           ubuntu-version: "latest"
