@@ -9,6 +9,10 @@ module TreeSitter.Node
 , FieldId(..)
 , ts_node_copy_child_nodes
 , ts_node_poke_p
+
+, evalStruct
+, peekStruct
+, pokeStruct
 ) where
 
 import Foreign
