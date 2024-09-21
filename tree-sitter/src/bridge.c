@@ -123,3 +123,8 @@ uint32_t ts_tree_cursor_copy_child_nodes(TSTreeCursor *cursor, Node *outChildNod
   }
   return count;
 }
+
+char *ts_node_string_p(TSNode *self) {
+  assert(self != NULL);
+  return ts_node_string(*self);
+}
