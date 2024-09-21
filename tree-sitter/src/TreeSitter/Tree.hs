@@ -20,6 +20,8 @@ withRootNode tree action = alloca $ \ ptr -> do
   ts_tree_root_node_p tree ptr
   action ptr
 
+-- | Locational info used for to adjust the source ranges of a 'Tree'\'s nodes.
+--   This record dirrectly corresponds to the C struct of the same name.
 data TSInputEdit = TSInputEdit
   { start_byte :: !Word32
   , old_end_byte :: !Word32
