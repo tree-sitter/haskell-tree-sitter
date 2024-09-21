@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 module TreeSitter.Tree
 ( Tree
+, TSInputEdit(..)
 , withRootNode
 , ts_tree_edit
 , ts_tree_delete
