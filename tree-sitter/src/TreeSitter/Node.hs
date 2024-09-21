@@ -26,6 +26,7 @@ data Node = Node
   , nodeFieldName  :: !CString
   , nodeIsNamed    :: !CBool
   , nodeIsExtra    :: !CBool
+  , nodeIsMissing  :: !CBool
   }
   deriving (Show, Eq, Generic)
 
@@ -81,8 +82,9 @@ instance Storable Node where
                            <*> peekStruct
                            <*> peekStruct
                            <*> peekStruct
+                           <*> peekStruct
   {-# INLINE peek #-}
-  poke ptr (Node n t s ep eb c fn nn ne) = flip evalStruct ptr $ do
+  poke ptr (Node n t s ep eb c fn nn ne nm) = flip evalStruct ptr $ do
     pokeStruct n
     pokeStruct t
     pokeStruct s
@@ -92,6 +94,7 @@ instance Storable Node where
     pokeStruct fn
     pokeStruct nn
     pokeStruct ne
+    pokeStruct nm
   {-# INLINE poke #-}
 
 instance Storable TSPoint where
