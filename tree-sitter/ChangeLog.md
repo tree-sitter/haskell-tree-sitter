@@ -1,5 +1,6 @@
 ### v0.9.0.4
 
+* Add `isMissing` flag for nodes.
 * Add bindings for the edit API.
 
 ### v0.9.0.3
