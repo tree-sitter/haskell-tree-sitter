@@ -1,3 +1,7 @@
+### v0.9.0.4
+
+* Add bindings for the edit API.
+
 ### v0.9.0.3
 
 * Support `base-4.14` at least (GHC 8.10.7)
