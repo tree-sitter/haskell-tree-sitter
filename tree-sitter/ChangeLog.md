@@ -1,6 +1,7 @@
 ### v0.9.0.4
 
 * Add binding to `ts_node_string`.
+* Add bindings for the edit API.
 
 ### v0.9.0.3
 
